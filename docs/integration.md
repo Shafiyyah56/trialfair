@@ -85,3 +85,24 @@ these additive shared changes for the other branches:
 Agent 1 and Agent 3 implementation files are untouched by Agent 2. Their default
 stubs still block a fully live trial-to-report run until merged and wired. Health
 component flags must be updated by the integrator when that wiring is verified.
+
+## Agent 3 implementation on feat/agent-3-evidence
+
+Agent 3 implements run_evidence and EuropePMCClient while preserving the existing
+scientific contracts and EuropePMCService/registry Protocols. It uses the shared
+ModelClient, generate_with_budget and ToolContext. No dependencies/lock versions
+were changed and Agent 1's code was not edited.
+
+Runtime integration included with this branch:
+- app/runtime.py now creates the real EuropePMCClient with the same RunBudget as
+  context and the configured ignored cache directory. Custom RuntimeServices still
+  work. Registry/terminology remain Agent 1 dependencies.
+- app/api.py reports evidence implementation present; the full pipeline stays
+  partial until Agent 1 is implemented/wired. UI status text reflects this.
+- Agent 2's existing dispatcher invokes the new run_evidence and records its result.
+  Agent 3 does not append its own result a second time or execute statistics.
+
+See docs/agent-3-usage.md for constructor signatures, constraints, source handling,
+CLI verification commands and limitations. Agents 1/2 should incorporate this
+feature branch (or the merged main) before testing the full evidence path.
+Restart the backend so imported handlers come from the newly merged implementation.

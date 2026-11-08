@@ -37,10 +37,14 @@ merely to make an installation work.
 
 - Agent 2: implemented safety tool loop, model adapter, bounded orchestration,
   FastAPI, SQLite, Streamlit and PlannerInput assembly.
-- Agents 1/3: interfaces exist, implementation and real source adapters still
-  required on this branch. Do not infer their completion from the working UI.
+- Agent 3: implemented on feat/agent-3-evidence with a real Europe PMC client
+  wired into the runtime. See [Agent 3 usage](agent-3-usage.md). Full live research
+  verification is separate from injected integration tests.
+- Agent 1: still required for real trial ingestion, statistics and registry/
+  terminology adapters. Do not infer completion from the working UI.
 - Agent 4: deferred. PlannerInput is available; no planner output is implemented.
-- Automated checks: 60 tests pass; Ruff lint/format and lock consistency pass.
+- Automated checks on the evidence branch: 100 tests pass; Ruff lint/format and
+  lock consistency pass. Agent 2's earlier milestone had 60 tests.
 - Live Gemini smoke: user-run on 2026-11-08, gemini-4-argon, google-genai 2.34.0,
   models.generate_content; plain reply, function calling and JSON output passed.
 - Live Agent 2 browser check: user launched local servers; Chrome showed a 34.63 s
@@ -49,7 +53,7 @@ merely to make an installation work.
   was unavailable. The report preserved that limitation and synthetic labelling.
 - Not verified: real trial ingestion -> real statistical results -> actual
   literature retrieval -> integrated clinical report. This remains the next
-  shared acceptance check after Agents 1/3 are implemented and wired.
+  shared acceptance check after Agent 1 is implemented and wired to Agents 2/3.
 
 The coding sandbox cannot reach external hosts or bind ports, but the user's
 Terminal and Chrome successfully ran the local application. This is a sandbox
@@ -151,7 +155,8 @@ reset budgets when one agent calls another. SDK retries/automatic tools are disa
 ### Compose real services after merging
 
 Agent 2 owns app/runtime.py and updates it with the concrete adapters supplied by
-Agents 1 and 3. The default MissingService is deliberate and must be replaced.
+Agents 1 and 3. The Europe PMC client is wired on the evidence branch. Remaining MissingService
+instances for registry/terminology are deliberate and must be replaced by Agent 1.
 Implementing an adapter without wiring it will still produce unavailable results.
 
 For adapters that need the shared per-run budget, create the context first, then
@@ -161,7 +166,8 @@ assign context.registry/literature/terminology to real adapters and return conte
 Pass this factory to create_app(context_factory=...). Do not construct a fresh
 budget inside each adapter. The actual adapter class names/constructors are agreed
 with their owners; none are claimed to exist in the current Protocol-only modules.
-Restart the backend after merging so imports use the new handler implementations.
+For the implemented EuropePMCClient constructor and its budget/cache handling,
+see agent-3-usage.md. Restart the backend after merging so imports use the new handler implementations.
 Update health component flags only once the real services are wired and checked.
 
 ## Acceptance and delivery

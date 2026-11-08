@@ -69,7 +69,8 @@ uv run --locked ruff format --check .
 ```
 
 Record actual results. The scaffold initially passed 31 tests; Agent 2 now
-passes 60 tests. Automated tests and live checks are separate evidence. An upstream
+passed 60 tests; the evidence branch now passes 100. Automated and live checks
+are separate evidence. An upstream
 TestClient deprecation warning was observed. Do not change shared dependencies or
 silence warnings without investigating them and coordinating any needed change.
 
@@ -124,14 +125,15 @@ automated clinical decisions. Respect the standing no-email policy.
 ## Shared non-secret readiness log
 
 - Dependency lock: uv.lock committed in dae3c5b.
-- Agent implementations: Agent 2 implemented on its feature branch; Agents 1/3 pending integration.
+- Agent implementations: Agents 2/3 and Europe PMC wiring are present on the evidence branch;
+  Agent 1 ingestion/statistics/registry are still pending.
 - Shared Gemini adapter: live smoke check passed, user-run on 2026-11-08.
 - Verified model ID for this account: gemini-4-argon, google-genai 2.34.0, models.generate_content.
 - Basic response, function calling and structured output: all true in the user-supplied smoke output.
 - Smoke run timestamp: 2026-11-08T03:25:05.097808+00:00. This is not a full clinical workflow test.
 - Live Agent 2 UI: observed in Chrome, 34.63 s with live Gemini and synthetic input;
   partial was expected because Agent 3 was not integrated. Real-data pipeline remains unverified.
-- Individual acknowledgements: Agent 2 acknowledged; Agents 1/3 update their own handoff files.
+- Individual acknowledgements: Agents 2/3 acknowledged; Agent 1 updates its own handoff file.
 
 The integrator updates this log as facts change. A pending item must not be marked
 complete merely because a teammate was given its assignment.

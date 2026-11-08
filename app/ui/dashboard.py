@@ -117,7 +117,7 @@ def main() -> None:
     st.set_page_config(page_title="TrialFair", layout="wide")
     st.title("TrialFair")
     st.write("Investigate sex-specific clinical trial safety signals and missing evidence.")
-    st.caption("Agent 2 workspace. Full trial ingestion and external research need Agents 1 and 3.")
+    st.caption("Safety and evidence workspace. Trial ingestion and registry lookup need Agent 1.")
     backend = "http://127.0.0.1:8000"
     action = st.radio("Input", ["Prepared screening JSON", "Completed trial", "Review saved run"])
     with st.form("investigation"):
