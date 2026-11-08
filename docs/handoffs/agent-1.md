@@ -111,3 +111,36 @@ flow verified. This does not establish accuracy across symptom types or verify r
 registry-to-Agent-2-to-Agent-3 execution. Run-status propagation remains blocked
 by unchanged integrator code; PK ratios remain incomplete. No contracts or other
 implementation files changed, and no commit, push or merge performed.
+
+
+## Participant-level loader and interpretation speed-up — 2026-11-08
+
+Added by Shafiyyah on feat/agent-1-interpreter (on top of 08d3ed9). No shared
+contracts, dependencies, Agent 2/3 files or orchestrator changed.
+
+- New `app/services/participant_data.py`: deterministic SDTM-style DM/AE (+ optional
+  narratives) CSV loader producing per-arm x sex x term x seriousness TrialBundle rows.
+  CLI: `--participant-dir DIR [--synthetic] [--with-gemini]`. See agent-1-usage.md.
+- Additional reported sex categories (e.g. Unknown) no longer block the Female/Male
+  comparison in the interpreter grouping or the availability audit; they remain
+  descriptive. Potential-signal findings now name the term and arm and set endpoint.
+- Interpretation rewritten for speed within the shared 150 s budget: case/whitespace-
+  insensitive de-duplication of identical texts, judgement-only structured output
+  with Python-attached text/locators, and a tool follow-up only for flagged texts.
+  Existing interpretation tests were updated to the new flow with the same scientific
+  checks (negation, pre-existing, ambiguity, invented codes, unsupported tools,
+  provider failures); new loader and de-duplication tests added.
+
+Checks: `pytest -q` 135 passed, 1 strict xfail (unchanged run-status defect),
+1 live test deselected; Ruff lint and format pass.
+
+Live check (user-authorised, hackathon credits), Agent 1 only, on an uncommitted
+labelled synthetic participant dataset (243 participants, 185 AE records, planted
+answer key; 238 interpretation entries = 39 distinct texts): all 21 Female/Male
+comparisons matched the independently computed answer key; 10/10 scored
+interpretation cases correct; 0 invented codes. Measured interpreter time:
+gemini-4-argon 94.7 s, gemini-3.8-flash 36.5 s, gemini-3.1-pro-preview 45.5 s
+(before this change argon and flash exhausted the 150 s deadline on the same
+participant data). argon still consumes most of the shared run budget; model choice
+should be agreed with the integrator. This is a synthetic, small scored sample, not
+evidence of accuracy on real clinical text or a full multi-agent run.

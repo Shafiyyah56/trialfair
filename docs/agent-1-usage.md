@@ -48,6 +48,45 @@ unknown fields are invalid. The interpreter emits its registered dataset key in
 the final stop event. Additional results echo request_id but are appended only by
 Agent 2's dispatcher. Unsupported tool names are rejected by the shared contract.
 
+## Participant-level data (SDTM-style DM/AE CSV)
+
+`app.services.participant_data.load_participant_dataset(dm_path, ae_path, *,
+is_synthetic, title=None, narratives_path=None) -> TrialBundle` derives aggregate
+rows deterministically from one-row-per-participant `dm.csv` (STUDYID, USUBJID,
+SEX, ARMCD, ARM, RFXSTDTC; ACTARMCD/ACTARM used when supplied) and
+one-row-per-record `ae.csv` (STUDYID, USUBJID, AEDECOD, AESER, AESTDTC; optional
+AETERM). An optional `narratives.csv` needs a TEXT column.
+
+```sh
+uv run python -m app.agents.interpreter --participant-dir path/to/dir --synthetic
+# Live interpretation with the configured model (paid):
+uv run python -m app.agents.interpreter --participant-dir path/to/dir --synthetic --with-gemini
+```
+
+Rules: safety population = participants with a first-dose date in a treated arm;
+treatment-emergent = onset on/after first dose (same day included); pre-existing,
+missing/partial onset and non-safety-population records are excluded and counted
+in limitations, never treated as zero. participants_affected counts unique
+participants; event_occurrences counts records. Serious/non-serious rows are
+separate. SEX is decoded only through the CDISC SEX codelist; other values are
+preserved and kept as separate categories, never merged into Female/Male. Zero
+cells assume complete AE capture for treated participants. Counts use AEDECOD;
+verbatim AETERM and narratives are interpretation inputs only and never alter
+counts. CSV only, 10 MB per file, duplicate USUBJID rejected, one STUDYID.
+
+## Interpretation flow
+
+Texts identical apart from letter case and whitespace (within the same kind:
+narrative vs reported AE term) are judged once; every entry still receives its own
+SymptomMapping with its exact original wording and locator. Punctuation and
+wording are never normalised. The model returns only judgements (term, assertion,
+temporality, severity, attribution, needs_review, explanation); Python attaches
+original text and locators. One structured call handles the batch (max 100
+distinct texts). Only texts the model flags for review get one bounded follow-up
+in which the model may select source_context or terminology_lookup; if that fails,
+first-pass judgements are kept and remain flagged. Unverified terminology codes,
+missing/duplicate/invented entry IDs and unsupported tools are rejected.
+
 ## Source handling and scientific limits
 
 The adapter's consumed field types were checked against the official
