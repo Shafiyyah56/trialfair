@@ -1,20 +1,17 @@
-"""Runtime composition: Agent 3 literature is wired; Agent 1 registry/terminology are pending.
-
-Missing adapters fail visibly rather than returning synthetic or fabricated data.
-The standalone screening endpoint can still run Agent 2 with the shared live model
-while unavailable registry or external sources yield a partial investigation.
-"""
+"""Compose Agents 1–3 with run-scoped sources, model, budget and resource ownership."""
 
 from dataclasses import dataclass
+
+import httpx
 
 from app.agents.evidence import run_evidence
 from app.config import Settings
 from app.context import RunBudget, ToolContext
 from app.model_client import GeminiModelClient
-from app.services.clinical_trials import ClinicalTrialsService
+from app.services.clinical_trials import ClinicalTrialsClient, ClinicalTrialsService
 from app.services.europe_pmc import EuropePMCClient, EuropePMCService
 from app.services.statistics import execute_analysis
-from app.services.terminology import TerminologyService
+from app.services.terminology import SuppliedTerminology, TerminologyService
 
 
 class RuntimeNotReady(ValueError):
@@ -59,20 +56,30 @@ def build_context(
         settings.require_live_credentials()
     except ValueError as exc:
         raise RuntimeNotReady("Configure GEMINI_API_KEY and GEMINI_MODEL in local .env.") from exc
-    missing = MissingService()
     budget = RunBudget.from_settings(settings)
-    services = services or RuntimeServices(
-        missing,
-        EuropePMCClient(budget, cache_dir=settings.data_dir / "cache" / "europe_pmc"),
-        missing,
+    model = GeminiModelClient(
+        api_key=settings.gemini_api_key.get_secret_value(),
+        model_id=settings.gemini_model,
     )
+    resources = []
+    if services is None:
+        http_client = httpx.AsyncClient()
+        resources.append(http_client.aclose)
+        services = RuntimeServices(
+            ClinicalTrialsClient(
+                http_client, budget, cache_dir=settings.data_dir / "cache" / "clinical_trials"
+            ),
+            EuropePMCClient(
+                budget,
+                cache_dir=settings.data_dir / "cache" / "europe_pmc",
+                http_client=http_client,
+            ),
+            SuppliedTerminology(),
+        )
     return ToolContext(
         run_id=run_id,
         settings=settings,
-        model=GeminiModelClient(
-            api_key=settings.gemini_api_key.get_secret_value(),
-            model_id=settings.gemini_model,
-        ),
+        model=model,
         registry=services.registry,
         literature=services.literature,
         terminology=services.terminology,
@@ -80,4 +87,5 @@ def build_context(
         emit=lambda event: None,
         analysis_handler=execute_analysis,
         evidence_handler=run_evidence,
+        resource_closers=resources,
     )

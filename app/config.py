@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     gemini_model: str = ""
     data_dir: Path = Field(default=Path(".trialfair"), alias="TRIALFAIR_DATA_DIR")
     mode: Literal["live", "replay"] = Field(default="live", alias="TRIALFAIR_MODE")
+    max_interpretation_texts: int = Field(
+        default=20, ge=1, le=100, alias="TRIALFAIR_MAX_INTERPRETATION_TEXTS"
+    )
     max_model_turns: int = Field(default=12, gt=0, alias="TRIALFAIR_MAX_MODEL_TURNS")
     max_external_requests: int = Field(default=16, gt=0, alias="TRIALFAIR_MAX_EXTERNAL_REQUESTS")
     max_evidence_requests: int = Field(default=2, gt=0, alias="TRIALFAIR_MAX_EVIDENCE_REQUESTS")

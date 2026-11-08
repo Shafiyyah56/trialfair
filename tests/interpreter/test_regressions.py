@@ -325,12 +325,6 @@ def test_real_agent2_dispatch_accepts_agent1_reanalysis(context_factory):
     asyncio.run(check())
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=AssertionError,
-    reason="RunResult status is owned by unchanged Agent 2/orchestrator; "
-    "ScreeningOutput has no status field. Requires integrator fix.",
-)
 def test_incomplete_interpretation_must_make_run_partial(context_factory):
     class MixedModel:
         model_id = "offline-regression-model"

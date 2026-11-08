@@ -24,8 +24,9 @@ files. If access is missing, state the blocker and continue with injected fakes.
 - Python 3.13; FastAPI, Streamlit, Pydantic v2 and the official google-genai SDK.
 - Shared contracts are version 1.0. Coordinate schema changes with the integrator.
 - Keep imports free of API calls, credential requirements and filesystem writes.
-- On the evidence branch, Agents 2/3 are implemented; Agent 1 is still pending.
-  Explicit unavailable adapters/stubs must not be described as live research.
+- Agents 1–3 are merged and connected on feat/service-integration. Read
+  docs/service-integration.md for wiring, cleanup and verification scope.
+  Offline integration is checked separately from live research; do not confuse them.
 - Do not run paid/network tests by default. Live tests must be opt-in.
 - Do not implement the fourth Trial Improvement Planner yet.
 

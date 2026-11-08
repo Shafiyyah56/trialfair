@@ -81,8 +81,8 @@ narrative vs reported AE term) are judged once; every entry still receives its o
 SymptomMapping with its exact original wording and locator. Punctuation and
 wording are never normalised. The model returns only judgements (term, assertion,
 temporality, severity, attribution, needs_review, explanation); Python attaches
-original text and locators. One structured call handles the batch (max 100
-distinct texts). Only texts the model flags for review get one bounded follow-up
+original text and locators. One structured call handles the batch (default 20
+distinct texts; TRIALFAIR_MAX_INTERPRETATION_TEXTS accepts 1–100). Only texts the model flags for review get one bounded follow-up
 in which the model may select source_context or terminology_lookup; if that fails,
 first-pass judgements are kept and remain flagged. Unverified terminology codes,
 missing/duplicate/invented entry IDs and unsupported tools are rejected.
@@ -143,8 +143,10 @@ text is invalid. Model extraction preserves original text and locators exactly;
 only codes returned by supplied terminology tools with registered sources are
 accepted. Negation/temporality interpretation still requires model and human
 review: deterministic fakes verify interface behaviour, not model accuracy.
-The batch is bounded at 100 entries; excess entries remain in source rows and are
-flagged for review. Failed/budget-limited interpretation returns uncertain,
+The batch uses the configured text limit; excess entries remain in source rows
+and are flagged for review. First-pass interpretation and refinement also have
+local time limits to leave time for downstream research/reporting; see
+service-integration.md. Failed/budget-limited interpretation returns uncertain,
 needs_review mappings without guessed terms. SDK API/transport errors also retain
 completed statistical work; error events do not expose provider messages. External
 task cancellation still propagates. Narrative and registry-AE tool IDs use separate

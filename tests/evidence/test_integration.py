@@ -105,12 +105,14 @@ def test_runtime_wires_one_shared_budget_into_real_literature_client(monkeypatch
     assert context.literature.budget is context.budget
     assert not tmp_path.joinpath("cache").exists()  # No construction-time filesystem writes.
     assert context.evidence_handler is run_evidence
+    asyncio.run(context.aclose())
 
 
-def test_health_reports_evidence_implementation_without_claiming_full_pipeline():
+def test_health_reports_first_three_agents_and_deferred_planner():
     from fastapi.testclient import TestClient
 
     health = TestClient(create_app()).get("/health").json()
     assert health["components"]["evidence"] is True
-    assert health["components"]["interpreter"] is False
+    assert health["components"]["interpreter"] is True
+    assert health["components"]["planner"] is False
     assert health["agents_implemented"] is False

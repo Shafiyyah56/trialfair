@@ -210,12 +210,13 @@ async def _interpret(bundle, context):
             by_text[key] = tid
             distinct[tid] = {"kind": kind, "text": text, "members": []}
         distinct[tid]["members"].append((kind, text, locator))
-    selected = dict(list(distinct.items())[:MAX_DISTINCT_TEXTS])
+    text_limit = min(MAX_DISTINCT_TEXTS, context.settings.max_interpretation_texts)
+    selected = dict(list(distinct.items())[:text_limit])
     limitations = (
         []
         if len(selected) == len(distinct)
         else [
-            f"Interpretation limited to the first {MAX_DISTINCT_TEXTS} distinct texts; "
+            f"Interpretation limited to the first {text_limit} distinct texts; "
             "remaining source entries need review."
         ]
     )
@@ -239,9 +240,10 @@ async def _interpret(bundle, context):
                 },
             ),
         ]
-        response = await generate_with_budget(
-            context, messages, tools=[], output_schema=JudgementBatch.model_json_schema()
-        )
+        async with asyncio.timeout(min(35, context.budget.remaining_seconds() * 0.3)):
+            response = await generate_with_budget(
+                context, messages, tools=[], output_schema=JudgementBatch.model_json_schema()
+            )
         judgements = _check_batch(
             JudgementBatch.model_validate(response.structured_output),
             list(selected),
@@ -273,9 +275,10 @@ async def _interpret(bundle, context):
     flagged = [tid for tid, j in judgements.items() if j.needs_review][:MAX_REFINEMENT_TEXTS]
     if flagged:
         try:
-            judgements = await _refine(
-                bundle, context, selected, flagged, judgements, allowed_codes
-            )
+            async with asyncio.timeout(min(10, context.budget.remaining_seconds() * 0.1)):
+                judgements = await _refine(
+                    bundle, context, selected, flagged, judgements, allowed_codes
+                )
         except Exception:
             _event(context, "error", "Interpretation follow-up failed; first-pass result kept")
             limitations.append(

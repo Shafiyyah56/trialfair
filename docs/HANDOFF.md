@@ -3,6 +3,15 @@
 Read this document, AGENTS.md, your assignment and app/contracts.py before coding.
 This is the entry point for Agents 1 and 3 integrating with the completed Agent 2.
 
+## Current integration update — 2026-11-08
+
+Agents 1–3 are merged into main through bece131. The follow-up branch
+feat/service-integration wires all real adapters, closes run-owned resources,
+and propagates incomplete interpretation/evidence into partial run status.
+Read [service integration](service-integration.md) before relying on older status
+notes below. Incorporate this branch after review; once it is merged, current main
+is sufficient. Combined live clinical workflow verification remains pending.
+
 ## Get the right code first
 
 As checked directly in GitHub on 2026-11-08, Agent 2 implementation and live-smoke
@@ -41,11 +50,12 @@ merely to make an installation work.
   wired into the runtime. See [Agent 3 usage](agent-3-usage.md). A live research
   check returned two audited items with partial status; see
   [the verification scope](verification/agent-3-live.md).
-- Agent 1: still required for real trial ingestion, statistics and registry/
-  terminology adapters. Do not infer completion from the working UI.
+- Agent 1: merged, including real registry ingestion, conservative statistics and
+  supplied terminology lookup. Runtime wiring is on feat/service-integration.
 - Agent 4: deferred. PlannerInput is available; no planner output is implemented.
-- Automated checks on the evidence branch: 110 tests pass; Ruff lint/format and
-  lock consistency pass. Agent 2's earlier milestone had 60 tests.
+- Automated integration checks: 195 tests pass, 1 live test deselected, no xfails;
+  Ruff lint/format and locked offline install pass. Earlier evidence and safety
+  milestones had 110 and 60 tests respectively.
 - Live Gemini smoke: user-run on 2026-11-08, gemini-4-argon, google-genai 2.34.0,
   models.generate_content; plain reply, function calling and JSON output passed.
 - Live Agent 2 browser check: user launched local servers; Chrome showed a 34.63 s
@@ -54,7 +64,7 @@ merely to make an installation work.
   was unavailable. The report preserved that limitation and synthetic labelling.
 - Not verified: real trial ingestion -> real statistical results -> actual
   literature retrieval -> integrated clinical report. This remains the next
-  shared acceptance check after Agent 1 is implemented and wired to Agents 2/3.
+  shared acceptance check now that Agents 1–3 have been merged and wired.
 
 The coding sandbox cannot reach external hosts or bind ports, but the user's
 Terminal and Chrome successfully ran the local application. This is a sandbox
@@ -156,8 +166,8 @@ reset budgets when one agent calls another. SDK retries/automatic tools are disa
 ### Compose real services after merging
 
 Agent 2 owns app/runtime.py and updates it with the concrete adapters supplied by
-Agents 1 and 3. The Europe PMC client is wired on the evidence branch. Remaining MissingService
-instances for registry/terminology are deliberate and must be replaced by Agent 1.
+Agents 1 and 3. On feat/service-integration the default runtime creates
+ClinicalTrialsClient, EuropePMCClient and SuppliedTerminology with the same budget.
 Implementing an adapter without wiring it will still produce unavailable results.
 
 For adapters that need the shared per-run budget, create the context first, then
@@ -165,8 +175,9 @@ attach adapters constructed with that same context.budget. For example, an
 integrator's context_factory(run_id, mode) can call build_context(run_id, mode),
 assign context.registry/literature/terminology to real adapters and return context.
 Pass this factory to create_app(context_factory=...). Do not construct a fresh
-budget inside each adapter. The actual adapter class names/constructors are agreed
-with their owners; none are claimed to exist in the current Protocol-only modules.
+budget inside each adapter. API routes call context.aclose(); direct callers must
+do so in finally. Injected source clients remain caller-owned unless registered
+in context.resource_closers.
 For the implemented EuropePMCClient constructor and its budget/cache handling,
 see agent-3-usage.md. Restart the backend after merging so imports use the new handler implementations.
 Update health component flags only once the real services are wired and checked.

@@ -1,5 +1,43 @@
 # Integration coordination
 
+## Current integration status — feat/service-integration
+
+Agent 2/integrator connects merged Agents 1–3 from main bece131. The existing
+RuntimeServices signature and scientific contracts stay compatible. build_context
+now constructs ClinicalTrialsClient and EuropePMCClient with one shared budget and
+HTTP client, plus empty SuppliedTerminology (no guessed licensed codes).
+ToolContext adds resource_closers and idempotent async aclose; the API and smoke
+scripts call it in finally. Injected source clients remain caller-owned.
+
+Agreement: implemented by the assigned integration owner; no schema/dependency
+migration. Incomplete/limited interpretation, review mappings and incomplete
+evidence prevent run-level completed status. Scientific subgroup evidence gaps
+alone remain valid findings. The strict expected-failure completion regression
+is now a normal passing test. Agent 1's population/window PK constraints remain.
+See [integration verification](service-integration.md) and Agent 2's handoff.
+
+The sections below retain the component-by-component implementation history.
+
+Follow-up after the first combined live run: it timed out after 149.85 seconds,
+with roughly 93 seconds spent in interpretation. The integration owner bounded
+interpretation calls and added a configurable default 20-text batch (1–100).
+All source rows still enter statistics. Research preserves source state on local
+timeout and reserves time for outer reporting; overall timeout returns explicitly
+unassessed partial investigation/planner input. Shared counters/deadline and v1.0
+contracts are unchanged. This narrowly adjusts Agent 1/3 execution timing as part
+of integration; their scientific extraction/grounding rules remain intact.
+198 offline tests pass; paid/live retest remains pending.
+
+Second live follow-up (149.18 s): partial investigation/evidence reports survived,
+but zero cited items. Research accumulated 20 publications without inspecting one,
+hit the pool cap and aborted on an oversized tool batch. The integrator now caps
+actual searches at three, closes search once two queries yield candidates and
+requires publication inspection. Pools/batches retain accepted work instead of
+aborting synthesis; every provider call receives a tool result. Safety skips more
+tool selection when evidence returns with <=45 s. Sanitised error categories/status
+now survive safety provider failures. No contracts/dependencies changed.
+202 offline tests pass; live cited-output acceptance remains unmet.
+
 Start with [the coding agent handoff](HANDOFF.md). Read [team setup and acknowledgement instructions](TEAM_SETUP.md). Each coding
 agent must acknowledge before implementation and update only its own handoff file.
 
