@@ -52,7 +52,9 @@ merely to make an installation work.
   [the verification scope](verification/agent-3-live.md).
 - Agent 1: merged, including real registry ingestion, conservative statistics and
   supplied terminology lookup. Runtime wiring is on feat/service-integration.
-- Agent 4: deferred. PlannerInput is available; no planner output is implemented.
+- Agent 4: independent snapshot planner implemented on feat/agent-4-planner
+  following explicit user approval. Default pipeline integration remains pending.
+  See [planner usage](agent-4-usage.md) and [Agent 4 handoff](handoffs/agent-4.md).
 - Automated integration checks: 195 tests pass, 1 live test deselected, no xfails;
   Ruff lint/format and locked offline install pass. Earlier evidence and safety
   milestones had 110 and 60 tests respectively.
@@ -195,7 +197,8 @@ Update health component flags only once the real services are wired and checked.
    Git; share authorised credentials privately. Shared changes go through Agent 2.
 6. After integration, test a real completed NCT record with posted results and real
    literature. Missing subgroup evidence is a valid output. Measure actual latency,
-   verify sources and preserve uncertainty before implementing Agent 4.
+   verify sources and preserve uncertainty before claiming combined clinical readiness.
+   Agent 4 can be checked independently on explicitly labelled fixtures.
 
 No database server, cloud hosting, vector store or additional agent framework is
 required. Evidence transparency and a working research loop take priority.

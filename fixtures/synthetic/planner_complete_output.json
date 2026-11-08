@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "trial_id": "synthetic-trial-1",
+  "status": "completed",
+  "recommendations": [
+    {
+      "schema_version": "1.0",
+      "recommendation_id": "plan-784cffa871f22268",
+      "action": "Obtain sex-stratified affected-participant counts and at-risk denominators for the same arm, event and reporting window.",
+      "rationale": "Follow up the linked screened finding; its scientific interpretation requires review.",
+      "priority": "high",
+      "priority_rationale": "Resolve a data prerequisite before interpreting a subgroup comparison.",
+      "category": "additional_data_collection",
+      "finding_ids": [
+        "finding-gap-1"
+      ],
+      "analysis_ids": [
+        "analysis-availability-1"
+      ],
+      "evidence_ids": [
+        "synthetic-planner-evidence"
+      ],
+      "source_ids": [
+        "source-synthetic-1",
+        "synthetic-planner-publication"
+      ],
+      "hypothesis_ids": [],
+      "evidence_basis": "evidence_gap",
+      "required_data": [
+        "Affected participants and positive at-risk denominators by reported sex",
+        "Source-backed arm, intervention, population, seriousness and reporting window"
+      ],
+      "availability": "missing",
+      "feasibility": "Comparison prerequisites are unmet; obtain or verify source data and registration first.",
+      "prerequisites": [
+        "Use participant counts, never event occurrences or baseline denominators",
+        "Resolve interpretation ambiguity before comparison"
+      ],
+      "resolves_question": "Can a comparable exploratory sex-specific adverse-event rate comparison be performed?",
+      "limitations": [
+        "Absence from input does not establish absence from all publications.",
+        "Synthetic abstract only; no observed clinical data.",
+        "No proposed analysis or data collection has been executed.",
+        "Association and missing evidence do not establish causality or safety.",
+        "Review dose, formulation, population, comparator and reporting-window applicability.",
+        "Evidence is abstract-only."
+      ]
+    }
+  ],
+  "unresolved_questions": [
+    "Do associated publications report subgroup results?"
+  ],
+  "input_limitations": [],
+  "limitations": [
+    "Human review must verify scientific support and applicability; no clinical decision is authorised."
+  ],
+  "human_review_required": true,
+  "is_synthetic": true
+}

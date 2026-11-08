@@ -2,7 +2,8 @@
 
 Integration branch: feat/service-integration, based on merged main bece131.
 Agents 1–3 execute in process; only Streamlit calls the FastAPI backend over HTTP.
-Agent 4 remains deferred; PlannerInput is prepared for it.
+Agent 4 now supports independent snapshot planning on feat/agent-4-planner.
+Default pipeline scheduling is still pending; see [planner usage](agent-4-usage.md).
 
 ## Default runtime
 

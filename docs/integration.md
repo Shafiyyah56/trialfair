@@ -221,3 +221,91 @@ Owner: Agent 1 (Shafiyyah). Pushed directly to main at the user's request; pleas
   memory (`participant_table_for(bundle)`) and are never added to TrialBundle,
   RunResult or SQLite. The new tools return `unavailable` when that data is not loaded
   in the current server process, for example when a stored run is reopened later.
+## Agent 4 additive contract proposal — 2026-11-08
+
+Owner: Agent 4; agreement status: explicitly approved by the user on 2026-11-08.
+Implemented on feat/agent-4-planner. Pipeline integration remains with Agent 2.
+The user now requests Agent 4; older deferral notes describe previous scope.
+Starting baseline: reviewed main dfcfcf5, including service integration.
+
+Proposed shared changes (no dependency/schema-version migration):
+
+- Add PlannerRecommendation and PlannerReport to app/contracts.py, retaining
+  PlannerInput unchanged. Report fields: trial_id, status (existing completion
+  enum), recommendations (at most eight), unresolved_questions,
+  input_limitations, limitations, human_review_required=true, is_synthetic.
+- Recommendation fields: recommendation_id, action, rationale, priority,
+  priority_rationale, category (additional_analysis/additional_data_collection/
+  future_trial_design/interpretation_review), finding_ids, analysis_ids,
+  evidence_ids, source_ids, hypothesis_ids, evidence_basis
+  (observed_finding/evidence_gap/hypothesis), required_data, availability
+  (available/missing/not_assessed), feasibility, prerequisites,
+  resolves_question, limitations. IDs and provenance are checked against input;
+  relevant contradictions must remain attached. Proposed analysis feasibility
+  must reflect actual registered data and conservative Agent 1 preconditions.
+- Add planner to AgentEvent.agent. Use existing event types and context.emit;
+  no transport or stage-status extension.
+- Add validate_planner_report(report, input) to shared validation. Reject unknown
+  and unrelated links, incorrect trial/synthetic labels, suppressed contrary
+  evidence and completed status with explicitly incomplete upstream inputs.
+- First execution is independent run_planner(PlannerInput, ToolContext), with
+  at most two inspection turns and one structured selection turn. Reuse shared
+  budget/deadline and reserve the final turn. No automatic pipeline append.
+  Insufficient budget returns unavailable. No global limit increase.
+- Defer RunResult/API/storage/UI/pipeline scheduling changes to the integrator;
+  a later opt-in pipeline integration must reserve time/turns before Agents 1–3,
+  rather than append a planner after an exhausted deadline. Independent planning
+  is explicitly a separately budgeted execution when given a new context.
+
+Example proposed payload (synthetic illustration; IDs must resolve in actual input):
+
+```json
+{
+  "schema_version": "1.0",
+  "trial_id": "synthetic-trial",
+  "status": "partial",
+  "recommendations": [{
+    "schema_version": "1.0",
+    "recommendation_id": "plan-gap-1",
+    "action": "Obtain affected-participant counts and corresponding denominators by reported sex for the same arm and reporting window.",
+    "rationale": "The reported data do not support a sex-specific event-rate comparison.",
+    "priority": "high",
+    "priority_rationale": "Resolve the data prerequisite before interpreting a subgroup difference.",
+    "category": "additional_data_collection",
+    "finding_ids": ["gap-1"], "analysis_ids": [], "evidence_ids": [],
+    "source_ids": ["synthetic-source"], "hypothesis_ids": [],
+    "evidence_basis": "evidence_gap",
+    "required_data": ["Affected participants and at-risk denominators by sex, arm and window"],
+    "availability": "missing",
+    "feasibility": "Requires source retrieval or sponsor data; no comparison was executed.",
+    "prerequisites": ["Verify source-backed arm and reporting-window comparability"],
+    "resolves_question": "Can comparable sex-specific adverse-event rates be calculated?",
+    "limitations": ["Missing evidence does not establish safety."]
+  }],
+  "unresolved_questions": ["Upstream assessment requires completion."],
+  "input_limitations": ["Investigation is partial; no accepted literature evidence."],
+  "limitations": ["Human review must assess applicability and scientific support."],
+  "human_review_required": true,
+  "is_synthetic": true
+}
+```
+
+Implementation approach after agreement: application-authored candidate actions
+and numerical/clinical guardrails, with model selection/prioritisation over bounded
+candidates, allowlisted read-only inspection tools, full continuation history and
+a result for every tool call. This avoids accepting model-invented calculations
+or clinical actions. Complete/partial synthetic examples and offline behavioural
+tests accompany implementation. No full clinical/live readiness claim follows.
+
+
+Implementation details after approval: the model returns a compact Selection
+(candidate ID, priority, constrained reason code), not arbitrary report prose.
+Application code compiles PlannerReport from inspected candidates. Up to 24
+candidates, eight recommendations, two inspection turns and one extraction turn,
+with a 30-second local cap inside the unchanged original deadline. Existing
+Agent 1 audit_subgroup_availability supplies deterministic prerequisite checks;
+no statistics, source requests or recursive agents are executed. Explicit upstream
+limitations keep the report partial; failed selection returns unavailable.
+Only shared Python edits are additive contracts/event identity and validation.
+RunResult, runtime, context, model adapter, config, API, storage, UI and dependencies
+remain unchanged. Live/provider and combined clinical acceptance are unverified.

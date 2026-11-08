@@ -9,7 +9,8 @@ trial ingestion/statistics, safety investigation, ClinicalTrials.gov and Europe 
 The API, storage and dashboard use the shared model and budget. The complete path
 has an offline integration check. The first combined live run timed out; revised
 time allocation awaits a live retest. See [the audit](docs/verification/pipeline-live.md).
-Agent 4 is deferred. Agent 2's live Gemini/synthetic demonstration passed. Agent 3's live
+Agent 4 supports independent snapshot planning on `feat/agent-4-planner`; see
+[planner usage](docs/agent-4-usage.md). Default pipeline scheduling remains pending. Agent 2's live Gemini/synthetic demonstration passed. Agent 3's live
 research returned two audited items with partial status; see the
 [live-check scope and limitations](docs/verification/agent-3-live.md).
 See [Agent 3 usage](docs/agent-3-usage.md) and [Agent 2 usage](docs/agent-2-usage.md).
@@ -73,7 +74,7 @@ Agent 2 execution. Missing live configuration returns 503, invalid inputs 422,
 and unknown stored run IDs 404. `POST /runs` accepts a completed trial identifier
 and invokes all three agents with real source adapters. Health component flags
 describe installed implementations, not validated credentials or source uptime;
-overall health stays partial because Agent 4 is deferred.
+overall health stays partial because Agent 4 is not scheduled in the default pipeline.
 
 The dashboard uses `POST /runs/async` or `POST /investigations/async`, then polls
 `GET /runs/{run_id}/progress` for sanitized agent events and completed stage outputs.
@@ -131,7 +132,7 @@ TrialInput -> Agent 1 -> ScreeningOutput -> Agent 2 -> InvestigationReport
                                              v        |
                                          Agent 3: EvidenceReport
                                              |
-                       validated outputs -> PlannerInput (Agent 4 deferred)
+                       validated outputs -> PlannerInput -> independent Agent 4 (optional caller)
 ```
 
 Agent 2 can also request allowlisted statistical analyses through Agent 1's tools.
