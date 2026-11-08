@@ -2,8 +2,10 @@
 ## Multi-agent pipeline investigating sex-specific safety gaps in clinical trials.
 
 **Note:** A [PDF writeup](/trialfair-writeup.pdf) of our project as per the track reveal slides is available
-in the root directory. This is the main component of our submission, but pitch 
-deck slides are also available in the root directory.
+in the root directory. This is the main component of our submission and functions partly as a 
+traditional 'README', but [pitch deck slides](/TrialFair-Slides.pdf) are also available in the root directory.
+
+***
 
 **Synthetic upload demo:** open the dashboard's **Synthetic CSV upload** form to
 upload the supplied participant datasets and run all four agents with matched
@@ -12,18 +14,6 @@ curated sources. See [dataset locations and instructions](docs/SYNTHETIC_UPLOAD.
 TrialFair helps pharmaceutical safety researchers investigate potential
 sex-specific safety signals and missing subgroup evidence in completed clinical
 trials, particularly before the next trial phase.
-
-**Current status on feat/demo-integration:** all four agents connect through the
-shared runtime, progress API, storage and dashboard. PlannerReport is validated
-against the final PlannerInput. The branch passes 265 offline tests. Actual live
-four-agent provider/browser verification remains pending.
-
-For the presentation, use the explicitly labelled **Curated demo**: real captured
-ACTT-1 trial data and three developer-selected real publication excerpts, with
-live model stages and visible fallbacks if a provider fails. Normal autonomous
-research remains a separate input option. Read [the demo runbook](docs/DEMO.md)
-for exact commands, labels, limits and the presentation story. Earlier autonomous
-live runs returned partial results; no complete clinical validation is claimed.
 
 ## Start here for teammates and coding agents
 
