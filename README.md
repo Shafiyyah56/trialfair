@@ -1,5 +1,9 @@
 # TrialFair
 
+**Synthetic upload demo:** open the dashboard's **Synthetic CSV upload** form to
+upload the supplied participant datasets and run all four agents with matched
+curated sources. See [dataset locations and instructions](docs/SYNTHETIC_UPLOAD.md).
+
 TrialFair helps pharmaceutical safety researchers investigate potential
 sex-specific safety signals and missing subgroup evidence in completed clinical
 trials, particularly before the next trial phase.

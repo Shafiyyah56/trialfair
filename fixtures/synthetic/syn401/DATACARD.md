@@ -48,8 +48,9 @@ uv run python -m app.agents.interpreter --participant-dir fixtures/synthetic/syn
 uv run python fixtures/synthetic/syn401/generate.py --scenario null --seed 7 --out /tmp/syn401_null
 ```
 
-The loader picks up `pp.csv` and `narratives.csv` automatically. The dashboard has no
-participant-level upload path yet, so use the command above.
+The CLI loader picks up `pp.csv` and `narratives.csv` automatically. The dashboard
+now supports **Synthetic CSV upload** for these files with the matching SYN-401
+curated class-context profile. See docs/SYNTHETIC_UPLOAD.md for the web flow.
 
 ## Class calibration (six approved hypnotics)
 

@@ -255,3 +255,29 @@ API/storage/progress/UI remain wired. Both owners' integration history is retain
 Agent 4's own acknowledgement/handoff is preserved from main. Existing partial
 live demo report still validates. 298 tests pass, Ruff lint/format and whitespace
 checks pass. No synthetic fixture is relabelled as clinical evidence.
+
+## Synthetic upload integration
+
+Integrator acknowledgement: feat/synthetic-upload-demo from main 2388d32, after
+inspecting the new CSV data cards, current Agent 1 participant loader, shared
+contracts, API/progress, model and demo interfaces. Own upload/API/UI composition;
+reuse Agent 1's loader and statistics and Agents 2–4. No dataset truth or generating
+parameters enter agent inputs. Credentials remain local; no emails are sent.
+
+Added a synthetic-only multi-file CSV form, safe filename/base64 envelope, schema/
+study-profile validation before model creation, no-model preview, CSV-only sample
+ZIP downloads, and async four-agent execution using an opaque registered bundle.
+Raw temporary CSVs are removed after loading; participant tables remain in process
+memory for existing PK/exposure/QTc tools. Results remain labelled synthetic.
+
+Three explicit class profiles contain two real paper excerpts each, checked against
+actual retrieved Europe PMC abstracts with original full-record hash/date and
+licence metadata preserved. They are class background, not observations of the
+fictional compound; normal source validators and visible demo fallback labels
+remain. No dependencies or scientific-payload schema were changed.
+
+314 offline tests pass; Ruff checks pass. Browser form and missing-file handling
+were inspected. Full API flows for all three datasets use injected models in tests.
+The browser file-selection tool denied repository paths under its configured
+workspace policy; it was not bypassed. A full paid/live browser upload requires
+manual file selection. Instructions and source links are in SYNTHETIC_UPLOAD.md.

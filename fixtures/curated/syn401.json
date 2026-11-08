@@ -1,0 +1,67 @@
+{
+  "profile": "syn401",
+  "trial_prefix": "SYN-401-",
+  "selection": "Developer-selected real drug-class sources for a synthetic upload demonstration. They do not verify the fictional trial or its generating mechanism.",
+  "unresolved_questions": [
+    "Which observed differences remain after accounting for exposure, body size and study design?",
+    "Are the selected real-drug findings applicable enough to motivate a follow-up investigation?"
+  ],
+  "items": [
+    {
+      "source": {
+        "schema_version": "1.0",
+        "source_id": "epmc-med-34580385-b4b7e3e9a2df",
+        "source_type": "publication",
+        "title": "Effect of CYP3A4 metabolism on sex differences in the pharmacokinetics and pharmacodynamics of zolpidem.",
+        "url": "https://europepmc.org/article/MED/34580385",
+        "external_id": "MED:34580385",
+        "retrieved_at": "2026-11-08T09:44:44.279850Z",
+        "content_hash": "b4b7e3e9a2dfa9184c59ab05973e4f2461ea89b0dfb2c3f15b90541bb8d4fdd5",
+        "licence_name": "cc by",
+        "licence_url": null,
+        "licence_status": "verified",
+        "access_level": "abstract",
+        "is_synthetic": false
+      },
+      "quote": "Zolpidem exposure was about 30% higher in females than in males.",
+      "claim": "A small zolpidem study reported higher female exposure.",
+      "relation": "background",
+      "study_design": "Healthy-volunteer single-dose PK study",
+      "relevance": "This is class-context evidence about zolpidem, not direct evidence about fictional SYN-401.",
+      "limitations": [
+        "Real published class-context evidence; not a study of the simulated compound.",
+        "Prepared annotation of a captured abstract excerpt; human review required."
+      ],
+      "location": "abstract[1109:1173]",
+      "excerpt_hash": "d5488f4240e5e09e477bdc6d49e0f07012ec30ffc15245841dbce334ae0c2f6d"
+    },
+    {
+      "source": {
+        "schema_version": "1.0",
+        "source_id": "epmc-med-42088939-17a17d0cdd7b",
+        "source_type": "publication",
+        "title": "Effect of lemborexant on insomnia severity, morning alertness, and cognition in participants with insomnia disorder and mild obstructive sleep apnea.",
+        "url": "https://europepmc.org/article/MED/42088939",
+        "external_id": "MED:42088939",
+        "retrieved_at": "2026-11-08T09:44:42.461872Z",
+        "content_hash": "17a17d0cdd7ba79d7364a4ba217a9ea504779ca43da2063b5ffca25139f1aaaa",
+        "licence_name": "cc by-nc",
+        "licence_url": null,
+        "licence_status": "verified",
+        "access_level": "abstract",
+        "is_synthetic": false
+      },
+      "quote": "LEM did not significantly impact next-morning cognitive functioning and alertness.",
+      "claim": "A post hoc lemborexant analysis reported no significant next-morning cognitive or alertness impact.",
+      "relation": "background",
+      "study_design": "Post hoc analysis of a randomized insomnia study",
+      "relevance": "A different hypnotic, formulation, population and endpoint; this excerpt is not a sex-stratified safety comparison.",
+      "limitations": [
+        "Real published class-context evidence; not a study of the simulated compound.",
+        "Prepared annotation of a captured abstract excerpt; human review required."
+      ],
+      "location": "abstract[1048:1130]",
+      "excerpt_hash": "ad1a82d2de0ff8348202825b48e24ccd13d3899baa915df72c0271b948a20902"
+    }
+  ]
+}

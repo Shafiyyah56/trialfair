@@ -29,7 +29,7 @@ DEMO_LABEL = (
 )
 
 
-def build_demo_context(run_id, mode):
+def build_demo_context(run_id, mode, *, registry_capture=True):
     """Explicit demo runtime: captured real inputs, curated review, live model stages."""
     from app.config import Settings
     from app.runtime import build_context
@@ -43,7 +43,7 @@ def build_demo_context(run_id, mode):
         }
     )
     context = build_context(run_id, mode, settings=settings)
-    return configure_demo_context(context)
+    return configure_demo_context(context) if registry_capture else context
 
 
 def configure_demo_context(context):
@@ -92,14 +92,34 @@ def demo_event(context, agent, kind, summary, ids=()):
 async def run_curated_evidence(request, context) -> EvidenceReport:
     """Inspect packaged, hash-checked excerpts and validate their prepared annotations."""
     request = EvidenceRequest.model_validate_json(request.model_dump_json())
-    if request.trial_id != DEMO_TRIAL:
-        raise ValueError("The curated remdesivir profile only supports NCT04280705")
-    payload = json.loads((ROOT / "fixtures/curated/remdesivir.json").read_text())
-    if payload["trial_id"] != request.trial_id:
+    profile = context.demo_profile or "remdesivir-curated"
+    filename = {
+        "remdesivir-curated": "remdesivir.json",
+        "syn401": "syn401.json",
+        "syn722": "syn722.json",
+        "syn318": "syn318.json",
+    }.get(profile)
+    if filename is None:
+        raise ValueError("Unknown curated source profile")
+    payload = json.loads((ROOT / "fixtures/curated" / filename).read_text())
+    matches = (
+        request.trial_id == payload["trial_id"]
+        if "trial_id" in payload
+        else request.trial_id.startswith(payload["trial_prefix"])
+    )
+    if not matches:
+        raise ValueError("Curated profile only supports its matching trial or study prefix")
+    if profile != "remdesivir-curated" and not request.trial_id.startswith("SYN-"):
         raise ValueError("Curated trial identity mismatch")
     state = EvidenceState()
     state.limitations.append(DEMO_LABEL)
-    demo_event(context, "evidence", "decision", "Reviewing three preselected real publications.")
+    state.limitations.append(payload["selection"])
+    demo_event(
+        context,
+        "evidence",
+        "decision",
+        f"Reviewing {len(payload['items'])} preselected real class-context publications.",
+    )
     items = []
     for index, entry in enumerate(payload["items"]):
         source = SourceRecord.model_validate(entry["source"])
@@ -145,10 +165,13 @@ async def run_curated_evidence(request, context) -> EvidenceReport:
         EvidenceDraft(
             evidence_items=items,
             status="partial",
-            unresolved_questions=[
-                "Are sex-stratified cardiac event counts and denominators available?",
-                "Do exposure and clinical risk differ by sex after accounting for confounders?",
-            ],
+            unresolved_questions=payload.get(
+                "unresolved_questions",
+                [
+                    "Are sex-stratified cardiac event counts and denominators available?",
+                    "Do exposure and clinical risk differ by sex after accounting for confounders?",
+                ],
+            ),
             limitations=[DEMO_LABEL],
         ),
         request,
@@ -176,7 +199,7 @@ async def ensure_demo_evidence(screening, context):
             trial_id=screening.trial_bundle.trial_id,
             finding_ids=[finding.finding_id for finding in screening.findings],
             question="Which preselected sources inform the screened safety evidence gaps?",
-            drug_names=["remdesivir"],
+            drug_names=screening.trial_bundle.interventions,
         ),
         context,
     )

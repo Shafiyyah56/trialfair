@@ -1,0 +1,67 @@
+{
+  "profile": "syn318",
+  "trial_prefix": "SYN-318-",
+  "selection": "Developer-selected real drug-class sources for a synthetic upload demonstration. They do not verify the fictional trial or its generating mechanism.",
+  "unresolved_questions": [
+    "Which observed differences remain after accounting for exposure, body size and study design?",
+    "Are the selected real-drug findings applicable enough to motivate a follow-up investigation?"
+  ],
+  "items": [
+    {
+      "source": {
+        "schema_version": "1.0",
+        "source_id": "epmc-med-29965883-272de466134c",
+        "source_type": "publication",
+        "title": "Influence of Sex, Age, and Weight on Levetiracetam Pharmacokinetics.",
+        "url": "https://europepmc.org/article/MED/29965883",
+        "external_id": "MED:29965883",
+        "retrieved_at": "2026-11-08T12:53:55.186000Z",
+        "content_hash": "272de466134cd96da2c4eb8893f920020632c6154faa61980ea1d82823f86c19",
+        "licence_name": null,
+        "licence_url": null,
+        "licence_status": "unknown",
+        "access_level": "abstract",
+        "is_synthetic": false
+      },
+      "quote": "Sex is a conditioning factor of LEV CL/F, although its influence is principally due to the weight.",
+      "claim": "A retrospective levetiracetam study attributed much of the sex-related clearance difference to weight.",
+      "relation": "background",
+      "study_design": "Retrospective clinical PK study",
+      "relevance": "Clinical covariates are context, not proof about the fictional compound or its simulated mechanism.",
+      "limitations": [
+        "Real published class-context evidence; not a study of the simulated compound.",
+        "Prepared annotation of a captured abstract excerpt; human review required."
+      ],
+      "location": "abstract[2104:2202]",
+      "excerpt_hash": "9873a6d7cfea9aea37375da479c4d1796c6ed8a41e42f303be383309fa1dcb80"
+    },
+    {
+      "source": {
+        "schema_version": "1.0",
+        "source_id": "epmc-med-17518509-a10f625b3c12",
+        "source_type": "publication",
+        "title": "Population pharmacokinetics of levetiracetam in Japanese and Western adults.",
+        "url": "https://europepmc.org/article/MED/17518509",
+        "external_id": "MED:17518509",
+        "retrieved_at": "2026-11-08T12:53:55.196000Z",
+        "content_hash": "a10f625b3c12db168a769b1b00accafd1bd00be1f7b91c9ddbbb0b68a5138018",
+        "licence_name": null,
+        "licence_url": null,
+        "licence_status": "unknown",
+        "access_level": "abstract",
+        "is_synthetic": false
+      },
+      "quote": "Bodyweight, sex, creatinine clearance and concomitant intake of enzyme inducers or valproic acid had a statistically significant effect on apparent plasma clearance of levetiracetam.",
+      "claim": "A population PK study identified several covariates associated with levetiracetam clearance.",
+      "relation": "background",
+      "study_design": "Population PK analysis of pooled clinical studies",
+      "relevance": "This study also identified sex as a covariate. Do not infer no sex effect, equivalence or causality from a different drug.",
+      "limitations": [
+        "Real published class-context evidence; not a study of the simulated compound.",
+        "Prepared annotation of a captured abstract excerpt; human review required."
+      ],
+      "location": "abstract[876:1058]",
+      "excerpt_hash": "9aca70170a316011ca345a6b40c8daa424567e40a9558878efc4a692bdd4592b"
+    }
+  ]
+}
