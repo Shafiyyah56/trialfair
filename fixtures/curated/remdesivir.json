@@ -5,7 +5,7 @@
   "items": [
     {
       "quote": "Pooled analysis revealed no significant association between remdesivir use and CAEs (RR=0.84, 95% CI: 0.68 to 1.04, p=0.118).",
-      "claim": "A meta-analysis of seven randomized trials did not detect an overall association between remdesivir and cardiac adverse events.",
+      "claim": "A meta-analysis did not detect an overall association between remdesivir and cardiac adverse events.",
       "relation": "inconclusive",
       "study_design": "Systematic review and meta-analysis of randomized controlled trials",
       "relevance": "Overall cardiac safety context; this excerpt does not resolve human sex-specific risk.",
