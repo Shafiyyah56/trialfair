@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "screening": {
+    "schema_version": "1.0",
+    "trial_bundle": {
+      "schema_version": "1.0",
+      "trial_id": "synthetic-trial-1",
+      "title": "Synthetic missing subgroup evidence example",
+      "condition_names": [],
+      "interventions": [],
+      "phase": null,
+      "study_status": null,
+      "sources": [
+        {
+          "schema_version": "1.0",
+          "source_id": "source-synthetic-1",
+          "source_type": "synthetic",
+          "title": "Synthetic contract fixture: no observed clinical data; no real drug or trial.",
+          "url": null,
+          "external_id": null,
+          "retrieved_at": "2026-11-08T00:00:00Z",
+          "content_hash": "906b42d8ecfe5a96ac6322d83fedc33bc0b97bf08c7e40fef7994c44c283b4cc",
+          "licence_name": "Project-generated synthetic fixture",
+          "licence_url": null,
+          "licence_status": "unknown",
+          "access_level": "uploaded",
+          "is_synthetic": true
+        }
+      ],
+      "demographic_rows": [],
+      "adverse_event_rows": [],
+      "pk_rows": [],
+      "narrative_entries": [],
+      "availability": {
+        "schema_version": "1.0",
+        "representation": "not_assessed",
+        "sex_stratified_ae": "missing",
+        "sex_stratified_pk": "missing",
+        "participant_level": "missing",
+        "notes": []
+      },
+      "limitations": [
+        "Synthetic contract fixture, not a clinical trial result."
+      ],
+      "is_synthetic": true
+    },
+    "symptom_mappings": [],
+    "analyses": [
+      {
+        "schema_version": "1.0",
+        "analysis_id": "analysis-availability-1",
+        "request_id": null,
+        "status": "completed",
+        "method": "audit_subgroup_availability",
+        "parameters": {},
+        "results": {
+          "sex_stratified_ae": "missing",
+          "sex_stratified_pk": "missing"
+        },
+        "sample_sizes": {},
+        "source_locators": [
+          {
+            "schema_version": "1.0",
+            "source_id": "source-synthetic-1",
+            "location": "synthetic.description",
+            "excerpt": "No sex-stratified adverse-event results supplied."
+          }
+        ],
+        "assumptions": [],
+        "limitations": [],
+        "is_synthetic": true
+      }
+    ],
+    "findings": [
+      {
+        "schema_version": "1.0",
+        "finding_id": "finding-gap-1",
+        "finding_type": "evidence_gap",
+        "title": "Sex-stratified adverse-event results unavailable",
+        "description": "Available input cannot support a sex-specific AE comparison.",
+        "endpoint": null,
+        "priority": "medium",
+        "priority_rationale": "Prevents the proposed subgroup comparison.",
+        "analysis_ids": [
+          "analysis-availability-1"
+        ],
+        "source_ids": [
+          "source-synthetic-1"
+        ],
+        "limitations": [
+          "Absence from input does not establish absence from all publications."
+        ],
+        "is_synthetic": true
+      }
+    ]
+  },
+  "investigation": {
+    "schema_version": "1.0",
+    "trial_id": "synthetic-trial-1",
+    "assessed_findings": [],
+    "hypotheses": [],
+    "completed_analysis_ids": [
+      "analysis-availability-1"
+    ],
+    "evidence_ids": [],
+    "unresolved_questions": [
+      "Do associated publications report subgroup results?"
+    ],
+    "limitations": [
+      "Synthetic interface example, not model output."
+    ],
+    "status": "unavailable"
+  },
+  "evidence_reports": []
+}

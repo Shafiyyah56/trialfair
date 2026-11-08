@@ -314,7 +314,7 @@ class AgentEvent(Contract):
     event_id: Identifier
     run_id: Identifier
     timestamp: AwareDatetime
-    agent: Literal["interpreter", "safety", "evidence", "orchestrator"]
+    agent: Literal["interpreter", "safety", "evidence", "planner", "orchestrator"]
     event_type: Literal["decision", "tool_call", "tool_result", "revision", "stop", "error"]
     summary: str
     related_ids: list[Identifier] = Field(default_factory=list)
@@ -325,6 +325,57 @@ class PlannerInput(Contract):
     screening: ScreeningOutput
     investigation: InvestigationReport
     evidence_reports: list[EvidenceReport]
+
+
+class PlannerRecommendation(Contract):
+    """A proposed research action, never an executed analysis or clinical decision."""
+
+    recommendation_id: Identifier
+    action: Identifier
+    rationale: Identifier
+    priority: Literal["high", "medium", "low"]
+    priority_rationale: Identifier
+    category: Literal[
+        "additional_analysis",
+        "additional_data_collection",
+        "future_trial_design",
+        "interpretation_review",
+    ]
+    finding_ids: list[Identifier] = Field(min_length=1)
+    analysis_ids: list[Identifier] = Field(default_factory=list)
+    evidence_ids: list[Identifier] = Field(default_factory=list)
+    source_ids: list[Identifier] = Field(default_factory=list)
+    hypothesis_ids: list[Identifier] = Field(default_factory=list)
+    evidence_basis: Literal["observed_finding", "evidence_gap", "hypothesis"]
+    required_data: list[Identifier]
+    availability: Literal["available", "missing", "not_assessed"]
+    feasibility: Identifier
+    prerequisites: list[Identifier]
+    resolves_question: Identifier
+    limitations: list[str] = Field(default_factory=list)
+
+
+class PlannerFindingDisposition(Contract):
+    """Completion of planning review is distinct from resolution of uncertainty."""
+
+    finding_id: Identifier
+    status: Literal["resolved", "unresolved", "requires_further_investigation"]
+    rationale: Identifier
+    recommendation_ids: list[Identifier] = Field(default_factory=list)
+    analysis_ids: list[Identifier] = Field(default_factory=list)
+    evidence_ids: list[Identifier] = Field(default_factory=list)
+
+
+class PlannerReport(Contract):
+    trial_id: Identifier
+    status: CompletionStatus
+    recommendations: list[PlannerRecommendation] = Field(default_factory=list, max_length=8)
+    finding_dispositions: list[PlannerFindingDisposition] = Field(default_factory=list)
+    unresolved_questions: list[str] = Field(default_factory=list)
+    input_limitations: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    human_review_required: Literal[True] = True
+    is_synthetic: bool
 
 
 class RunResult(Contract):
