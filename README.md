@@ -1,7 +1,9 @@
 # TrialFair
+## Multi-agent pipeline investigating sex-specific safety gaps in clinical trials.
 
-**Note** A PDF writeup of our project as per the track reveal slides is available
-in the root directory.
+**Note:** A [PDF writeup](/trialfair-writeup.pdf) of our project as per the track reveal slides is available
+in the root directory. This is the main component of our submission, but pitch 
+deck slides are also available in the root directory.
 
 **Synthetic upload demo:** open the dashboard's **Synthetic CSV upload** form to
 upload the supplied participant datasets and run all four agents with matched
