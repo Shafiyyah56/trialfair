@@ -4,7 +4,13 @@ A source ID resolving successfully does not prove its claim is accurate. Agents
 must also inspect retrieved content and retain excerpts/locations and limitations.
 """
 
-from app.contracts import InvestigationReport, PlannerInput, RunResult, ScreeningOutput
+from app.contracts import (
+    InvestigationReport,
+    PlannerInput,
+    PlannerReport,
+    RunResult,
+    ScreeningOutput,
+)
 
 
 def _ids(records: list, attribute: str) -> set[str]:
@@ -139,3 +145,108 @@ def validate_run(result: RunResult) -> None:
             or result.planner_input.evidence_reports != result.evidence_reports
         ):
             raise ValueError("PlannerInput must match current run outputs")
+
+
+def planner_input_limitations(planner: PlannerInput) -> list[str]:
+    """Explicit incompleteness cannot be overridden by model completion status."""
+    limits = list(planner.screening.trial_bundle.limitations)
+    if planner.investigation.status != "completed":
+        limits.append("Upstream investigation is incomplete.")
+    assessed = {x.finding_id for x in planner.investigation.assessed_findings}
+    if any(x.finding_id not in assessed for x in planner.screening.findings):
+        limits.append("Some screened findings have not been assessed.")
+    if any(x.needs_review for x in planner.screening.symptom_mappings):
+        limits.append("Symptom interpretation requires human review.")
+    if any(x.status != "completed" for x in planner.evidence_reports):
+        limits.append("Some upstream evidence research is incomplete.")
+    if not any(r.evidence_items for r in planner.evidence_reports):
+        limits.append(
+            "No accepted external evidence items are available; no literature "
+            "conclusion is established."
+        )
+    if any(a.status != "completed" for a in planner.screening.analyses):
+        limits.append("Some upstream analyses are unavailable or invalid.")
+    limits.extend(planner.investigation.limitations)
+    limits.extend(lim for r in planner.evidence_reports for lim in r.limitations)
+    return list(dict.fromkeys(limits))
+
+
+def validate_planner_report(report: PlannerReport, planner: PlannerInput) -> None:
+    """Check reference edges and honesty, not semantic support or clinical validity.
+
+    run_planner additionally restricts generated text to application-authored actions.
+    Call this after schema validation and before publishing independent reports.
+    """
+    validate_planner_input(planner)
+    bundle = planner.screening.trial_bundle
+    if report.trial_id != bundle.trial_id:
+        raise ValueError("Planner trial does not match input")
+    evidence = {x.evidence_id: x for r in planner.evidence_reports for x in r.evidence_items}
+    sources = {x.source_id: x for x in bundle.sources}
+    sources.update({x.source_id: x for r in planner.evidence_reports for x in r.sources})
+    synthetic = bundle.is_synthetic or any(x.is_synthetic for x in sources.values())
+    if report.is_synthetic != synthetic:
+        raise ValueError("Planner synthetic label must match inputs")
+    required_limits = planner_input_limitations(planner)
+    if not set(required_limits) <= set(report.input_limitations):
+        raise ValueError("Planner must preserve input limitations")
+    if report.status == "completed" and required_limits:
+        raise ValueError("Incomplete or limited upstream inputs prevent completed planning")
+    if report.status == "unavailable" and report.recommendations:
+        raise ValueError("Unavailable planning cannot contain selected recommendations")
+    if report.status == "completed" and planner.screening.findings and not report.recommendations:
+        raise ValueError("Completed planning must address a screened finding")
+    _ids(report.recommendations, "recommendation_id")
+    findings = {x.finding_id: x for x in planner.screening.findings}
+    hypotheses = {x.hypothesis_id: x for x in planner.investigation.hypotheses}
+    analyses = {x.analysis_id: x for x in planner.screening.analyses}
+    for rec in report.recommendations:
+        _require(rec.finding_ids, set(findings), "planner finding ID")
+        _require(rec.analysis_ids, set(analyses), "planner analysis ID")
+        _require(rec.evidence_ids, set(evidence), "planner evidence ID")
+        _require(rec.source_ids, set(sources), "planner source ID")
+        _require(rec.hypothesis_ids, set(hypotheses), "planner hypothesis ID")
+        related = set(rec.finding_ids)
+        linked_analyses = {aid for fid in related for aid in findings[fid].analysis_ids}
+        linked_analyses.update(
+            aid
+            for a in planner.investigation.assessed_findings
+            if a.finding_id in related
+            for aid in a.analysis_ids
+        )
+        if not set(rec.analysis_ids) <= linked_analyses:
+            raise ValueError("Planner analysis is unrelated to its findings")
+        linked_sources = {sid for fid in related for sid in findings[fid].source_ids}
+        linked_sources.update(
+            loc.source_id for aid in rec.analysis_ids for loc in analyses[aid].source_locators
+        )
+        for eid in rec.evidence_ids:
+            if not related.intersection(evidence[eid].finding_ids):
+                raise ValueError("Planner evidence is unrelated to its findings")
+            linked_sources.add(evidence[eid].source_id)
+        if not set(rec.source_ids) <= linked_sources:
+            raise ValueError("Planner source lacks a finding, analysis or accepted evidence link")
+        required_sources = {evidence[eid].source_id for eid in rec.evidence_ids}
+        if not required_sources <= set(rec.source_ids):
+            raise ValueError("Planner must retain cited evidence sources")
+        contradictions = {
+            eid
+            for eid, e in evidence.items()
+            if e.relation == "contradicts" and related.intersection(e.finding_ids)
+        }
+        if not contradictions <= set(rec.evidence_ids):
+            raise ValueError("Planner must retain relevant contradictory evidence")
+        for hid in rec.hypothesis_ids:
+            hypothesis = hypotheses[hid]
+            if not related.intersection(hypothesis.finding_ids):
+                raise ValueError("Planner hypothesis is unrelated to its findings")
+            if not set(
+                hypothesis.supporting_evidence_ids + hypothesis.contradicting_evidence_ids
+            ) <= set(rec.evidence_ids):
+                raise ValueError("Planner must retain hypothesis evidence")
+        if rec.evidence_basis == "hypothesis" and not rec.hypothesis_ids:
+            raise ValueError("Hypothesis basis requires a linked hypothesis")
+        if rec.evidence_basis == "evidence_gap" and not any(
+            findings[f].finding_type == "evidence_gap" for f in related
+        ):
+            raise ValueError("Evidence-gap basis requires a gap finding")

@@ -114,7 +114,9 @@ through Pydantic contracts and ToolContext, not agent-specific HTTP servers.
 
 Agent 1 -> ScreeningOutput -> Agent 2 -> InvestigationReport.
 Agent 2 requests AnalysisResult from Agent 1's tools and EvidenceReport from
-Agent 3. All accepted outputs become PlannerInput. Agent 4 is deferred.
+Agent 3. All accepted outputs become PlannerInput. Agent 4 now supports independent
+snapshot planning on its feature branch; default pipeline integration remains pending.
+See [planner usage](agent-4-usage.md).
 
 Statistical calculations remain deterministic Python. Preserve source wording,
 source locations, missing values, denominators, uncertainty and contradictory

@@ -43,7 +43,10 @@ call Agent 2 or execute statistics itself. Agent 2 decides whether suggestions a
 valid, useful and within the shared budget.
 
 PlannerInput is a snapshot of final screening, investigation and evidence reports.
-It must match the enclosing RunResult. Agent 4 is not implemented at this stage.
+It must match the enclosing RunResult. Agent 4 now supports independent
+`run_planner(PlannerInput, ToolContext) -> PlannerReport` execution on its feature
+branch. Default orchestration, API, persistence and UI integration remain pending;
+see [planner usage](agent-4-usage.md).
 
 ## Budgets and errors
 

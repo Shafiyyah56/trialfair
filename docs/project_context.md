@@ -17,8 +17,9 @@ available evidence, investigate them collaboratively and support human review.
 3. External Evidence Investigator: autonomously refines literature/related-trial
    searches, evaluates supporting and contradictory findings and returns sourced
    evidence and unresolved questions.
-4. Trial Improvement Planner: deferred until outputs from the first three work.
-   Its future input is PlannerInput; no planner output is implemented now.
+4. Trial Improvement Planner: independently consumes PlannerInput and produces
+   a human-reviewed PlannerReport on feat/agent-4-planner. Default pipeline
+   scheduling and API/UI integration remain pending; live readiness is unverified.
 
 The first stage is partly agentic. All arithmetic and inferential analysis remain
 ordinary reproducible Python operations. An LLM interpreting symptoms cannot
