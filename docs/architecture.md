@@ -84,8 +84,11 @@ ToolContext.aclose in finally. Direct context users must do the same. Injected
 source clients remain caller-owned unless registered in context.resource_closers.
 
 FastAPI owns POST /runs, POST /investigations, GET /runs/{run_id} and GET /health. Streamlit is only a
-client/display layer. A synchronous bounded run is sufficient initially. Show an
-honest running indicator; show the recorded tool timeline once available. The implemented SQLite store
+client/display layer. The additive POST /runs/async and POST /investigations/async
+routes return a run ID for polling GET /runs/{run_id}/progress. Progress contains
+only emitted AgentEvents and completed validated stage outputs; milestone values
+are workflow positions, not estimates of model completion. Active state is local
+to the API process, while final RunResult records use SQLite. The implemented SQLite store
 validates persisted results and removes top-level narratives/mappings from saved
 snapshots; evidence excerpts can still contain supplied information. No import-time
 network calls, database creation or credential checks.

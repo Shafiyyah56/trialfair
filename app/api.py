@@ -5,6 +5,7 @@ sources never become fake live results. Bind to localhost for the hackathon;
 there is no account or public-hosting security layer in this MVP.
 """
 
+import asyncio
 from collections.abc import Callable
 from typing import Literal
 from uuid import uuid4
@@ -15,6 +16,7 @@ from app.config import Settings
 from app.context import ToolContext
 from app.contracts import Contract, HealthResponse, RunResult, ScreeningOutput, TrialInput
 from app.orchestrator import investigate_screening, run_trial
+from app.progress import ActiveRunRegistry, RunAccepted, RunProgress
 from app.runtime import RuntimeNotReady, build_context
 from app.storage import RunStore, SQLiteRunStore
 
@@ -36,6 +38,8 @@ def create_app(
 ) -> FastAPI:
     """Dependency injection enables integration tests and future real source adapters."""
     application = FastAPI(title="TrialFair", version="0.2.0")
+    active_runs = ActiveRunRegistry()
+    application.state.run_tasks = set()
 
     def run_store():
         return store if store is not None else SQLiteRunStore(Settings().data_dir / "runs.sqlite")
@@ -56,6 +60,53 @@ def create_app(
         finally:
             await context.aclose()
 
+    async def execute_in_background(payload, context: ToolContext) -> None:
+        try:
+
+            def screening_sink(screening: ScreeningOutput) -> None:
+                active_runs.screening_ready(context.run_id, screening)
+
+            if isinstance(payload, InvestigationInput):
+                result = await investigate_screening(
+                    payload.screening,
+                    context,
+                    mode=payload.mode,
+                    on_screening=screening_sink,
+                )
+            else:
+                result = await run_trial(payload, context, on_screening=screening_sink)
+            run_store().save(result)
+            active_runs.finish(result)
+        except Exception:
+            active_runs.fail(
+                context.run_id,
+                "The run stopped before a validated result could be saved.",
+            )
+        finally:
+            await context.aclose()
+
+    def start_background_run(payload) -> RunAccepted:
+        factory = context_factory or build_context
+        run_id = str(uuid4())
+        try:
+            context = factory(run_id, payload.mode)
+        except RuntimeNotReady as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
+        active_runs.start(
+            run_id, includes_interpretation=not isinstance(payload, InvestigationInput)
+        )
+        downstream_emit = context.emit
+
+        def capture(event):
+            active_runs.record_event(run_id, event, context.evidence_reports)
+            downstream_emit(event)
+
+        context.emit = capture
+        task = asyncio.create_task(execute_in_background(payload, context))
+        application.state.run_tasks.add(task)
+        task.add_done_callback(application.state.run_tasks.discard)
+        return RunAccepted(run_id=run_id, progress_url=f"/runs/{run_id}/progress")
+
     @application.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
         return HealthResponse(
@@ -73,6 +124,23 @@ def create_app(
     async def create_investigation(payload: InvestigationInput) -> RunResult:
         """Investigate a prepared screening without repeating trial ingestion."""
         return await execute(payload)
+
+    @application.post("/runs/async", response_model=RunAccepted, status_code=202)
+    async def create_run_async(trial_input: TrialInput) -> RunAccepted:
+        """Start a trial run and return immediately for honest progress polling."""
+        return start_background_run(trial_input)
+
+    @application.post("/investigations/async", response_model=RunAccepted, status_code=202)
+    async def create_investigation_async(payload: InvestigationInput) -> RunAccepted:
+        """Start prepared-screening investigation without repeating interpretation."""
+        return start_background_run(payload)
+
+    @application.get("/runs/{run_id}/progress", response_model=RunProgress)
+    def get_run_progress(run_id: str) -> RunProgress:
+        progress = active_runs.get(run_id)
+        if progress is None:
+            raise HTTPException(status_code=404, detail="Active run not found")
+        return progress
 
     @application.get("/runs/{run_id}", response_model=RunResult)
     def get_run(run_id: str) -> RunResult:
