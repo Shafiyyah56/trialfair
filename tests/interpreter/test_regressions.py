@@ -45,9 +45,22 @@ def bundle():
         httpx.ReadTimeout("injected-secret-provider-message"),
     ],
 )
-@pytest.mark.parametrize("stage", ["tool", "structured"])
+@pytest.mark.parametrize("stage", ["first-pass", "follow-up"])
 def test_provider_failures_preserve_screening(context_factory, error, stage):
-    responses = [error] if stage == "tool" else [ModelResponse(text="Ready"), error]
+    flagged = {
+        "judgements": [
+            {
+                "entry_id": "t1",
+                "assertion": "uncertain",
+                "temporality": "unknown",
+                "needs_review": True,
+                "explanation": "Flagged",
+            }
+        ]
+    }
+    responses = (
+        [error] if stage == "first-pass" else [ModelResponse(structured_output=flagged), error]
+    )
     context, events = context_factory(responses)
     context.datasets["input"] = bundle()
     output = asyncio.run(
@@ -57,7 +70,8 @@ def test_provider_failures_preserve_screening(context_factory, error, stage):
     assert len(output.analyses) == 4
     assert any("risk_difference" in a.results for a in output.analyses)
     assert all(m.needs_review for m in output.symptom_mappings)
-    assert any("Interpretation incomplete" in s for s in output.trial_bundle.limitations)
+    expected = "Interpretation incomplete" if stage == "first-pass" else "Follow-up"
+    assert any(expected in s for s in output.trial_bundle.limitations)
     assert "injected-secret" not in output.model_dump_json()
     assert "injected-secret" not in " ".join(e.summary for e in events)
 

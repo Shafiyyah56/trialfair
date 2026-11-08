@@ -57,9 +57,13 @@ def _ae_availability(bundle):
                 reasons.append(str(exc))
     covered = {key for pair in compatible_pairs for key in pair}
     if compatible_pairs:
-        state = "available" if all(r.row_id in covered for r in labelled) else "incomplete"
+        # Additional reported categories are descriptive only; they never block or join
+        # the Female/Male comparison, but every Female/Male row must have a valid pair.
+        state = "available" if all(r.row_id in covered for r in [*female, *male]) else "incomplete"
         if state == "incomplete":
             reasons.append("Some reported category rows lack a compatible comparison")
+        if len(female) + len(male) < len(labelled):
+            reasons.append("Additional reported sex categories are retained descriptively")
     elif not labelled:
         declared = bundle.availability.sex_stratified_ae
         state = declared if declared in {"not_assessed", "not_applicable"} else "missing"
