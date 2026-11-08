@@ -1,5 +1,8 @@
 # TrialFair
 
+**Note** A PDF writeup of our project as per the track reveal slides is available
+in the root directory.
+
 **Synthetic upload demo:** open the dashboard's **Synthetic CSV upload** form to
 upload the supplied participant datasets and run all four agents with matched
 curated sources. See [dataset locations and instructions](docs/SYNTHETIC_UPLOAD.md).
