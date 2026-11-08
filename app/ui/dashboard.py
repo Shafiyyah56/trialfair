@@ -6,13 +6,21 @@ screening JSON is schema checked; saved results are validated before display.
 
 import hashlib
 import json
+import sys
 import time
+from pathlib import Path
 
 import httpx
 
-from app.contracts import RunResult, ScreeningOutput
-from app.progress import RunAccepted, RunProgress
-from app.validation import validate_run, validate_screening
+# Streamlit's console entry point places this file's directory on sys.path.
+# Resolve the package from the checkout even without an editable installation.
+_PROJECT_ROOT = str(Path(__file__).resolve().parents[2])
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+from app.contracts import RunResult, ScreeningOutput  # noqa: E402
+from app.progress import RunAccepted, RunProgress  # noqa: E402
+from app.validation import validate_run, validate_screening  # noqa: E402
 
 
 def render_result(st, result: RunResult, *, saved: bool = False) -> None:

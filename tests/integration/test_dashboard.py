@@ -5,6 +5,26 @@ from pathlib import Path
 from streamlit.testing.v1 import AppTest
 
 
+def test_dashboard_imports_from_outside_checkout_without_pythonpath(tmp_path):
+    import subprocess
+    import sys
+
+    dashboard = Path(__file__).resolve().parents[2] / "app/ui/dashboard.py"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-c",
+            f"import runpy; runpy.run_path({str(dashboard)!r}, run_name='import_check')",
+        ],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+    assert result.returncode == 0, result.stderr
+
+
 def test_saved_run_review_renders_without_live_execution(fixture_run):
     app = AppTest.from_file(
         str(Path(__file__).resolve().parents[2] / "app/ui/dashboard.py"), default_timeout=10
