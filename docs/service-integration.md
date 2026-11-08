@@ -27,6 +27,21 @@ GEMINI_MODEL and TRIALFAIR_MODE=live. No extra service keys or database server
 are needed. Replay execution still requires a separately injected captured runtime;
 the default rejects it explicitly. Saved results can be reviewed without re-running.
 
+The interpretation batch defaults to 20 distinct texts, configurable with
+TRIALFAIR_MAX_INTERPRETATION_TEXTS (1–100). All source rows still enter deterministic
+screening; terms beyond the interpretation cap remain explicitly unreviewed.
+First-pass interpretation is capped at 35 seconds or 30% of remaining time,
+whichever is less; refinement gets at most 10 seconds or 10% of remaining time.
+Timeouts retain computed statistics and review mappings.
+
+Evidence research is capped at 90 seconds and leaves up to 20 seconds for the
+outer investigator (15% of the configured total deadline for short runs).
+Safety tool selection leaves up to 15 seconds for final assessment. All counters
+and the original 150-second overall deadline remain shared and unchanged.
+If research times out, actual searches/sources survive without invented claims.
+If the final assessment still cannot finish, an explicitly unassessed partial
+InvestigationReport and PlannerInput survive alongside validated screening.
+
 `/health` marks interpreter, safety and evidence implementations present; planner
 is false, so overall status remains partial. These are implementation flags, not
 credential or source-uptime probes. No network/model calls occur on health requests.
@@ -56,7 +71,7 @@ uv run --locked streamlit run app/ui/dashboard.py
 
 Use the completed-trial input to supply an NCT identifier with posted results.
 The API path is `POST /runs` with `{"nct_id":"NCT04280705","mode":"live"}`.
-The captured example has more than 100 distinct AE terms, so the bounded
+The captured example exceeds the default 20-term interpretation cap, so the bounded
 interpreter correctly reports partial coverage. Trial choice changes what can be
 analysed; no patient-level records are implied by a public registry identifier.
 
@@ -86,11 +101,14 @@ interpretation propagation, persistence, resource cleanup and a registry outage
 making zero model calls. The interpreter regression previously marked strict
 xfail is now required to pass normally.
 
-Combined live latency and a real source-to-conclusion audit remain pending.
+The first combined live run timed out at 149.85 seconds without cited evidence;
+see [the audit and corrections](verification/pipeline-live.md). A live retest of
+the revised time allocation and a real source-to-conclusion audit remain pending.
 The earlier standalone Agent 3 check took 132.81 seconds, close to the shared
 150-second deadline. Do not promise that the combined pipeline finishes within
 the demo budget until measured. No deadlines or grounding rules were relaxed.
 
-Integration checks: 195 tests passed, 1 opt-in live test deselected, no xfails.
+Integration checks after timeout corrections: 198 tests passed, 1 opt-in live test
+deselected, no xfails.
 Ruff lint and formatting, diff whitespace and locked offline installation passed.
 The existing upstream TestClient warning remains; dependencies were not changed.

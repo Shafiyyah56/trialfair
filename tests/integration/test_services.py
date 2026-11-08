@@ -47,6 +47,7 @@ class PipelineModel:
     async def generate(self, messages, **kwargs):
         self.turn += 1
         if self.turn == 1:
+            assert len(messages[-1].content["entries"]) == 20
             return ModelResponse(
                 structured_output={
                     "judgements": [
@@ -210,7 +211,7 @@ def test_api_connects_all_agents_sources_statistics_and_storage(monkeypatch, tmp
     assert len(result.evidence_reports) == 1
     assert len(result.evidence_reports[0].evidence_items) == 1
     assert result.investigation.status == "completed"
-    # The real capture exceeds the interpreter text cap: retain that partial status.
+    # The real capture exceeds the configured interpreter text cap: retain partial status.
     assert result.status == "partial"
     assert any("Interpretation limited" in x for x in result.screening.trial_bundle.limitations)
     assert {event.agent for event in result.events} >= {"interpreter", "safety", "evidence"}

@@ -68,6 +68,9 @@ One research call uses at most four model turns from the existing shared budget
 and reserves two available model turns for the outer Safety Investigator. It
 allows up to three tool-selection turns plus a final structured-output turn.
 At least three available local turns are needed for a search, inspection and report.
+Wall-clock research is also capped at 90 seconds and reserves up to 20 seconds
+of the existing deadline for the outer investigator. Retrieved searches/sources
+are preserved if research times out; uncompleted synthesis creates no claims.
 The last research turn exposes inspection tools only once candidates exist.
 Unavailable registry tools are not offered to the model. This
 is a bounded MVP investigation, not an exhaustive literature review.

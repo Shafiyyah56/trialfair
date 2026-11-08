@@ -7,7 +7,8 @@ trials, particularly before the next trial phase.
 **Current status on feat/service-integration:** Agents 1–3 are merged and connected:
 trial ingestion/statistics, safety investigation, ClinicalTrials.gov and Europe PMC.
 The API, storage and dashboard use the shared model and budget. The complete path
-has an offline integration check; a combined live trial run remains unverified.
+has an offline integration check. The first combined live run timed out; revised
+time allocation awaits a live retest. See [the audit](docs/verification/pipeline-live.md).
 Agent 4 is deferred. Agent 2's live Gemini/synthetic demonstration passed. Agent 3's live
 research returned two audited items with partial status; see the
 [live-check scope and limitations](docs/verification/agent-3-live.md).

@@ -290,7 +290,17 @@ async def run_safety(screening: ScreeningOutput, context: ToolContext) -> Invest
             )
             if remaining <= 1:
                 break
-            response = await generate_with_budget(context, messages, tools=TOOLS)
+            reserve = min(15, context.settings.run_timeout_seconds * 0.1)
+            if context.budget.remaining_seconds() <= reserve:
+                tool_errors = True
+                break
+            try:
+                async with asyncio.timeout(context.budget.remaining_seconds() - reserve):
+                    response = await generate_with_budget(context, messages, tools=TOOLS)
+            except TimeoutError:
+                tool_errors = True
+                emit_event(context, "error", "Tool selection timed out; final assessment reserved.")
+                break
             if not response.tool_calls:
                 if not had_tool_result:
                     tool_errors = True

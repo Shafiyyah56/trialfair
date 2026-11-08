@@ -18,6 +18,16 @@ See [integration verification](service-integration.md) and Agent 2's handoff.
 
 The sections below retain the component-by-component implementation history.
 
+Follow-up after the first combined live run: it timed out after 149.85 seconds,
+with roughly 93 seconds spent in interpretation. The integration owner bounded
+interpretation calls and added a configurable default 20-text batch (1–100).
+All source rows still enter statistics. Research preserves source state on local
+timeout and reserves time for outer reporting; overall timeout returns explicitly
+unassessed partial investigation/planner input. Shared counters/deadline and v1.0
+contracts are unchanged. This narrowly adjusts Agent 1/3 execution timing as part
+of integration; their scientific extraction/grounding rules remain intact.
+198 offline tests pass; paid/live retest remains pending.
+
 Start with [the coding agent handoff](HANDOFF.md). Read [team setup and acknowledgement instructions](TEAM_SETUP.md). Each coding
 agent must acknowledge before implementation and update only its own handoff file.
 

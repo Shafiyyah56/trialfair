@@ -600,9 +600,28 @@ def compile_evidence_report(
 
 
 async def run_evidence(request: EvidenceRequest, context: ToolContext) -> EvidenceReport:
-    """Adaptive tool loop with a four-turn cap and two outer-investigator turns reserved."""
+    """Retain research on timeout and reserve wall-clock time for the investigator."""
     request = EvidenceRequest.model_validate_json(request.model_dump_json())
     state = EvidenceState()
+    reserve = min(20, context.settings.run_timeout_seconds * 0.15)
+    try:
+        duration = min(90, max(0, context.budget.remaining_seconds() - reserve))
+        async with asyncio.timeout(duration):
+            return await _run_evidence(request, context, state)
+    except (TimeoutError, BudgetExceeded):
+        state.had_failure = True
+        state.limitations.append(
+            "Research time limit or shared deadline reached; time reserved for final assessment."
+        )
+        report = compile_evidence_report(EvidenceDraft(status="partial"), request, context, state)
+        _emit(
+            context, "stop", f"External evidence investigation ended with status {report.status}."
+        )
+        return report
+
+
+async def _run_evidence(request, context, state):
+    """Four model turns at most, with shared counters and two investigator turns reserved."""
     available = context.budget.limits["model_turn"] - context.budget.used.get("model_turn", 0)
     allowance = min(4, max(0, available - 2))
     messages = [

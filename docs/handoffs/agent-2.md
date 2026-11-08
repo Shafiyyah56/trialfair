@@ -1,5 +1,25 @@
 # Agent 2 acknowledgement and handoff
 
+## Integrated live timeout correction
+
+Continuing integration on feat/service-integration from dc2b886. The user ran
+the combined smoke check: 149.85 s, partial, screening retained, no investigation
+or evidence report. I inspected the saved event timeline: 100-term interpretation
+took roughly 93 s. See ../verification/pipeline-live.md for measured scope.
+
+Implemented: configurable 20-term default interpretation limit; bounded first-pass
+and refinement calls; evidence research timeout with preserved searches/sources
+and reserved reporting time; safety report time reservation; explicitly unassessed
+partial investigation when the overall deadline expires. Source rows/statistics,
+grounding, shared counters and the overall deadline are unchanged. No dependencies
+or public contract changes. The narrow Agent 1/3 timing edits are coordinated by
+the integration owner in integration.md.
+
+198 tests pass, 1 live test deselected; Ruff checks pass. Injected delays verify
+source preservation, statistics preservation and the outer deadline fallback.
+The revised path has not yet been rerun live; do not promise cited evidence or
+under-three-minute completion on real inputs from offline timing tests.
+
 ## Service integration follow-up — 2026-11-08
 
 I read AGENTS.md, HANDOFF, TEAM_SETUP, assignments, architecture and contracts.

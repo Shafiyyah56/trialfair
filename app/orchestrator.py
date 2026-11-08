@@ -4,7 +4,7 @@ import asyncio
 from time import monotonic
 
 from app.agents.interpreter import run_interpreter
-from app.agents.safety import merged_screening, run_safety
+from app.agents.safety import merged_screening, partial_report, run_safety
 from app.context import ToolContext
 from app.contracts import PlannerInput, RunResult, ScreeningOutput, TrialInput
 from app.validation import validate_run, validate_screening
@@ -61,6 +61,11 @@ async def _run(trial_input, screening, context, *, mode):
             context.evidence_reports.clear()
             errors.append("Rejected invalid screening provenance.")
     planner = None
+    if screening is not None and investigation is None:
+        investigation = partial_report(
+            screening,
+            errors[-1] if errors else "Investigation did not finish; no assessment was inferred.",
+        )
     if screening is not None and investigation is not None:
         planner = PlannerInput(
             screening=screening,
