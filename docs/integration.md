@@ -309,3 +309,28 @@ Owner: Agent 1 (Shafiyyah). Pushed directly to main at the user's request; pleas
   memory (`participant_table_for(bundle)`) and are never added to TrialBundle,
   RunResult or SQLite. The new tools return `unavailable` when that data is not loaded
   in the current server process, for example when a stored run is reopened later.
+
+
+## Agent 4 functional corrections — 2026-11-08
+
+Authorisation: the user explicitly requested fixes for the four verified issues,
+with Agent 4-only scope except a shared output-contract addition if necessary.
+The minimal addition is PlannerFindingDisposition plus a defaulted
+PlannerReport.finding_dispositions list, required by the corrected completion
+validation to distinguish resolved, explicitly unresolved and follow-up states
+without interpreting free-form prose. This changes only the Agent 4 output; no
+Agent 1–3 payload, PlannerInput, RunResult or function signature changes. No
+schema-version, dependency or lock changes. Older partial reports still parse;
+older completed planner reports need explicit dispositions before validation.
+The complete synthetic fixture has been updated. No persisted planner migration
+is currently needed because planner output is not integrated into storage.
+
+Planner-only generation now matches requested PK parameters, preserves hypotheses
+with scoped evidence, and uses existing representation counts before suggesting
+new collection. Shared validation changes apply only inside validate_planner_report:
+accept indirect evidence only through a relevant retained hypothesis; retain all
+relevant hypotheses; validate related dispositions and full completed coverage.
+No changes to validate_run, validate_planner_input, Agents 1–3 or their implementations.
+See verification/agent-4-fixes.md for TDD evidence, scenario results and limits.
+Default pipeline scheduling, new API/storage/UI integration and live acceptance
+remain the integrator's follow-up. Changes are local; no push/PR update/merge.

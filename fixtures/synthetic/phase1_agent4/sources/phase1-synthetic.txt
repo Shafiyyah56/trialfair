@@ -1,0 +1,24 @@
+ENTIRELY SYNTHETIC — software test data only.
+No real compound, participant, clinical trial, publication or clinical finding.
+Synthetic audit evidence only; no observed clinical data.
+
+Scenario: Phase I fixed-dose healthy-volunteer cohort; one synthetic active arm.
+Product: SYN-ALPHA, fabricated compound; no numeric dose is specified.
+Population: synthetic safety population. Reporting window: synthetic days 1–14.
+Demographics: reported Female 6/36; reported Male 30/36.
+Non-serious nausea: Female affected participants 3, at-risk participants 6;
+Male affected participants 5, at-risk participants 30.
+Event-occurrence counts: not supplied. Participant-level records: not supplied.
+Sex-specific PK, including Cmax and AUC: not supplied.
+
+Locations:
+table.demographics.Female: reported Female 6/36.
+table.demographics.Male: reported Male 30/36.
+table.ae.Female: non-serious Nausea 3/6, arm-active, days 1–14.
+table.ae.Male: non-serious Nausea 5/30, arm-active, days 1–14.
+tables: synthetic aggregate availability and representation review.
+
+Counts are fabricated, not observed measurements. Differences are exploratory
+scenario inputs, not evidence of causation, safety, or a treatment recommendation.
+Small subgroup size warrants researcher review; no universal target, power,
+clinical threshold or future sample-size recommendation is asserted.

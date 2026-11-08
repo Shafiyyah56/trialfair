@@ -55,5 +55,18 @@
     "Human review must verify scientific support and applicability; no clinical decision is authorised."
   ],
   "human_review_required": true,
-  "is_synthetic": true
+  "is_synthetic": true,
+  "finding_dispositions": [
+    {
+      "schema_version": "1.0",
+      "finding_id": "finding-gap-1",
+      "status": "requires_further_investigation",
+      "rationale": "Synthetic planning review completed; the selected data-gap action remains for human review.",
+      "recommendation_ids": [
+        "plan-784cffa871f22268"
+      ],
+      "analysis_ids": [],
+      "evidence_ids": []
+    }
+  ]
 }

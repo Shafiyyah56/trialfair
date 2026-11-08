@@ -7,6 +7,7 @@ clinical instructions and fabricated evidence from entering the report.
 
 import asyncio
 import hashlib
+import re
 from datetime import UTC, datetime
 from typing import Literal
 from uuid import uuid4
@@ -14,7 +15,13 @@ from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.context import BudgetExceeded, ToolContext
-from app.contracts import AgentEvent, PlannerInput, PlannerRecommendation, PlannerReport
+from app.contracts import (
+    AgentEvent,
+    PlannerFindingDisposition,
+    PlannerInput,
+    PlannerRecommendation,
+    PlannerReport,
+)
 from app.model_client import ModelMessage, ToolDefinition, generate_with_budget
 from app.services.statistics import audit_subgroup_availability
 from app.validation import (
@@ -112,6 +119,29 @@ def _packet(item, planner):
     }
 
 
+_PK_TERMS = re.compile(
+    r"\b(?:auc(?:[ _]?0[-–_](?:t|inf|infinity))?|c[ _]?max|t[ _]?max|"
+    r"cl(?:/f)?|v[dz](?:/f)?|t[ _]?1/2)\b",
+    re.IGNORECASE,
+)
+
+
+def _pk_key(parameter):
+    # Ignore case/spacing conventions, but retain parameter and AUC-window differences.
+    return re.sub(r"[\s_]", "", parameter.casefold()).replace("–", "-").replace("−", "-")
+
+
+def _pk_requested(finding):
+    endpoint = finding.endpoint
+    if endpoint and _pk_key(endpoint) not in {"pk", "pharmacokinetics", "exposure"}:
+        return [
+            part.strip()
+            for part in re.split(r"\s+and\s+|[,;]", endpoint, flags=re.I)
+            if part.strip()
+        ]
+    return list(dict.fromkeys(match.group() for match in _PK_TERMS.finditer(finding.title)))
+
+
 def build_candidates(planner: PlannerInput, context: ToolContext) -> list[PlannerRecommendation]:
     """Deterministic prerequisites reuse Agent 1's availability audit, never its tests.
 
@@ -145,17 +175,27 @@ def build_candidates(planner: PlannerInput, context: ToolContext) -> list[Planne
             h for h in planner.investigation.hypotheses if finding.finding_id in h.finding_ids
         ]
         items = [e for e in evidence.values() if finding.finding_id in e.finding_ids]
-        # Hypothesis edges can span findings; retain their full evidence context.
+        # Preserve each relevant hypothesis and its scoped evidence; do not turn an
+        # indirect edge into direct support for a different finding.
         hypothesis_eids = {
             eid
             for h in hypotheses
             for eid in h.supporting_evidence_ids + h.contradicting_evidence_ids
         }
-        if any(finding.finding_id not in evidence[eid].finding_ids for eid in hypothesis_eids):
-            # Such hypotheses require a separate applicability review, not a fabricated edge.
-            hypotheses = []
+        items = [
+            e
+            for e in evidence.values()
+            if finding.finding_id in e.finding_ids or e.evidence_id in hypothesis_eids
+        ]
+        indirect_limits = [
+            f"Evidence {e.evidence_id} addresses finding(s) {', '.join(e.finding_ids)}; "
+            f"applicability to {finding.finding_id} requires review through the linked hypothesis."
+            for e in items
+            if finding.finding_id not in e.finding_ids
+        ]
         locators = {a.source_id for analysis in analyses for a in analysis.source_locators}
-        source_ids = sorted(set(finding.source_ids) | locators | {e.source_id for e in items})
+        direct_source_ids = set(finding.source_ids) | locators
+        source_ids = sorted(direct_source_ids | {e.source_id for e in items})
         base = dict(
             finding_ids=[finding.finding_id],
             analysis_ids=[a.analysis_id for a in analyses],
@@ -175,6 +215,7 @@ def build_candidates(planner: PlannerInput, context: ToolContext) -> list[Planne
                 dict.fromkeys(
                     [
                         *finding.limitations,
+                        *indirect_limits,
                         *(lim for a in analyses for lim in a.limitations),
                         *(lim for e in items for lim in e.limitations),
                         "No proposed analysis or data collection has been executed.",
@@ -226,35 +267,93 @@ def build_candidates(planner: PlannerInput, context: ToolContext) -> list[Planne
             )
         # Determine the domain from declared endpoint/title, without inventing a mechanism.
         text = f"{finding.endpoint or ''} {finding.title}".casefold()
-        pk = any(word in text for word in ("pharmacokinetic", "exposure", " pk", "auc", "cmax"))
+        requested_pk = _pk_requested(finding)
+        pk = (
+            bool(_PK_TERMS.search(text))
+            or any(
+                _pk_key(row.parameter) in {_pk_key(param) for param in requested_pk}
+                for row in bundle.pk_rows
+                if row.source_locator.source_id in direct_source_ids
+            )
+            or any(
+                word in text
+                for word in (
+                    "pharmacokinetic",
+                    "exposure",
+                    " pk",
+                    "clearance",
+                    "volume of distribution",
+                )
+            )
+        )
         ae = any(word in text for word in ("adverse", " ae", "event", "safety"))
         if pk:
-            rows = [
+            requested_keys = {_pk_key(parameter) for parameter in requested_pk}
+            related_pk_rows = [
                 r
                 for r in bundle.pk_rows
-                if r.reported_sex_category and r.source_locator.source_id in source_ids
+                if r.reported_sex_category and r.source_locator.source_id in direct_source_ids
             ]
-            available = bool(rows and registered)
+            unspecified_with_data = not requested_pk and bool(related_pk_rows)
+            rows = [r for r in related_pk_rows if _pk_key(r.parameter) in requested_keys]
+            missing_pk = [
+                parameter
+                for parameter in requested_pk
+                if not any(_pk_key(r.parameter) == _pk_key(parameter) for r in rows)
+            ]
+            complete_pk = bool(requested_pk and not missing_pk)
+            available = bool(complete_pk and registered)
+            parameter_note = ", ".join(requested_pk) or "unspecified parameter"
+            base["limitations"].append(
+                "Requested PK parameter(s): "
+                + parameter_note
+                + ". "
+                + (
+                    "Reported categories retained: "
+                    + ", ".join(sorted({r.reported_sex_category for r in rows}))
+                    + "; other categories are not inferred. "
+                    if rows
+                    else ""
+                )
+                + (
+                    "Missing requested parameter(s): " + ", ".join(missing_pk) + ". "
+                    if missing_pk
+                    else ""
+                )
+                + (
+                    "Reported summaries do not establish subgroup adequacy "
+                    "or cross-category comparability."
+                )
+            )
             add(
                 "pk",
                 category="additional_analysis"
                 if available
                 else "interpretation_review"
-                if rows
+                if complete_pk or unspecified_with_data
                 else "additional_data_collection",
                 action=(
                     "Review descriptive PK summaries by reported sex; withhold "
                     "cross-category ratios."
                 )
                 if available
+                else "Specify the requested PK parameter before assessing data availability."
+                if unspecified_with_data
                 else "Register the validated PK snapshot before requesting descriptive analysis."
-                if rows
+                if complete_pk
                 else (
                     "Obtain source-backed PK summaries by reported sex with dose, "
                     "formulation, population and sampling window."
                 ),
-                required_data=["Reported sex-category PK summaries with units and source context"],
-                availability="available" if rows else "missing",
+                required_data=[
+                    f"Requested PK parameter(s): {parameter_note}",
+                    "Reported sex-category PK summaries with units and source context",
+                ],
+                availability="available"
+                if complete_pk
+                else "not_assessed"
+                if unspecified_with_data
+                else "missing",
                 feasibility=(
                     "Descriptive summaries only; no verified population/window "
                     "comparability in PKRow v1.0."
@@ -267,7 +366,7 @@ def build_candidates(planner: PlannerInput, context: ToolContext) -> list[Planne
                     "Which PK data and comparability details are available for follow-up?"
                 ),
             )
-            if not rows and finding.finding_type == "evidence_gap":
+            if not complete_pk and finding.finding_type == "evidence_gap":
                 add(
                     "future-pk",
                     category="future_trial_design",
@@ -283,6 +382,81 @@ def build_candidates(planner: PlannerInput, context: ToolContext) -> list[Planne
                         "Human review must justify population, collection and analysis design",
                     ],
                     resolves_question="How could a future protocol avoid this PK evidence gap?",
+                )
+        elif any(
+            word in text
+            for word in (
+                "representation",
+                "underrepresent",
+                "enrol",
+                "enroll",
+                "recruit",
+                "subgroup counts",
+            )
+        ):
+            rows = [
+                r
+                for r in bundle.demographic_rows
+                if r.source_locator.source_id in direct_source_ids
+                and r.category.casefold() in {"sex", "gender", "sex/gender", "reported sex"}
+            ]
+            known = [r for r in rows if r.count is not None]
+            missing = [
+                f"{r.reported_label}: "
+                + ", ".join(
+                    field for field in ("count", "denominator") if getattr(r, field) is None
+                )
+                for r in rows
+                if r.count is None or r.denominator is None
+            ]
+            if known:
+                counts = "; ".join(
+                    f"{r.reported_label}: count={r.count}, denominator={r.denominator}, "
+                    f"group={r.group_id}, population={r.analysis_population}"
+                    for r in known
+                )
+                add(
+                    "representation-review",
+                    category="interpretation_review",
+                    action=(
+                        "Review reported subgroup representation and precision; assess future "
+                        "recruitment feasibility with the researcher before setting any targets."
+                    ),
+                    rationale="Source-reported subgroup counts: "
+                    + counts
+                    + ". No groups are pooled.",
+                    required_data=["Existing source-backed subgroup counts and population context"],
+                    availability="available",
+                    feasibility=(
+                        "Review existing counts; new collection is not justified "
+                        "by imbalance alone."
+                    ),
+                    prerequisites=[
+                        "Verify group overlap and population comparability",
+                        "Researcher evaluates precision and recruitment feasibility",
+                    ],
+                    resolves_question="How should representation inform future planning?",
+                    limitations=[
+                        *base["limitations"],
+                        (
+                            "Counts alone do not establish statistical adequacy; "
+                            "no threshold or target is inferred."
+                        ),
+                    ],
+                )
+            if not rows or missing:
+                add(
+                    "representation-data",
+                    category="additional_data_collection",
+                    action=(
+                        "Obtain missing source-backed subgroup participant counts or denominators."
+                    ),
+                    required_data=missing
+                    or ["Reported sex/gender categories, participant counts and denominators"],
+                    availability="missing",
+                    feasibility="Retrieve missing representation fields; retain known counts.",
+                    prerequisites=["Do not pool overlapping groups or infer unreported categories"],
+                    resolves_question="Which representation fields remain unavailable?",
                 )
         elif ae:
             pairs = availability["comparison_availability"]["adverse_events"][
@@ -409,6 +583,7 @@ def inspect(name, identifier, planner, context, candidates):
                     _packet(e, planner)
                     for e in _evidence(planner).values()
                     if identifier in e.finding_ids
+                    or any(e.evidence_id in c.evidence_ids for c in relevant)
                 ],
                 "hypotheses": [
                     h.model_dump(mode="json")
@@ -622,9 +797,29 @@ async def run_planner(planner_input: PlannerInput, context: ToolContext) -> Plan
                 f"Finding {fid} was not selected; researcher triage remains."
                 for fid in sorted(omitted)
             ]
+            dispositions = [
+                PlannerFindingDisposition(
+                    finding_id=f.finding_id,
+                    status="requires_further_investigation"
+                    if f.finding_id not in omitted
+                    else "unresolved",
+                    rationale=(
+                        "The selected source-linked actions require researcher review."
+                        if f.finding_id not in omitted
+                        else "No action was selected; researcher triage remains."
+                    ),
+                    recommendation_ids=[
+                        r.recommendation_id
+                        for r in recommendations
+                        if f.finding_id in r.finding_ids
+                    ],
+                )
+                for f in planner.screening.findings
+            ]
             report = PlannerReport(
                 status="partial" if limits or rejected or omitted else "completed",
                 recommendations=recommendations,
+                finding_dispositions=dispositions,
                 **common,
             )
             if rejected:

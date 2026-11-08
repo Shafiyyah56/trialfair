@@ -85,3 +85,37 @@ prose, source support, applicability or scientific truth; human review is mandat
   experimental plans. Missing/contradictory/abstract-only evidence remains explicit.
 - Existing .vscode/ untracked files are preserved; credentials remain local and
   unread. No email or external communications were sent.
+
+
+## Functional fixes after merging main — 2026-11-08
+
+Starting from merge 14bbd36 (main through 9c117d9). The user authorised the four
+functional corrections with TDD, synthetic-only checks and no publishing/merge.
+Regression tests were written first: 23 failed, 5 passed against the old code.
+After the fixes and extra scope checks, 32 new cases pass (73 planner cases total).
+Full suite: 289 passed, 1 live test deselected; Ruff lint/format and diff whitespace
+passed. One pre-existing 100 ms evidence timing test failed once, then passed in
+isolation and in the full rerun without any upstream change; the existing
+Starlette TestClient deprecation warning remains.
+
+Changes: parameter-specific PK prerequisites; source-reported representation
+review and targeted missing-field collection; retained cross-finding hypotheses
+and exact scoped evidence with applicability limits; typed finding dispositions
+and complete output coverage. The additive Agent 4 disposition model/defaulted
+field is necessary to distinguish workflow completion from scientific resolution.
+Existing functions, input contracts, schema_version and dependencies are unchanged.
+The complete synthetic output now carries an explicit follow-up disposition.
+
+Ten synthetic scripted planner executions repeated all four functional scenarios
+plus denominator/window/registration/missing-evidence/dosing rejection checks.
+All pass with the corrected expected behaviour. An injected real-code Agents 1–4
+exercise still accepts upstream PlannerInput, retains two evidence items and adds
+two model attempts (8 to 10) using the same context and original deadline.
+All model and literature behaviour is scripted/synthetic; no paid or live calls.
+See verification/agent-4-fixes.md and tests/planner/test_functional_regressions.py.
+No code in Agents 1–3, runtime, model adapter, API, storage or UI changed.
+No commits, pushes, PR operations or merges were performed for these corrections.
+Existing .vscode/ and previously created synthetic fixture data remain preserved.
+Live provider compatibility/usefulness and default pipeline integration remain
+unverified/pending. Legacy completed planner payloads need dispositions; semantic
+support and clinical applicability still require human review.

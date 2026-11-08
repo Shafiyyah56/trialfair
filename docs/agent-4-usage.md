@@ -54,11 +54,18 @@ No model, network, credentials or filesystem operation happens at module import.
 - Actual rows and Agent 1's availability audit determine AE prerequisites;
   baseline denominators and event occurrences never substitute for participant
   counts. Identical registered snapshots are required for executable proposals.
-  PK summaries remain descriptive; population/window comparability is unverified
-  in contract v1.0. Planning never executes an analysis or starts research.
+  PK availability now requires every explicitly requested parameter (case/spacing
+  normalisation only); AUC, Cmax, Tmax, clearance and AUC windows are not
+  interchangeable. An unspecified parameter with existing rows requires review.
+  PK summaries remain descriptive, preserve reported categories and do not imply
+  subgroup adequacy; population/window comparability is unverified in v1.0. Planning never executes an analysis or starts research.
 - Candidate families include interpretation review, source/data collection,
   compatible AE or descriptive PK analysis, evidence applicability review and
-  future PK protocol reporting when a PK gap justifies that alternative.
+  future PK protocol reporting when a PK gap justifies that alternative. Known
+  subgroup representation counts now produce a precision/recruitment-feasibility
+  review using exact reported labels, counts, denominators, groups and populations;
+  only genuinely missing fields trigger representation data collection. No target
+  or statistical-adequacy threshold is inferred, and overlapping groups are not pooled.
   This first candidate vocabulary is deliberately limited; free-form experiment
   design and mechanistic explanations are outside it.
 
@@ -76,6 +83,30 @@ or zero accepted evidence keep planning partial. This is intentionally conservat
 limitations; it never means the drug is safe or the trial can progress.
 A failed/rejected/timed-out selection returns unavailable with no invented plan.
 Invalid input references are rejected before any model call.
+
+`PlannerReport.finding_dispositions` is an additive, defaulted list of typed
+`PlannerFindingDisposition` objects. A completed report must explicitly dispose
+of every screened finding (including every assessed finding). States are:
+
+- `requires_further_investigation`: links valid, related recommendation IDs.
+- `unresolved`: gives a nonempty rationale without claiming scientific resolution.
+- `resolved`: records a human-reviewed planning disposition with related accepted
+  evidence or a completed analysis as review support. This is not a drug-safety
+  conclusion; reference validity still does not establish semantic support.
+
+Generated plans mark selected findings as requiring further investigation and
+omitted findings as unresolved, keeping bounded omissions partial. External human
+review can complete planning while explicitly recording unresolved questions.
+The planner does not autonomously assert that a finding is resolved. Existing
+partial payloads can omit this new field, but older completed planner payloads
+must add valid dispositions before passing the stronger output validator. The
+complete synthetic output fixture demonstrates this. `PlannerInput`, Agents 1–3,
+`RunResult` and function signatures are unchanged; schema_version remains 1.0.
+
+Hypotheses and their supporting/contradicting evidence are retained across finding
+boundaries. Indirect evidence retains its original finding IDs, exact source support
+and an explicit applicability limitation; it is not promoted into direct support
+for a different finding. Data feasibility uses directly linked source rows only.
 
 `validate_planner_report` checks trial and synthetic labels, duplicate IDs, known
 and related finding/analysis/evidence/hypothesis/source edges, preservation of

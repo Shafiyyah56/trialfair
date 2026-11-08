@@ -1,0 +1,385 @@
+{
+  "schema_version": "1.0",
+  "screening": {
+    "schema_version": "1.0",
+    "trial_bundle": {
+      "schema_version": "1.0",
+      "trial_id": "synthetic-phase1-alpha",
+      "title": "ENTIRELY SYNTHETIC Phase I fixed-dose cohort for Agent 4 testing",
+      "condition_names": [],
+      "interventions": [
+        "SYN-ALPHA experimental compound"
+      ],
+      "phase": "Phase 1",
+      "study_status": "COMPLETED",
+      "sources": [
+        {
+          "schema_version": "1.0",
+          "source_id": "phase1-synthetic",
+          "source_type": "synthetic",
+          "title": "ENTIRELY SYNTHETIC source: phase1-synthetic",
+          "url": null,
+          "external_id": null,
+          "retrieved_at": "2026-11-08T00:00:00Z",
+          "content_hash": "964089e3f202373afb57780ba9f0349704acf5c6ad685c1ef4711238f2705c25",
+          "licence_name": "Project-generated synthetic test material",
+          "licence_url": null,
+          "licence_status": "unknown",
+          "access_level": "uploaded",
+          "is_synthetic": true
+        }
+      ],
+      "demographic_rows": [
+        {
+          "schema_version": "1.0",
+          "row_id": "demo-Female",
+          "category": "Sex",
+          "reported_label": "Female",
+          "group_id": "arm-active",
+          "analysis_population": "Synthetic safety population",
+          "count": 6,
+          "denominator": 36,
+          "source_locator": {
+            "schema_version": "1.0",
+            "source_id": "phase1-synthetic",
+            "location": "table.demographics.Female",
+            "excerpt": "Synthetic audit evidence only; no observed clinical data."
+          },
+          "is_synthetic": true
+        },
+        {
+          "schema_version": "1.0",
+          "row_id": "demo-Male",
+          "category": "Sex",
+          "reported_label": "Male",
+          "group_id": "arm-active",
+          "analysis_population": "Synthetic safety population",
+          "count": 30,
+          "denominator": 36,
+          "source_locator": {
+            "schema_version": "1.0",
+            "source_id": "phase1-synthetic",
+            "location": "table.demographics.Male",
+            "excerpt": "Synthetic audit evidence only; no observed clinical data."
+          },
+          "is_synthetic": true
+        }
+      ],
+      "adverse_event_rows": [
+        {
+          "schema_version": "1.0",
+          "row_id": "ae-Female",
+          "source_term": "Nausea",
+          "normalised_term": null,
+          "group_id": "arm-active",
+          "intervention": "SYN-ALPHA experimental compound",
+          "reported_sex_category": "Female",
+          "analysis_population": "Synthetic safety population",
+          "participants_affected": 3,
+          "participants_at_risk": 6,
+          "event_occurrences": null,
+          "event_seriousness": "non_serious",
+          "reporting_window": "Synthetic days 1–14",
+          "source_locator": {
+            "schema_version": "1.0",
+            "source_id": "phase1-synthetic",
+            "location": "table.ae.Female",
+            "excerpt": "Synthetic audit evidence only; no observed clinical data."
+          },
+          "is_synthetic": true
+        },
+        {
+          "schema_version": "1.0",
+          "row_id": "ae-Male",
+          "source_term": "Nausea",
+          "normalised_term": null,
+          "group_id": "arm-active",
+          "intervention": "SYN-ALPHA experimental compound",
+          "reported_sex_category": "Male",
+          "analysis_population": "Synthetic safety population",
+          "participants_affected": 5,
+          "participants_at_risk": 30,
+          "event_occurrences": null,
+          "event_seriousness": "non_serious",
+          "reporting_window": "Synthetic days 1–14",
+          "source_locator": {
+            "schema_version": "1.0",
+            "source_id": "phase1-synthetic",
+            "location": "table.ae.Male",
+            "excerpt": "Synthetic audit evidence only; no observed clinical data."
+          },
+          "is_synthetic": true
+        }
+      ],
+      "pk_rows": [],
+      "narrative_entries": [],
+      "availability": {
+        "schema_version": "1.0",
+        "representation": "available",
+        "sex_stratified_ae": "available",
+        "sex_stratified_pk": "missing",
+        "participant_level": "missing",
+        "notes": []
+      },
+      "limitations": [
+        "Entirely synthetic audit scenario; cannot support a clinical conclusion."
+      ],
+      "is_synthetic": true
+    },
+    "symptom_mappings": [],
+    "analyses": [
+      {
+        "schema_version": "1.0",
+        "analysis_id": "audit-1",
+        "request_id": null,
+        "status": "completed",
+        "method": "Synthetic descriptive availability review",
+        "parameters": {},
+        "results": {
+          "female_participants": 6,
+          "male_participants": 30,
+          "sex_specific_pk": "missing"
+        },
+        "sample_sizes": {},
+        "source_locators": [
+          {
+            "schema_version": "1.0",
+            "source_id": "phase1-synthetic",
+            "location": "tables",
+            "excerpt": "Synthetic audit evidence only; no observed clinical data."
+          }
+        ],
+        "assumptions": [],
+        "limitations": [
+          "Synthetic aggregate data; exploratory only."
+        ],
+        "is_synthetic": true
+      }
+    ],
+    "findings": [
+      {
+        "schema_version": "1.0",
+        "finding_id": "signal-nausea",
+        "finding_type": "potential_signal",
+        "title": "Exploratory adverse-event nausea imbalance",
+        "description": "Exploratory adverse-event nausea imbalance (synthetic).",
+        "endpoint": "Nausea",
+        "priority": "high",
+        "priority_rationale": "Unresolved prerequisite for planning a subsequent trial, not a safety conclusion.",
+        "analysis_ids": [
+          "audit-1"
+        ],
+        "source_ids": [
+          "phase1-synthetic"
+        ],
+        "limitations": [],
+        "is_synthetic": true
+      },
+      {
+        "schema_version": "1.0",
+        "finding_id": "gap-representation",
+        "finding_type": "evidence_gap",
+        "title": "Limited representation of women",
+        "description": "Limited representation of women (synthetic).",
+        "endpoint": null,
+        "priority": "high",
+        "priority_rationale": "Unresolved prerequisite for planning a subsequent trial, not a safety conclusion.",
+        "analysis_ids": [
+          "audit-1"
+        ],
+        "source_ids": [
+          "phase1-synthetic"
+        ],
+        "limitations": [],
+        "is_synthetic": true
+      },
+      {
+        "schema_version": "1.0",
+        "finding_id": "gap-pk",
+        "finding_type": "evidence_gap",
+        "title": "Missing sex-specific PK Cmax summaries",
+        "description": "Missing sex-specific PK Cmax summaries (synthetic).",
+        "endpoint": "Cmax",
+        "priority": "high",
+        "priority_rationale": "Unresolved prerequisite for planning a subsequent trial, not a safety conclusion.",
+        "analysis_ids": [
+          "audit-1"
+        ],
+        "source_ids": [
+          "phase1-synthetic"
+        ],
+        "limitations": [],
+        "is_synthetic": true
+      }
+    ]
+  },
+  "investigation": {
+    "schema_version": "1.0",
+    "trial_id": "synthetic-phase1-alpha",
+    "assessed_findings": [
+      {
+        "schema_version": "1.0",
+        "finding_id": "signal-nausea",
+        "conclusion": "Synthetic unresolved research issue, not an established safety conclusion.",
+        "priority": "high",
+        "rationale": "Source review and missing-data checks required.",
+        "analysis_ids": [
+          "audit-1"
+        ],
+        "evidence_ids": [
+          "e-support",
+          "e-opposes"
+        ],
+        "limitations": []
+      },
+      {
+        "schema_version": "1.0",
+        "finding_id": "gap-representation",
+        "conclusion": "Synthetic unresolved research issue, not an established safety conclusion.",
+        "priority": "high",
+        "rationale": "Source review and missing-data checks required.",
+        "analysis_ids": [
+          "audit-1"
+        ],
+        "evidence_ids": [],
+        "limitations": []
+      },
+      {
+        "schema_version": "1.0",
+        "finding_id": "gap-pk",
+        "conclusion": "Synthetic unresolved research issue, not an established safety conclusion.",
+        "priority": "high",
+        "rationale": "Source review and missing-data checks required.",
+        "analysis_ids": [
+          "audit-1"
+        ],
+        "evidence_ids": [],
+        "limitations": []
+      }
+    ],
+    "hypotheses": [
+      {
+        "schema_version": "1.0",
+        "hypothesis_id": "hyp-nausea",
+        "statement": "A subgroup association may merit further investigation; no causal conclusion.",
+        "finding_ids": [
+          "signal-nausea"
+        ],
+        "supporting_evidence_ids": [
+          "e-support"
+        ],
+        "contradicting_evidence_ids": [
+          "e-opposes"
+        ],
+        "status": "unresolved"
+      }
+    ],
+    "completed_analysis_ids": [
+      "audit-1"
+    ],
+    "evidence_ids": [
+      "e-support",
+      "e-opposes"
+    ],
+    "unresolved_questions": [
+      "Would better subgroup representation and sex-specific PK resolve this uncertainty?"
+    ],
+    "limitations": [],
+    "status": "partial"
+  },
+  "evidence_reports": [
+    {
+      "schema_version": "1.0",
+      "request_id": "synthetic-research",
+      "searches": [],
+      "sources": [
+        {
+          "schema_version": "1.0",
+          "source_id": "synthetic-study-A",
+          "source_type": "synthetic",
+          "title": "ENTIRELY SYNTHETIC source: synthetic-study-A",
+          "url": null,
+          "external_id": null,
+          "retrieved_at": "2026-11-08T00:00:00Z",
+          "content_hash": "416ee40bdf44e8b97936c302dc582c3c51db382245039b5168d8176212a52991",
+          "licence_name": "Project-generated synthetic test material",
+          "licence_url": null,
+          "licence_status": "unknown",
+          "access_level": "abstract",
+          "is_synthetic": true
+        },
+        {
+          "schema_version": "1.0",
+          "source_id": "synthetic-study-B",
+          "source_type": "synthetic",
+          "title": "ENTIRELY SYNTHETIC source: synthetic-study-B",
+          "url": null,
+          "external_id": null,
+          "retrieved_at": "2026-11-08T00:00:00Z",
+          "content_hash": "c58d09efc96c62855609ce61aa418302a5ec432f30c13dfef547256a3ffa0af8",
+          "licence_name": "Project-generated synthetic test material",
+          "licence_url": null,
+          "licence_status": "unknown",
+          "access_level": "abstract",
+          "is_synthetic": true
+        }
+      ],
+      "evidence_items": [
+        {
+          "schema_version": "1.0",
+          "evidence_id": "e-support",
+          "source_id": "synthetic-study-A",
+          "finding_ids": [
+            "signal-nausea"
+          ],
+          "claim": "Synthetic study A reports more nausea in the female subgroup; association only.",
+          "relation": "supports",
+          "source_locator": {
+            "schema_version": "1.0",
+            "source_id": "synthetic-study-A",
+            "location": "synthetic.abstract",
+            "excerpt": "Synthetic study A reports more nausea in the female subgroup; association only."
+          },
+          "study_design": null,
+          "population": "Fabricated healthy-volunteer cohort",
+          "intervention": "SYN-ALPHA synthetic study product",
+          "endpoint": "Nausea",
+          "relevance": "Entirely fabricated comparison for software testing only.",
+          "limitations": [
+            "Abstract-only synthetic source; different formulation/population cannot establish applicability."
+          ]
+        },
+        {
+          "schema_version": "1.0",
+          "evidence_id": "e-opposes",
+          "source_id": "synthetic-study-B",
+          "finding_ids": [
+            "signal-nausea"
+          ],
+          "claim": "Synthetic study B reports no clear nausea difference; population and formulation differ.",
+          "relation": "contradicts",
+          "source_locator": {
+            "schema_version": "1.0",
+            "source_id": "synthetic-study-B",
+            "location": "synthetic.abstract",
+            "excerpt": "Synthetic study B reports no clear nausea difference; population and formulation differ."
+          },
+          "study_design": null,
+          "population": "Fabricated healthy-volunteer cohort",
+          "intervention": "SYN-ALPHA synthetic study product",
+          "endpoint": "Nausea",
+          "relevance": "Entirely fabricated comparison for software testing only.",
+          "limitations": [
+            "Abstract-only synthetic source; different formulation/population cannot establish applicability."
+          ]
+        }
+      ],
+      "unresolved_questions": [],
+      "suggested_analysis_requests": [],
+      "limitations": [
+        "Entirely synthetic research; applicability unresolved."
+      ],
+      "status": "partial"
+    }
+  ]
+}
