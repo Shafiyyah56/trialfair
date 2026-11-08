@@ -20,7 +20,7 @@ Agent 1 live test. No shared dependency or contract modifications planned.
 
 ## Implementation handoff
 
-Implementation complete locally; integrator runtime wiring and live verification pending.
+Initial implementation is committed; pre-merge corrections are local. Integration remains blocked.
 
 Implemented modules: interpreter, registry client/parser, four deterministic
 statistics tools and supplied terminology lookup. Added interpreter tests, exact
@@ -35,7 +35,46 @@ No live Gemini calls or full multi-agent workflow were run by Agent 1. Public
 registry record and official API metadata/spec were retrieved over approved HTTP.
 See usage documentation for constructor signatures, commands and limitations.
 
-Final checks: `.venv/bin/python -m pytest -q` — 95 passed, 1 live test deselected,
+Initial implementation checks: `.venv/bin/python -m pytest -q` — 95 passed, 1 live test deselected,
 1 existing Starlette/httpx deprecation warning. `.venv/bin/ruff check .` and
 `.venv/bin/ruff format --check .` passed.
-No dependencies or lockfile changed. Changes remain local for review; no push or PR performed.
+No dependencies or lockfile changed. Initial implementation was subsequently committed by the user as 246f7fb.
+
+
+## Pre-merge corrections
+
+Working on feat/agent-1-interpreter from 246f7fb0ae2be91b36c9583b9495579fa36cf2c0
+with a clean initial tree. Original ownership and no-email policy remain in force.
+No shared contracts, dependencies, Agent 2/3 files or orchestrator changes allowed.
+
+Fixed SDK/transport error recovery without swallowing task cancellation; PK subgroup
+sample-size assignment and uncertainty preservation; compatibility-based subgroup
+audits and non-absence wording; narrative/AE tool-key collisions; cache-only registry
+retrieval enforced by replay interpreter runs. Captures retain original hash/date.
+Original statistics, tool loop, live registry fetching and summaries remain enabled.
+
+Added regression tests under tests/interpreter/test_regressions.py, including a
+real Agent 2 dispatcher -> Agent 1 reanalysis -> validated PlannerInput check.
+Updated the original replay test to register its actual captured source, not perform
+a mocked fresh fetch during a replay run.
+
+Remaining blocker: unchanged orchestrator may mark incomplete interpretation as
+completed. Strict expected-failure regression documents the precise status assertion;
+`--runxfail` exposes it. No source-local workaround can enforce global RunResult
+status while preserving the shared interfaces and downstream functionality.
+
+PK ratios remain unavailable from PKRow alone. Source-verified population/window
+context could enable descriptive ratios without a schema change; that resolver is
+not implemented. This is an incomplete requirement, not a reason to invent context.
+No live API calls performed during corrections. No commit, push or merge performed.
+
+Correction verification: full suite 122 passed, 1 strict expected failure (the
+unresolved run-status defect), 1 paid/live test deselected, 1 existing upstream
+warning. Running the status regression with --runxfail produced the exact
+completed-versus-partial failure. Ruff lint/format and git diff --check passed.
+Network-blocked credential-free fixture demo returned validated 4 analyses and
+3 findings with risk difference 0.1. Real Agent 2 dispatch/reanalysis/PlannerInput
+regression passed. Protected shared/Agent 2/Agent 3/orchestrator files match HEAD.
+Merge recommendation: do not merge as integration-ready until the run-status
+blocker is resolved by the integrator; PK ratio and runtime/live limitations remain
+explicit. No commit, push or merge has been performed for these corrections.

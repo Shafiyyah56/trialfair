@@ -44,7 +44,11 @@ def test_source_preserving_interpretation(
         [
             ModelResponse(
                 tool_calls=[
-                    ToolCall(call_id="call", name="source_context", arguments={"entry_id": "entry"})
+                    ToolCall(
+                        call_id="call",
+                        name="source_context",
+                        arguments={"entry_id": "narrative:entry"},
+                    )
                 ]
             ),
             ModelResponse(text="Ready"),
@@ -145,6 +149,7 @@ def test_real_nct_to_valid_screening(context_factory):
     import httpx
     from test_registry import PUBLIC
 
+    from app.contracts import SourceRecord
     from app.services.clinical_trials import ClinicalTrialsClient
 
     async def check():
@@ -155,6 +160,21 @@ def test_real_nct_to_valid_screening(context_factory):
             )
         ) as http:
             ctx.registry = ClinicalTrialsClient(http, ctx.budget)
+            metadata = json.loads((PUBLIC / "NCT04280705.provenance.json").read_text())
+            ctx.registry.load_capture(
+                (PUBLIC / "NCT04280705.json").read_bytes(),
+                SourceRecord(
+                    source_id="captured-NCT04280705",
+                    source_type="trial_registry",
+                    title="Captured NCT04280705",
+                    external_id="NCT04280705",
+                    url=metadata["url"],
+                    retrieved_at=metadata["retrieved_at"],
+                    content_hash=metadata["sha256"],
+                    access_level="full_text",
+                    is_synthetic=False,
+                ),
+            )
             output = await run_interpreter(TrialInput(nct_id="NCT04280705", mode="replay"), ctx)
         validate_screening(output)
         assert not output.trial_bundle.is_synthetic

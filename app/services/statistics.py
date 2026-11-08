@@ -39,6 +39,48 @@ def summarise_representation(bundle: TrialBundle, rows):
     ]
 
 
+def _ae_availability(bundle):
+    rows = bundle.adverse_event_rows
+    labelled = [r for r in rows if r.reported_sex_category]
+    categories = {r.reported_sex_category.casefold() for r in labelled}
+    reasons = []
+    compatible_pairs = []
+    # Validate pairs using exactly the statistical tool's preconditions, not row counts.
+    female = [r for r in labelled if r.reported_sex_category.casefold() == "female"]
+    male = [r for r in labelled if r.reported_sex_category.casefold() == "male"]
+    for a in female:
+        for b in male:
+            try:
+                _validate_ae_pair([a, b])
+                compatible_pairs.append([a.row_id, b.row_id])
+            except ValueError as exc:
+                reasons.append(str(exc))
+    covered = {key for pair in compatible_pairs for key in pair}
+    if compatible_pairs:
+        state = "available" if all(r.row_id in covered for r in labelled) else "incomplete"
+        if state == "incomplete":
+            reasons.append("Some reported category rows lack a compatible comparison")
+    elif not labelled:
+        declared = bundle.availability.sex_stratified_ae
+        state = declared if declared in {"not_assessed", "not_applicable"} else "missing"
+        reasons.append(
+            "No explicit sex-category participant comparison extracted; "
+            "this does not establish that the source lacks subgroup data"
+        )
+    elif not {"female", "male"} <= categories:
+        state = "incomplete"
+        reasons.append(
+            "A single or unsupported set of reported categories cannot form a comparison"
+        )
+    else:
+        state = "incompatible"
+    return {
+        "status": state,
+        "compatible_row_pairs": compatible_pairs,
+        "reasons": list(dict.fromkeys(reasons)),
+    }
+
+
 def audit_subgroup_availability(bundle: TrialBundle, rows):
     ae = [
         r
@@ -48,20 +90,42 @@ def audit_subgroup_availability(bundle: TrialBundle, rows):
         and r.participants_at_risk
     ]
     pk = [r for r in bundle.pk_rows if r.reported_sex_category]
+    ae_state = _ae_availability(bundle)
+    if pk:
+        pk_state = {
+            "status": "reported_only",
+            "reasons": [
+                "Sex-category PK summaries are reported; population and sampling-window "
+                "comparability cannot be established from PKRow v1.0 alone"
+            ],
+        }
+    else:
+        declared = bundle.availability.sex_stratified_pk
+        pk_state = {
+            "status": declared if declared in {"not_assessed", "not_applicable"} else "missing",
+            "reasons": [
+                "No explicit sex-category PK summaries extracted; source review may be needed"
+            ],
+        }
+    missing = []
+    if ae_state["status"] not in {"available", "not_applicable"}:
+        missing.append("compatible sex-stratified AE participant counts")
+    if pk_state["status"] not in {"available", "not_applicable"}:
+        missing.append("verified compatible sex-stratified PK summaries")
     return {
         "reported_availability": bundle.availability.model_dump(mode="json"),
+        "comparison_availability": {"adverse_events": ae_state, "pk": pk_state},
         "ae_rows_with_explicit_sex_and_participant_counts": len(ae),
         "pk_rows_with_explicit_sex": len(pk),
-        "ae_comparison_requires_compatibility_review": True,
-        "missing_fields": ([] if ae else ["sex-stratified AE participant counts"])
-        + ([] if pk else ["sex-stratified PK summaries"]),
+        "ae_comparison_requires_compatibility_review": ae_state["status"] != "available",
+        "missing_fields": missing,
     }, [
-        "Availability describes this supplied source only, not all sponsor analyses.",
+        "Availability describes extracted inputs, not absence from original sources or analyses.",
         "Baseline sex counts cannot supply adverse-event denominators.",
     ]
 
 
-def compare_adverse_event_rates(bundle: TrialBundle, rows):
+def _validate_ae_pair(rows):
     if len(rows) != 2:
         raise ValueError("Select exactly two disjoint sex-category rows")
     a, b = rows
@@ -89,6 +153,11 @@ def compare_adverse_event_rates(bundle: TrialBundle, rows):
                 "Requires participants_affected and positive participants_at_risk; "
                 "event occurrences are not participant counts"
             )
+    return a, b
+
+
+def compare_adverse_event_rates(bundle: TrialBundle, rows):
+    a, b = _validate_ae_pair(rows)
     x, n, y, m = (
         a.participants_affected,
         a.participants_at_risk,

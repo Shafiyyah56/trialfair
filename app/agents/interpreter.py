@@ -5,9 +5,9 @@ import hashlib
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field
 
-from app.context import BudgetExceeded, ToolContext
+from app.context import ToolContext
 from app.contracts import (
     AgentEvent,
     AnalysisRequest,
@@ -50,9 +50,12 @@ def _event(context, kind, summary, ids=()):
 
 
 async def _interpret(bundle, context):
-    entries = {e.entry_id: (e.text, e.locator) for e in bundle.narrative_entries}
+    entries = {f"narrative:{e.entry_id}": (e.text, e.locator) for e in bundle.narrative_entries}
     entries.update(
-        {f"ae:{r.row_id}": (r.source_term, r.source_locator) for r in bundle.adverse_event_rows}
+        {
+            f"registry-ae:{r.row_id}": (r.source_term, r.source_locator)
+            for r in bundle.adverse_event_rows
+        }
     )
     if not entries:
         return [], []
@@ -168,14 +171,11 @@ async def _interpret(bundle, context):
         if len({m.mapping_id for m in batch.mappings}) != len(batch.mappings):
             raise ValueError("Duplicate mapping IDs")
         return batch.mappings, limitations
-    except (
-        BudgetExceeded,
-        TimeoutError,
-        ValueError,
-        ValidationError,
-        RuntimeError,
-        NotImplementedError,
-    ):
+    except Exception:
+        # Provider APIError, HTTP transport errors and invalid model/tool results
+        # are recoverable interpretation failures. Never catch BaseException:
+        # task cancellation must still propagate to the run deadline boundary.
+        _event(context, "error", "Interpretation provider, tool or validation failed")
         _event(context, "stop", "Interpretation incomplete; source entries require review")
         # Do not silently replace a failed model with guessed interpretation.
         mappings = [
@@ -212,7 +212,13 @@ async def run_interpreter(trial_input: TrialInput, context: ToolContext) -> Scre
         bundles.append(context.datasets[key].model_copy(deep=True))
     if trial_input.nct_id:
         async with asyncio.timeout(context.budget.remaining_seconds()):
-            retrieved = await context.registry.fetch_trial(trial_input.nct_id)
+            if trial_input.mode == "replay":
+                fetch = getattr(context.registry, "fetch_cached_trial", None)
+                if not callable(fetch):
+                    raise ValueError("Replay requires cache-only registry retrieval")
+                retrieved = await fetch(trial_input.nct_id)
+            else:
+                retrieved = await context.registry.fetch_trial(trial_input.nct_id)
         bundles.insert(0, parse_trial(retrieved))
     if bundles:
         bundle = bundles[0]
@@ -361,7 +367,10 @@ async def run_interpreter(trial_input: TrialInput, context: ToolContext) -> Scre
                 finding_id=f"finding-{uuid4().hex}",
                 finding_type="evidence_gap",
                 title="Subgroup evidence unavailable for screening",
-                description="The supplied record lacks usable " + ", ".join(missing) + ".",
+                description="This screening cannot establish a usable comparison for "
+                + ", ".join(missing)
+                + ". See the audit for missing, unassessed or incompatible data; "
+                "this does not establish absence from the original source.",
                 priority="medium",
                 priority_rationale="Further source review is needed before subgroup "
                 "interpretation.",

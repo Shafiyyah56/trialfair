@@ -109,3 +109,20 @@ Pending coordination, not an agreed schema change:
 
 Agreement status: review by Agent 2 pending. No migration or version change was
 applied. Agent 2/3 implementation files and shared contracts were not edited.
+
+
+## Agent 1 pre-merge corrections (integration review required)
+
+Agent 1 now enforces cache-only registry access for replay using its concrete
+client's additive fetch_cached_trial method; load_capture registers exact captured
+bytes with original hash/retrieval metadata. Shared Protocol signatures are unchanged.
+SDK errors preserve screening; availability audits distinguish extraction uncertainty
+from source absence. PK uncertainty and subgroup denominators are preserved safely.
+
+Run-level completion remains blocked: test_incomplete_interpretation_must_make_run_partial
+in tests/interpreter/test_regressions.py is a strict expected failure against the
+unchanged real orchestrator and Agent 2. Agent 2/integrator must propagate incomplete
+interpreter work into RunResult partial status. Agent 1 cannot enforce that with
+ScreeningOutput alone. No such shared-code change was applied or agreed here.
+PK descriptive ratios still need provenance-backed population/window comparability;
+source context could supply it without necessarily changing scientific contracts.

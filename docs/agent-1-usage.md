@@ -6,6 +6,10 @@
 - `app.services.statistics.execute_analysis(AnalysisRequest, ToolContext) -> AnalysisResult`
 - `ClinicalTrialsClient(client, budget, cache_dir=None, replay=False)` implements
   existing `fetch_trial(nct_id)` and `search_related_trials(query, page_size=5)`.
+  Additive `fetch_cached_trial(nct_id)` never attempts HTTP, even on a live-capable
+  client. `load_capture(raw_bytes, source_record)` registers a hash-verified capture
+  with its original provenance. Replay interpreter runs require the cache-only
+  entry point; adapters without it fail before their live fetch is called.
   The caller owns the injected `httpx.AsyncClient` lifetime and shared RunBudget.
 - `SuppliedTerminology(mappings=None)` implements exact `lookup(text)` only.
   Mappings must be licensed/supplied and candidate source records must already
@@ -32,7 +36,10 @@ risk difference 0.1, risk ratio 2, Newcombe/Wilson 95% difference interval and a
 two-sided Fisher test. These are demonstration data, not clinical observations.
 The real captured registry response has baseline sex counts but no extracted
 sex-specific AE participant counts. Those baseline counts are never used as AE
-denominators. Missing subgroup evidence produces an evidence-gap finding.
+denominators. Unassessed extraction produces a source-review gap, not a claim
+that the registry or sponsor never reported subgroup data. The audit validates
+actual comparison preconditions and distinguishes missing, unassessed, incomplete,
+incompatible, available and not-applicable inputs in its JSON results.
 
 Tool parameters are `{}` for summaries/audits, or `{"row_ids": ["row-a", "row-b"]}`
 for explicit row selection. Only opaque keys already registered in
@@ -74,8 +81,23 @@ with concentration/exposure/PK context and units. Non-numeric summaries and
 ambiguous outcomes require review. Explicit Sex/Gender class categories may be
 preserved; group names never manufacture sex labels. Dose/formulation are not
 inferred. Contract v1.0 lacks population and sampling-window fields, so PK ratios
-are withheld; reported summaries remain available. No individual exposure or
-inferential PK statistics are manufactured.
+are withheld; reported summaries remain available. Group/class participant counts
+are not assigned to Sex/Gender category measurements as subgroup sample sizes.
+Reported uncertainty is retained in `variability` as a JSON string with the original
+`dispersionType`, `spread`, `lowerLimit` and `upperLimit` values when supplied.
+No individual exposure or inferential PK statistics are manufactured.
+
+A descriptive PK ratio is scientifically possible without changing the JSON
+contracts *if* trusted source inspection separately establishes comparable
+population, sampling window, endpoint, summary statistic, dose, formulation and
+units. A positive reference value is also required. Sample sizes or SDs are not
+needed for a purely descriptive ratio, but cannot be fabricated to support inference.
+`PKRow` alone does not establish all those facts: matching group IDs and numbers
+are insufficient. SourceLocator permits later retrieval of that context, but the
+current tool has no verified source-context resolver for PK comparisons. Therefore
+it still returns `descriptive_ratio=null` rather than accepting model-supplied
+compatibility claims. This original requirement remains incomplete; it is not
+mathematically impossible and does not inherently require a contract change.
 
 Narrative sources hash exact UTF-8 text. Reusing an upload source ID for different
 text is invalid. Model extraction preserves original text and locators exactly;
@@ -84,7 +106,10 @@ accepted. Negation/temporality interpretation still requires model and human
 review: deterministic fakes verify interface behaviour, not model accuracy.
 The batch is bounded at 100 entries; excess entries remain in source rows and are
 flagged for review. Failed/budget-limited interpretation returns uncertain,
-needs_review mappings without guessed terms. No hidden reasoning or raw narratives
+needs_review mappings without guessed terms. SDK API/transport errors also retain
+completed statistical work; error events do not expose provider messages. External
+task cancellation still propagates. Narrative and registry-AE tool IDs use separate
+namespaces, so user entry IDs cannot overwrite AE entries. No hidden reasoning or raw narratives
 are emitted in activity events. Registry/model/source text cannot grant new tools.
 
 ## Verification
@@ -110,3 +135,21 @@ unchanged and must not be described as a ready live pipeline. Agent 2 should
 propagate interpreter-incomplete limitations to run-level partial status; the
 current ScreeningOutput contract has no status field. Source IDs resolving and
 Pydantic validation do not prove scientific support.
+
+## Pre-merge regression status
+
+Five review defects are fixed in Agent 1. The sixth, run-level partial status,
+cannot be enforced by the current ScreeningOutput contract and unchanged
+orchestrator. A strict expected-failure regression demonstrates that an incomplete
+interpreter can still be followed by a completed investigation/run. This is a
+known merge blocker, not a passing acceptance check. Run it without the marker:
+
+```sh
+uv run python -m pytest --runxfail tests/interpreter/test_regressions.py::test_incomplete_interpretation_must_make_run_partial -q
+```
+
+That command currently fails at the expected `completed` versus `partial` assertion.
+Fixing it requires an integrator-owned status propagation change. No budget
+manipulation, forced failure, monkeypatching of production code, or disabling
+Agent 2 is used to conceal it. Runtime service wiring and live verification remain
+pending; do not describe this branch as a ready complete live pipeline.

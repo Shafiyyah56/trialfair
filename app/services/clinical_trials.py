@@ -206,7 +206,31 @@ class ClinicalTrialsClient:
         response.raise_for_status()
         return response
 
+    def load_capture(self, raw: bytes, source: SourceRecord) -> RetrievedTrial:
+        """Register exact captured bytes and their original provenance without HTTP."""
+        if hashlib.sha256(raw).hexdigest() != source.content_hash:
+            raise ValueError("Registry capture hash mismatch")
+        payload = json.loads(raw)
+        study = RegistryStudy.model_validate(payload)
+        nct_id = study.protocolSection["identificationModule"]["nctId"]
+        if (
+            source.external_id != nct_id
+            or source.source_type != "trial_registry"
+            or source.is_synthetic
+        ):
+            raise ValueError("Registry capture identity or source mismatch")
+        retrieved = RetrievedTrial(payload=payload, source=source.model_copy(deep=True))
+        self._memory[nct_id] = retrieved
+        return retrieved
+
     async def fetch_trial(self, nct_id: str) -> RetrievedTrial:
+        return await self._fetch_trial(nct_id, cache_only=self.replay)
+
+    async def fetch_cached_trial(self, nct_id: str) -> RetrievedTrial:
+        """Cache-only entry point even when this client also supports live retrieval."""
+        return await self._fetch_trial(nct_id, cache_only=True)
+
+    async def _fetch_trial(self, nct_id: str, *, cache_only: bool) -> RetrievedTrial:
         nct_id = TypeAdapter(NctId).validate_python(nct_id)
         self.budget.remaining_seconds()
         if nct_id in self._memory:
@@ -222,7 +246,7 @@ class ClinicalTrialsClient:
             self.cache_hits.append(nct_id)
             payload = json.loads(raw)
         else:
-            if self.replay:
+            if cache_only:
                 raise ValueError("No captured registry response for replay")
             response = await self._get(f"/studies/{nct_id}")
             raw, payload = response.content, response.json()
@@ -278,6 +302,21 @@ class ClinicalTrialsClient:
             hits.append(TrialSearchHit(nct_id=identity["nctId"], title=identity["briefTitle"]))
         self._searches[key] = hits
         return list(hits)
+
+
+def _pk_variability(outcome: dict, measurement: dict) -> str | None:
+    """Retain reported uncertainty and its type verbatim in the existing string field."""
+    reported = {
+        key: value
+        for key, value in {
+            "dispersionType": outcome.get("dispersionType"),
+            "spread": measurement.get("spread"),
+            "lowerLimit": measurement.get("lowerLimit"),
+            "upperLimit": measurement.get("upperLimit"),
+        }.items()
+        if value is not None
+    }
+    return json.dumps(reported, ensure_ascii=False) if reported else None
 
 
 def parse_trial(retrieved: RetrievedTrial) -> TrialBundle:
@@ -401,11 +440,8 @@ def parse_trial(retrieved: RetrievedTrial) -> TrialBundle:
                     if not math.isfinite(number):
                         continue
                     group = value["groupId"]
-                    sex = (
-                        category.get("title")
-                        if cls.get("title", "").casefold() in {"sex", "gender"}
-                        else None
-                    )
+                    sex_class = (cls.get("title") or "").casefold() in {"sex", "gender"}
+                    sex = category.get("title") if sex_class else None
                     denoms = cls.get("denoms", outcome.get("denoms", []))
                     sizes = [
                         _count(c.get("value"))
@@ -414,6 +450,12 @@ def parse_trial(retrieved: RetrievedTrial) -> TrialBundle:
                         for c in d.get("counts", [])
                         if c.get("groupId") == group
                     ]
+                    if sex_class and sizes:
+                        limitations.append(
+                            "PK category sample size withheld: reported group/class denominator "
+                            "does not establish the sex-category sample size at "
+                            f"outcomeMeasures[{oi}].classes[{ci}].categories[{ki}]."
+                        )
                     pk_rows.append(
                         PKRow(
                             row_id=f"pk-{oi}-{ci}-{ki}-{vi}",
@@ -423,8 +465,9 @@ def parse_trial(retrieved: RetrievedTrial) -> TrialBundle:
                             summary_statistic=outcome["paramType"],
                             reported_sex_category=sex,
                             group_id=group,
-                            sample_size=sizes[0] if len(sizes) == 1 else None,
-                            variability=value.get("spread"),
+                            # Group/class counts do not identify a category-specific N.
+                            sample_size=sizes[0] if len(sizes) == 1 and not sex_class else None,
+                            variability=_pk_variability(outcome, value),
                             source_locator=locator(
                                 f"$.resultsSection.outcomeMeasuresModule.outcomeMeasures[{oi}]"
                                 f".classes[{ci}].categories[{ki}].measurements[{vi}]"
