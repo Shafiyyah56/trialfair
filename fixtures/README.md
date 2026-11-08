@@ -24,3 +24,17 @@ drug. It contains SDTM-style DM, AE, PP and narrative CSVs, `truth.json` (genera
 parameters and expected conclusions), the generator, and a known-truth evaluation. See
 `synthetic/syn401/DATACARD.md` for sources, limitations and the proposed licence. It
 contains no real participant or trial data.
+
+## synthetic/syn722 and synthetic/syn318 (participant-level, SYNTHETIC)
+
+Two more mechanistic synthetic Phase Ib/IIa trials, each calibrated to a different drug
+class with no shared sources. Each has a data card with sources, years and limitations.
+
+- `syn722`: a fictional QT-prolonging antiarrhythmic, calibrated to sotalol, dofetilide,
+  ibutilide and quinidine evidence. Truth: same exposure-QTc slope by sex, but a longer
+  female baseline QTc and higher torsade risk. Includes `eg.csv` (QTcF).
+- `syn318`: a fictional antiseizure medicine, calibrated to levetiracetam, brivaracetam,
+  lacosamide and topiramate. Truth: no sex difference beyond body weight (negative control).
+
+`sdtm_sim.py` holds the shared CSV-writing mechanics.
+`evaluate_participant_sets.py {syn722,syn318}` runs the known-truth evaluation.

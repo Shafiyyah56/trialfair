@@ -1,0 +1,138 @@
+{
+  "study": "SYN-722-201",
+  "is_synthetic": true,
+  "generator_version": "1.0.0",
+  "scenario": "baseline_vulnerability",
+  "seed": 722,
+  "scenario_parameters": {
+    "female_offset_ms": 8.0,
+    "female_slope_ratio": 1.0,
+    "female_tdp_or": 1.6,
+    "equal_weights": false
+  },
+  "design": {
+    "arms": [
+      [
+        "PBO",
+        "Placebo"
+      ],
+      [
+        "SYN100",
+        "SYN-722 100 mg"
+      ],
+      [
+        "SYN200",
+        "SYN-722 200 mg"
+      ]
+    ],
+    "randomised_per_arm": 40,
+    "p_female": 0.35
+  },
+  "pk_model": {
+    "CL_typ": 12.0,
+    "V_typ": 140.0,
+    "ka": 1.0,
+    "F": 0.9,
+    "omega_CL": 0.3,
+    "omega_V": 0.2
+  },
+  "qtc_model": {
+    "baseline_qtcf_ms": {
+      "M": 448.0
+    },
+    "baseline_sd": 18.0,
+    "ecg_noise_sd": 8.0,
+    "slope_ms_per_ng_ml": 0.023708661284375047,
+    "typical_male_top_dose_dqtc_ms": 20.0,
+    "response_sd_at_reference_ms": 25.0,
+    "ecg_days": [
+      1,
+      7,
+      14
+    ]
+  },
+  "tdp_model": {
+    "p_at_450_ms": 0.0019,
+    "log_or_per_10_ms": 0.5
+  },
+  "true_effects": {
+    "female_to_male_AUC_ratio_typical": 1.135,
+    "exposure_difference": "body weight only",
+    "baseline_qtcf_female_minus_male_ms": 8.0,
+    "concentration_qtc_slope_female_to_male": 1.0,
+    "torsade_female_odds_ratio_at_equal_qtc": 1.6,
+    "expected_conclusion": "Women cross QTc outlier categories more often mainly because of longer baseline QTc (and are more TdP-prone at equal QTc); the drug's effect per unit concentration does not differ by sex. Monitoring, not dose, is the Phase II question.",
+    "background_terms": "Dizziness, fatigue, headache, nausea, palpitations: no drug or sex effect (illustrative rates)",
+    "note": "Torsade de pointes is rare; a trial of this size usually has 0-2 cases, too few for a sex comparison."
+  },
+  "class_reference": {
+    "sotalol": {
+      "finding": "TdP 4.1% of women vs 1.9% of men; ~3x adjusted odds, not explained by dose or bradycardia",
+      "year": 1996,
+      "sources": [
+        "Lehmann MH et al. Circulation 1996 (22 trials, 3,135 adults)"
+      ]
+    },
+    "ibutilide": {
+      "finding": "TdP 5.6% of women vs 3.0% of men; larger QTc increase in women (59-63 vs 46 ms, low dose)",
+      "year": 2001,
+      "sources": [
+        "Gowda RM et al. 2004 (pooled)",
+        "Rodriguez I et al. JAMA 2001"
+      ]
+    },
+    "dofetilide": {
+      "finding": "Women dose-reduced or stopped more often (55% vs 32%); TdP more frequent in women; no sex difference in exposure-adjusted QTc in healthy volunteers",
+      "year": 2015,
+      "sources": [
+        "Duke dofetilide initiation cohort",
+        "DIAMOND analyses",
+        "Vicente J et al. J Electrocardiol 2015;48(6):1081-7"
+      ]
+    },
+    "quinidine": {
+      "finding": "No sex difference in exposure-adjusted QTc prolongation",
+      "year": 2015,
+      "sources": [
+        "Vicente J et al. J Electrocardiol 2015"
+      ]
+    },
+    "class_overview": {
+      "finding": "70% (95% CI 64-75%) of 332 published cardiovascular-drug TdP cases were women (case reports; reporting bias)",
+      "year": 1993,
+      "sources": [
+        "Makkar RR et al. JAMA 1993;270:2590-7"
+      ]
+    },
+    "baseline_qtc": {
+      "finding": "Post-pubertal women have longer baseline QTc than men (about 8-10 ms in one multi-formula study)",
+      "year": 1992,
+      "sources": [
+        "Rautaharju PM et al. Can J Cardiol 1992",
+        "PMC6932456"
+      ]
+    },
+    "dqtc_magnitude": {
+      "finding": "Mean QTc +19 +/- 30 ms after initial sotalol/dofetilide dose; +11 +/- 37 ms for sotalol at >=48 h",
+      "year": 2014,
+      "sources": [
+        "PMC3888125",
+        "initiation cohort (140 patients)"
+      ]
+    },
+    "max_qtc_initiation": {
+      "finding": "Mean maximal QTc 471 ms during sotalol/dofetilide initiation with standard dosing (517 ms with non-standard)",
+      "year": 2020,
+      "sources": [
+        "PMC7313317 (379 patients)"
+      ]
+    },
+    "regulatory_categories": {
+      "finding": "QTcF > 450/480/500 ms and increase > 30/60 ms categorical analysis; >500 or >60 commonly used to stop dosing",
+      "year": 2005,
+      "sources": [
+        "ICH E14 guidance"
+      ]
+    }
+  }
+}

@@ -1,0 +1,137 @@
+{
+  "study": "SYN-318-201",
+  "is_synthetic": true,
+  "generator_version": "1.0.0",
+  "scenario": "weight_only",
+  "seed": 318,
+  "scenario_parameters": {
+    "female_exposure_ratio": 1.1353818685143864,
+    "equal_weights": false
+  },
+  "design": {
+    "arms": [
+      [
+        "PBO",
+        "Placebo"
+      ],
+      [
+        "SYN100",
+        "SYN-318 100 mg"
+      ],
+      [
+        "SYN200",
+        "SYN-318 200 mg"
+      ]
+    ],
+    "randomised_per_arm": 40,
+    "p_female": 0.45
+  },
+  "pk_model": {
+    "CL_typ": 4.0,
+    "V_typ": 50.0,
+    "ka": 1.5,
+    "F": 0.95,
+    "omega_CL": 0.25,
+    "omega_V": 0.2,
+    "auc_ref": 40918.87986708966,
+    "theta_sex_after_weight": 1.0
+  },
+  "ae_model": {
+    "Somnolence": {
+      "p0": 0.08,
+      "target_top_dose": 0.15,
+      "soc": "Nervous system disorders"
+    },
+    "Dizziness": {
+      "p0": 0.07,
+      "target_top_dose": 0.12,
+      "soc": "Nervous system disorders"
+    },
+    "Fatigue": {
+      "p0": 0.065,
+      "target_top_dose": 0.12,
+      "soc": "General disorders and administration site conditions"
+    }
+  },
+  "calibrated_exposure_slopes": {
+    "Somnolence": 0.6171854627362734,
+    "Dizziness": 0.519102541122598,
+    "Fatigue": 0.5869404374337733
+  },
+  "true_effects": {
+    "female_to_male_AUC_ratio_typical": 1.135,
+    "explained_by_body_weight": true,
+    "female_pd_sensitivity": 1.0,
+    "expected_conclusion": "Any female exposure excess (~1.13x) is explained by body weight; AE sex differences are small and should not reach clear signals beyond chance. No sex-specific dosing question.",
+    "background_terms": "Headache, nausea, URTI, back pain: no drug or sex effect (illustrative rates)"
+  },
+  "class_reference": {
+    "levetiracetam": {
+      "sex_pk": "Cmax and AUC ~20% higher in women, but clearance adjusted for body weight comparable",
+      "somnolence": [
+        15,
+        8
+      ],
+      "dizziness": [
+        9,
+        4
+      ],
+      "fatigue": [
+        15,
+        9
+      ],
+      "year": "label (approved 1999)",
+      "sources": [
+        "Keppra US PI, pooled adjunctive adult table",
+        "levetiracetam PI 12.3 (gender)"
+      ]
+    },
+    "brivaracetam": {
+      "sex_pk": "No differences between male and female subjects",
+      "somnolence": [
+        16,
+        8
+      ],
+      "dizziness": [
+        12,
+        7
+      ],
+      "fatigue": [
+        9,
+        4
+      ],
+      "year": "label (approved 2016)",
+      "sources": [
+        "Briviact US PI",
+        "FDA Drug Trials Snapshot: Briviact"
+      ]
+    },
+    "lacosamide": {
+      "sex_pk": "No clinically relevant influence of gender; higher female concentrations explained by smaller V/F",
+      "somnolence": [
+        8,
+        5
+      ],
+      "dizziness": [
+        30,
+        8
+      ],
+      "fatigue": null,
+      "year": "label (approved 2008)",
+      "sources": [
+        "Vimpat US PI (400 mg/day row)",
+        "population PK by age and gender (PAGE 2005)"
+      ]
+    },
+    "topiramate": {
+      "sex_pk": "Clearance not affected by gender (adults 18-67)",
+      "somnolence": null,
+      "dizziness": null,
+      "fatigue": null,
+      "year": "label (approved 1996; older label versions)",
+      "sources": [
+        "Topamax US PI (archived versions)"
+      ]
+    }
+  }
+}
