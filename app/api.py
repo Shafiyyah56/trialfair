@@ -1,8 +1,8 @@
 """Local research API with injected runtimes and validated persisted results.
 
-The default runtime has Agent 2 only. It never turns missing upstream components
-into fake live results. Bind to localhost for the hackathon; there is no account or
-public-hosting security layer in this MVP.
+The default runtime has Agent 2 and Europe PMC-backed Agent 3. Missing upstream
+components never become fake live results. Bind to localhost for the hackathon;
+there is no account or public-hosting security layer in this MVP.
 """
 
 from collections.abc import Callable
@@ -67,7 +67,7 @@ def create_app(
         return HealthResponse(
             status="partial",
             agents_implemented=False,
-            components={"safety": True, "interpreter": False, "evidence": False, "planner": False},
+            components={"safety": True, "interpreter": False, "evidence": True, "planner": False},
         )
 
     @application.post("/runs", response_model=RunResult)

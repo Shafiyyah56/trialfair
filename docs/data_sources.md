@@ -1,7 +1,9 @@
 # Data sources and licences
 
-This scaffold contains no downloaded trials or publications. The synthetic fixtures
-are hand-authored interface examples. Live retrieval adapters remain unimplemented.
+The repository contains synthetic contract fixtures and synthetic HTTP/model tests,
+not committed clinical observations or article bodies. On the evidence branch,
+EuropePMCClient retrieves real metadata, abstracts and permitted open-access body
+text into ignored local caches. The registry adapter is still an Agent 1 dependency.
 
 | Source | Intended use | Licence handling |
 | --- | --- | --- |

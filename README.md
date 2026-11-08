@@ -4,14 +4,14 @@ TrialFair helps pharmaceutical safety researchers investigate potential
 sex-specific safety signals and missing subgroup evidence in completed clinical
 trials, particularly before the next trial phase.
 
-**Current status on the safety branch:** Agent 2, the shared model adapter,
-orchestration, API, local storage and dashboard are implemented and tested with
-injected services. Agents 1 and 3 still need their separate implementations and
-service wiring before a full live trial-to-report run. The user-run Gemini smoke
-check passed for gemini-4-argon (SDK 2.34.0), including tools and structured output.
-A live Agent 2 investigation with synthetic input was also observed in Chrome
-(34.63 s, partial because external evidence was not integrated).
-See [Agent 2 usage and integration](docs/agent-2-usage.md).
+**Current status on the evidence branch:** Agents 2 and 3, the shared model
+adapter, bounded orchestration, Europe PMC client, API, storage and dashboard are
+implemented. Agent 1 still needs its trial ingestion, statistics and registry/
+terminology adapters before a full real-trial pipeline is available. Agent 4 is
+deferred. Agent 2's live Gemini/synthetic demonstration passed. Agent 3's live
+research returned two audited items with partial status; see the
+[live-check scope and limitations](docs/verification/agent-3-live.md).
+See [Agent 3 usage](docs/agent-3-usage.md) and [Agent 2 usage](docs/agent-2-usage.md).
 
 ## Start here for teammates and coding agents
 
@@ -68,7 +68,8 @@ uv run uvicorn app.api:app --reload
 `GET /health` reports partial pipeline readiness. `/docs` exposes the agreed API
 shapes. `POST /investigations` accepts a prepared ScreeningOutput for independent
 Agent 2 execution. Missing live configuration returns 503, invalid inputs 422,
-and unknown stored run IDs 404. Agents 1/3 must be integrated for full trial runs.
+and unknown stored run IDs 404. Agent 1 must be integrated for full trial runs.
+Agent 3's Europe PMC adapter is now wired into the default runtime.
 
 Start the dashboard in a second terminal:
 

@@ -1,8 +1,8 @@
-"""Explicit runtime composition; Agents 1/3 provide real service adapters at integration.
+"""Runtime composition: Agent 3 literature is wired; Agent 1 registry/terminology are pending.
 
 Missing adapters fail visibly rather than returning synthetic or fabricated data.
 The standalone screening endpoint can still run Agent 2 with the shared live model
-while unavailable external evidence yields a partial investigation.
+while unavailable registry or external sources yield a partial investigation.
 """
 
 from dataclasses import dataclass
@@ -12,7 +12,7 @@ from app.config import Settings
 from app.context import RunBudget, ToolContext
 from app.model_client import GeminiModelClient
 from app.services.clinical_trials import ClinicalTrialsService
-from app.services.europe_pmc import EuropePMCService
+from app.services.europe_pmc import EuropePMCClient, EuropePMCService
 from app.services.statistics import execute_analysis
 from app.services.terminology import TerminologyService
 
@@ -23,6 +23,8 @@ class RuntimeNotReady(ValueError):
 
 class MissingService:
     """Explicit service placeholder until the owning branch provides an adapter."""
+
+    is_available = False
 
     def __getattr__(self, name):
         async def unavailable(*args, **kwargs):
@@ -58,7 +60,12 @@ def build_context(
     except ValueError as exc:
         raise RuntimeNotReady("Configure GEMINI_API_KEY and GEMINI_MODEL in local .env.") from exc
     missing = MissingService()
-    services = services or RuntimeServices(missing, missing, missing)
+    budget = RunBudget.from_settings(settings)
+    services = services or RuntimeServices(
+        missing,
+        EuropePMCClient(budget, cache_dir=settings.data_dir / "cache" / "europe_pmc"),
+        missing,
+    )
     return ToolContext(
         run_id=run_id,
         settings=settings,
@@ -69,7 +76,7 @@ def build_context(
         registry=services.registry,
         literature=services.literature,
         terminology=services.terminology,
-        budget=RunBudget.from_settings(settings),
+        budget=budget,
         emit=lambda event: None,
         analysis_handler=execute_analysis,
         evidence_handler=run_evidence,

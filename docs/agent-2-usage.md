@@ -3,7 +3,9 @@
 Agent 2 implements the Safety Investigator, Gemini SDK adapter, bounded
 orchestration, SQLite persistence, FastAPI routes and Streamlit dashboard. It
 supports independent investigation of a prepared Agent 1 ScreeningOutput JSON.
-Agent 4 is not implemented. Agents 1 and 3 are separate branch dependencies.
+Agent 4 is not implemented. Agent 3 and its Europe PMC client are now wired on
+the evidence branch; Agent 1 remains a separate implementation dependency.
+See [Agent 3 usage](agent-3-usage.md) for research behaviour and live checks.
 
 ## Install and check
 
@@ -139,6 +141,6 @@ injected transport, API routes with TestClient, and the actual dashboard with
 Streamlit AppTest. Separate live smoke and browser evidence come from the
 user-run checks recorded above. The coding sandbox restrictions did not prevent
 the user from starting servers normally.
-No real-input full-pipeline latency is claimed until Agents 1/3 are implemented
+No real-input full-pipeline latency is claimed until Agent 1 is implemented
 and wired and an actual end-to-end run is measured. The model itself has passed
 the recorded smoke check.
