@@ -238,3 +238,11 @@ excluded. Locked offline installation, Ruff lint/format and whitespace checks pa
 The configured model remains gemini-4-argon; credentials were only checked for
 presence. No keys were printed or copied. No local server or paid run was launched
 successfully from this sandbox. The user's Terminal is required for live QA.
+
+Actual browser check now completed: 95.87 s, partial, three curated cited sources
+and four explicitly rules-based follow-up actions. Safety/planner inspections
+ran, but final model outputs were rejected; do not call this complete autonomous
+research. Source review and draft fallbacks remained visible. Saved report was
+reopened successfully in the browser. See verification/demo-live.md. The live
+check exposed launcher package-path and planner timeline-label bugs; both are
+fixed and regression-tested. Current suite contains 266 offline tests.
