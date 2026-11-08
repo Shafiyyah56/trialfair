@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from typing import Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.context import BudgetExceeded, ToolContext
 from app.contracts import (
@@ -120,7 +120,7 @@ def _packet(item, planner):
 
 
 _PK_TERMS = re.compile(
-    r"\b(?:auc(?:[ _]?0[-–_](?:t|inf|infinity))?|c[ _]?max|t[ _]?max|"
+    r"\b(?:auc(?:ifo|[ _]?0[-–_](?:t|inf|infinity))?|c[ _]?max|t[ _]?max|"
     r"cl(?:/f)?|v[dz](?:/f)?|t[ _]?1/2)\b",
     re.IGNORECASE,
 )
@@ -131,7 +131,7 @@ def _pk_key(parameter):
     return re.sub(r"[\s_]", "", parameter.casefold()).replace("–", "-").replace("−", "-")
 
 
-def _pk_requested(finding):
+def _pk_requested(finding, parameters=()):
     endpoint = finding.endpoint
     if endpoint and _pk_key(endpoint) not in {"pk", "pharmacokinetics", "exposure"}:
         return [
@@ -139,7 +139,32 @@ def _pk_requested(finding):
             for part in re.split(r"\s+and\s+|[,;]", endpoint, flags=re.I)
             if part.strip()
         ]
-    return list(dict.fromkeys(match.group() for match in _PK_TERMS.finditer(finding.title)))
+    # SDTM parameters such as AUCIFO are not aliases of generic AUC. Recover the
+    # exact parameter from registered row names only when it appears in the title.
+    exact = [
+        parameter
+        for parameter in parameters
+        if re.search(r"(?<![\w/])" + re.escape(parameter) + r"(?![\w/-])", finding.title, re.I)
+    ]
+    return list(dict.fromkeys(exact or [m.group() for m in _PK_TERMS.finditer(finding.title)]))
+
+
+def _choice_reasons(candidate, planner):
+    reasons = {"follow_up", "data_prerequisite"}
+    if candidate.category == "interpretation_review":
+        reasons.add("interpretation_first")
+    if any(_evidence(planner)[eid].relation == "contradicts" for eid in candidate.evidence_ids):
+        reasons.add("conflicting_evidence")
+    return reasons
+
+
+def _selection_schema(candidates, inspected):
+    """Constrain generated references as well as validating them after generation."""
+    schema = Selection.model_json_schema()
+    ids = [c.recommendation_id for c in candidates if set(c.finding_ids) <= inspected]
+    if ids:
+        schema["$defs"]["Choice"]["properties"]["recommendation_id"]["enum"] = ids
+    return schema
 
 
 def build_candidates(planner: PlannerInput, context: ToolContext) -> list[PlannerRecommendation]:
@@ -205,8 +230,8 @@ def build_candidates(planner: PlannerInput, context: ToolContext) -> list[Planne
             priority=finding.priority,
             priority_rationale=finding.priority_rationale,
             rationale=(
-                "Follow up the linked screened finding; its scientific "
-                "interpretation requires review."
+                f"Study {bundle.trial_id}: {finding.title}. {finding.description} "
+                "Follow-up is proposed for researcher review, not a clinical conclusion."
             ),
             evidence_basis="evidence_gap"
             if finding.finding_type == "evidence_gap"
@@ -247,8 +272,22 @@ def build_candidates(planner: PlannerInput, context: ToolContext) -> list[Planne
                 PlannerRecommendation(recommendation_id=f"plan-{digest}", **(base | fields))
             )
 
+        finding_locations = {
+            (locator.source_id, locator.location)
+            for analysis in analyses
+            for locator in analysis.source_locators
+        }
         review = finding.finding_type == "data_quality" or any(
-            m.needs_review and m.source_locator.source_id in source_ids
+            m.needs_review
+            and m.source_locator.source_id in direct_source_ids
+            and (
+                (m.source_locator.source_id, m.source_locator.location) in finding_locations
+                or (
+                    finding.endpoint
+                    and finding.endpoint.casefold()
+                    in {m.original_text.casefold(), (m.normalised_term or "").casefold()}
+                )
+            )
             for m in planner.screening.symptom_mappings
         )
         if review:
@@ -267,7 +306,7 @@ def build_candidates(planner: PlannerInput, context: ToolContext) -> list[Planne
             )
         # Determine the domain from declared endpoint/title, without inventing a mechanism.
         text = f"{finding.endpoint or ''} {finding.title}".casefold()
-        requested_pk = _pk_requested(finding)
+        requested_pk = _pk_requested(finding, [row.parameter for row in bundle.pk_rows])
         pk = (
             bool(_PK_TERMS.search(text))
             or any(
@@ -286,7 +325,15 @@ def build_candidates(planner: PlannerInput, context: ToolContext) -> list[Planne
                 )
             )
         )
-        ae = any(word in text for word in ("adverse", " ae", "event", "safety"))
+        linked_ae_ids = {
+            row_id
+            for analysis in analyses
+            for row_id in analysis.parameters.get("row_ids", [])
+            if isinstance(row_id, str)
+        }
+        ae = any(word in text for word in ("adverse", " ae", "event", "safety")) or any(
+            row.row_id in linked_ae_ids for row in bundle.adverse_event_rows
+        )
         if pk:
             requested_keys = {_pk_key(parameter) for parameter in requested_pk}
             related_pk_rows = [
@@ -664,11 +711,14 @@ async def run_planner(planner_input: PlannerInput, context: ToolContext) -> Plan
                 "input_limitations": limits,
                 "candidates": [c.model_dump(mode="json") for c in candidates],
                 "hypothesis_ids": [h.hypothesis_id for h in planner.investigation.hypotheses],
+                "interventions": planner.screening.trial_bundle.interventions,
+                "findings": [f.model_dump(mode="json") for f in planner.screening.findings],
             },
         ),
     ]
     inspected = set()
     rejected = False
+    phase = "provider response"
     try:
         available = context.budget.limits["model_turn"] - context.budget.used.get("model_turn", 0)
         if available < 2 or context.budget.remaining_seconds() < 2:
@@ -686,6 +736,7 @@ async def run_planner(planner_input: PlannerInput, context: ToolContext) -> Plan
                     }
                 ),
             )
+            phase = "report validation"
             validate_planner_report(report, planner)
             _emit(context, "stop", "Planning ended with status partial.")
             return report
@@ -739,11 +790,21 @@ async def run_planner(planner_input: PlannerInput, context: ToolContext) -> Plan
                             "priorities and reason codes. No prose or new actions."
                         ),
                         "inspected_finding_ids": sorted(inspected),
+                        "eligible_choices": [
+                            {
+                                "recommendation_id": c.recommendation_id,
+                                "finding_ids": c.finding_ids,
+                                "action": c.action,
+                                "allowed_reasons": sorted(_choice_reasons(c, planner)),
+                            }
+                            for c in candidates
+                            if set(c.finding_ids) <= inspected
+                        ],
                     },
                 )
             )
             reply = await generate_with_budget(
-                context, messages, tools=[], output_schema=Selection.model_json_schema()
+                context, messages, tools=[], output_schema=_selection_schema(candidates, inspected)
             )
             if reply.tool_calls:
                 messages.append(
@@ -761,7 +822,9 @@ async def run_planner(planner_input: PlannerInput, context: ToolContext) -> Plan
                         )
                     )
                 raise ValueError("Tools forbidden during final selection")
+            phase = "selection structure"
             selected = Selection.model_validate(reply.structured_output)
+            phase = "selection references or prerequisites"
             by_id = {c.recommendation_id: c for c in candidates}
             recommendations = []
             for choice in selected.choices:
@@ -772,15 +835,7 @@ async def run_planner(planner_input: PlannerInput, context: ToolContext) -> Plan
                 candidate = by_id[choice.recommendation_id]
                 if not set(candidate.finding_ids) <= inspected:
                     raise ValueError("Selected finding was not inspected")
-                reasons = {"follow_up", "data_prerequisite"}
-                if candidate.category == "interpretation_review":
-                    reasons.add("interpretation_first")
-                if any(
-                    _evidence(planner)[eid].relation == "contradicts"
-                    for eid in candidate.evidence_ids
-                ):
-                    reasons.add("conflicting_evidence")
-                if choice.reason not in reasons:
+                if choice.reason not in _choice_reasons(candidate, planner):
                     raise ValueError("Priority explanation lacks its prerequisite")
                 recommendations.append(
                     candidate.model_copy(
@@ -825,6 +880,7 @@ async def run_planner(planner_input: PlannerInput, context: ToolContext) -> Plan
             )
             if rejected:
                 report.limitations.append("Some planner tool requests were rejected.")
+            phase = "report validation"
             validate_planner_report(report, planner)
             _emit(
                 context,
@@ -836,11 +892,13 @@ async def run_planner(planner_input: PlannerInput, context: ToolContext) -> Plan
             return report
     except (BudgetExceeded, TimeoutError):
         reason = "Planning unavailable: shared budget, deadline or bounded planning time exhausted."
-    except Exception:
-        # Provider text may contain credentials or sensitive source text; never expose it.
-        reason = (
-            "Planning unavailable: provider failure or invalid selection; no plan was inferred."
-        )
+    except (ValueError, ValidationError):
+        reason = f"Planning unavailable: rejected {phase}; no plan was inferred."
+    except Exception as exc:
+        # Never expose provider text, invalid payloads or patient narratives.
+        from app.agents.evidence import safe_failure
+
+        reason = safe_failure(exc, "Planning") + "; no plan was inferred."
     report = PlannerReport(
         status="unavailable",
         **(

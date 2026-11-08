@@ -589,3 +589,53 @@ def test_candidates_are_bounded_and_high_priority_first(snapshot, context_factor
     candidates = build_candidates(snapshot, ctx)
     assert len(candidates) == 24
     assert candidates[0].finding_ids == ["gap-39"]
+
+
+def test_unrelated_mapping_same_file_does_not_block_structured_ae(snapshot, context_factory):
+    from app.contracts import SymptomMapping
+
+    add_pair(snapshot)
+    snapshot.screening.symptom_mappings = [
+        SymptomMapping(
+            mapping_id="unrelated-review",
+            original_text="Ambiguous headache",
+            assertion="uncertain",
+            temporality="unknown",
+            needs_review=True,
+            explanation="Keep this unrelated entry flagged.",
+            source_locator=SourceLocator(source_id="source-synthetic-1", location="other-row"),
+        )
+    ]
+    ctx, _ = context_factory()
+    rec = build_candidates(snapshot, ctx)[0]
+    assert rec.category == "additional_analysis" and rec.availability == "available"
+    assert "Symptom interpretation requires human review." in planner_input_limitations(snapshot)
+
+
+def test_event_name_only_title_uses_linked_ae_rows(snapshot, context_factory):
+    add_pair(snapshot)
+    finding = snapshot.screening.findings[0]
+    finding.title = "Female participants had a higher Nausea rate (PBO)"
+    snapshot.screening.analyses[0].parameters = {"row_ids": ["ae-Female", "ae-Male"]}
+    # Use actual IDs, rather than assuming the helper's naming scheme.
+    snapshot.screening.analyses[0].parameters["row_ids"] = [
+        row.row_id for row in snapshot.screening.trial_bundle.adverse_event_rows
+    ]
+    ctx, _ = context_factory()
+    rec = build_candidates(snapshot, ctx)[0]
+    assert rec.category == "additional_analysis"
+    assert "Nausea" in rec.rationale
+
+
+@pytest.mark.anyio
+async def test_final_selection_lists_eligible_ids_and_reasons(snapshot, context_factory):
+    ctx, _ = context_factory()
+    candidate = build_candidates(snapshot, ctx)[0]
+    ctx.model.responses = iter(responses(candidate))
+    await run_planner(snapshot, ctx)
+    messages, options = ctx.model.calls[-1]
+    schema = options["output_schema"]
+    assert schema["$defs"]["Choice"]["properties"]["recommendation_id"]["enum"]
+    final = messages[-1].content
+    assert final["eligible_choices"][0]["recommendation_id"] == candidate.recommendation_id
+    assert "data_prerequisite" in final["eligible_choices"][0]["allowed_reasons"]

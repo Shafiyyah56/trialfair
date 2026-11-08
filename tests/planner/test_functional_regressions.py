@@ -342,3 +342,27 @@ def test_pk_rows_from_unrelated_sources_cannot_satisfy_parameter(phase1, context
     ctx, _ = context_factory()
     ctx.datasets = {"snapshot": phase1.screening.trial_bundle}
     assert build_candidates(phase1, ctx)[0].availability == "missing"
+
+
+@pytest.mark.parametrize("parameter", ["AUCIFO", "AUClast", "AUC0-inf"])
+def test_exact_sdtm_pk_name_in_title_is_not_unspecified(phase1, context_factory, parameter):
+    pk_candidates(phase1, context_factory, None, [parameter])
+    finding = phase1.screening.findings[0]
+    finding.title = f"Female {parameter} exposure higher than male (SYN5)"
+    finding.description = "Synthetic ratio 1.39 with uncertainty; not adjusted for body size."
+    ctx, _ = context_factory()
+    ctx.datasets = {"snapshot": phase1.screening.trial_bundle}
+    rec = build_candidates(phase1, ctx)[0]
+    assert rec.availability == "available"
+    assert rec.category == "additional_analysis"
+    assert f"Requested PK parameter(s): {parameter}" in rec.required_data
+    assert finding.title in rec.rationale and finding.description in rec.rationale
+
+
+def test_aucifo_title_cannot_be_satisfied_by_other_auc_window(phase1, context_factory):
+    pk_candidates(phase1, context_factory, None, ["AUC"])
+    phase1.screening.findings[0].title = "Female AUCIFO exposure higher than male"
+    ctx, _ = context_factory()
+    recs = build_candidates(phase1, ctx)
+    assert all(c.availability != "available" for c in recs)
+    assert any(c.category == "additional_data_collection" for c in recs)

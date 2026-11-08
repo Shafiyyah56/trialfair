@@ -375,3 +375,65 @@ def test_contradictory_evidence_cannot_be_silently_dropped(
     ]
     with pytest.raises(ValueError, match="contradictory evidence"):
         validate_report(investigation, screening, context)
+
+
+def test_final_citation_contract_binds_references_without_more_calls(
+    screening, context_factory, final_response
+):
+    context, _ = context_factory([inspect_response(), ModelResponse(), final_response])
+    report = asyncio.run(run_safety(screening, context))
+    assert report.assessed_findings
+    messages, options = context.model.calls[-1]
+    contract = messages[-1].content["citation_constraints"]
+    assert contract["trial_id"] == screening.trial_bundle.trial_id
+    assert contract["findings"][0]["allowed_evidence_ids"] == []
+    schema = options["output_schema"]
+    assert schema["properties"]["trial_id"]["enum"] == [screening.trial_bundle.trial_id]
+    assert schema["properties"]["evidence_ids"]["maxItems"] == 0
+    assert schema["$defs"]["Hypothesis"]["properties"]["supporting_evidence_ids"]["maxItems"] == 0
+    assert context.budget.used["model_turn"] == 3
+
+
+def test_background_cannot_be_generated_as_hypothesis_support(screening, context_factory):
+    from app.agents.safety import report_schema
+
+    context, _ = context_factory()
+    source = screening.trial_bundle.sources[0]
+    context.evidence_reports = [
+        EvidenceReport(
+            request_id="background",
+            status="partial",
+            sources=[source],
+            evidence_items=[
+                EvidenceItem(
+                    evidence_id="class-context",
+                    source_id=source.source_id,
+                    finding_ids=[screening.findings[0].finding_id],
+                    claim="Class context only",
+                    relation="background",
+                    source_locator=screening.analyses[0].source_locators[0],
+                    relevance="Not evidence for the fictional drug",
+                )
+            ],
+        )
+    ]
+    schema = report_schema(screening, context)
+    assert schema["properties"]["evidence_ids"]["items"]["enum"] == ["class-context"]
+    assert schema["$defs"]["Hypothesis"]["properties"]["supporting_evidence_ids"]["maxItems"] == 0
+
+
+def test_rejection_category_does_not_expose_unknown_reference(
+    screening, investigation, context_factory
+):
+    investigation.evidence_ids = ["secret-unknown-reference"]
+    context, events = context_factory(
+        [
+            inspect_response(),
+            ModelResponse(),
+            ModelResponse(structured_output=investigation.model_dump(mode="json")),
+        ]
+    )
+    report = asyncio.run(run_safety(screening, context))
+    assert "unknown cross-record reference" in report.limitations[0]
+    assert "secret-unknown-reference" not in report.model_dump_json()
+    assert "secret-unknown-reference" not in str(events)

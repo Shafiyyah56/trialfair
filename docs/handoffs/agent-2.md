@@ -1,5 +1,39 @@
 # Agent 2 acknowledgement and handoff
 
+## Output reliability branch — 2026-11-08
+
+Integrator acknowledgement: implementing backend-only reliability fixes on
+fix/agent-output-reliability, starting 8fb76cf in a separate worktree. Read AGENTS,
+team setup, handoff, assignment, architecture/context and contracts. Own safety/
+planner implementation and related tests; reuse shared ModelClient, ToolContext
+and contracts. Existing locked environment is reused from the original checkout;
+no dependencies, credentials, budgets, timeouts, UI or API contracts changed.
+
+Fixed exact AUCIFO/registered-parameter discovery in finding titles, AE-domain
+identification from linked row IDs, and symptom-review scope (exact source
+location or endpoint, rather than every finding sharing a file). Recommendations
+retain the actual study/finding description instead of a generic rationale.
+Existing global interpretation limitations and validators remain mandatory.
+
+Final safety extraction now supplies an explicit finding/evidence citation map
+and constrains schema IDs/relations to accepted data. Planner final selection lists
+eligible inspected candidates and allowed reason codes, with schema ID constraints.
+No extra provider calls/retries are added. Rejections now report safe categories,
+not raw provider messages or rejected reference values.
+
+The original saved run's exact invalid model payload was not persisted, so its
+precise rejection cannot be reconstructed. These fixes address independently
+reproduced mapping defects and reduce known reference failure opportunities; they
+do not establish that the configured live model will now succeed. Provider
+compatibility of the added dynamic schema enums remains live-unverified.
+
+Validation: 326 offline tests pass (1 live test deselected), including exact AUCIFO
+matching/window mismatch, unrelated-vs-linked symptom ambiguity, AE row-linked
+domain routing, schema constraints, citation preservation and secret-free rejection
+categories. Ruff lint/format and whitespace checks pass. No live/paid request,
+server launch, credential access or email transmission was performed.
+
+
 ## Live pipeline updates — startup acknowledgement
 
 I read AGENTS.md, docs/HANDOFF.md, docs/TEAM_SETUP.md, README.md, the Agent 2

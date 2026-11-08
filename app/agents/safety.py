@@ -160,6 +160,103 @@ def validate_report(
             raise ValueError("Hypothesis must retain relevant retrieved contradictory evidence")
 
 
+def report_constraints(screening, context):
+    """Explicit citation contracts keep raw source IDs separate from evidence IDs."""
+    evidence = [item for report in context.evidence_reports for item in report.evidence_items]
+    return {
+        "trial_id": screening.trial_bundle.trial_id,
+        "findings": [
+            {
+                "finding_id": f.finding_id,
+                "screening_analysis_ids": f.analysis_ids,
+                "allowed_evidence_ids": [
+                    e.evidence_id for e in evidence if f.finding_id in e.finding_ids
+                ],
+            }
+            for f in screening.findings
+        ],
+        "evidence_relations": [
+            {"evidence_id": e.evidence_id, "relation": e.relation, "finding_ids": e.finding_ids}
+            for e in evidence
+        ],
+        "completed_analysis_ids": [
+            a.analysis_id
+            for a in merged_screening(screening, context).analyses
+            if a.status == "completed"
+        ],
+        "rules": [
+            "Copy the exact trial_id. Never use source IDs, publication IDs "
+            "or request IDs as evidence IDs.",
+            "Each assessment may cite only evidence whose finding_ids contain that finding.",
+            "Hypothesis supporting_evidence_ids accept relation=supports only; "
+            "contradicting_evidence_ids accept relation=contradicts only.",
+            "Background and inconclusive evidence may be cited in assessments "
+            "but never as supporting/contradicting hypothesis evidence.",
+            "Retain every relevant contradictory item for each hypothesis; "
+            "if unresolved, label the hypothesis unresolved.",
+            "Use empty citation lists rather than inventing a reference or inferring support.",
+        ],
+    }
+
+
+def report_schema(screening, context):
+    """Restrict provider-generated IDs; full cross-record validators remain mandatory."""
+    schema = InvestigationReport.model_json_schema()
+    evidence = [item for report in context.evidence_reports for item in report.evidence_items]
+    analyses = merged_screening(screening, context).analyses
+
+    def restrict(field, ids):
+        if ids:
+            field["items"] = {"type": "string", "enum": sorted(set(ids))}
+        else:
+            field["maxItems"] = 0
+
+    schema["properties"]["trial_id"]["enum"] = [screening.trial_bundle.trial_id]
+    restrict(
+        schema["properties"]["completed_analysis_ids"],
+        [a.analysis_id for a in analyses if a.status == "completed"],
+    )
+    restrict(schema["properties"]["evidence_ids"], [e.evidence_id for e in evidence])
+    assessment = schema["$defs"]["FindingAssessment"]["properties"]
+    ids = [f.finding_id for f in screening.findings]
+    if ids:
+        assessment["finding_id"]["enum"] = ids
+    else:
+        schema["properties"]["assessed_findings"]["maxItems"] = 0
+    restrict(assessment["analysis_ids"], [a.analysis_id for a in analyses])
+    restrict(assessment["evidence_ids"], [e.evidence_id for e in evidence])
+    hypothesis = schema["$defs"]["Hypothesis"]["properties"]
+    restrict(hypothesis["finding_ids"], ids)
+    restrict(
+        hypothesis["supporting_evidence_ids"],
+        [e.evidence_id for e in evidence if e.relation == "supports"],
+    )
+    restrict(
+        hypothesis["contradicting_evidence_ids"],
+        [e.evidence_id for e in evidence if e.relation == "contradicts"],
+    )
+    return schema
+
+
+def _rejection_category(exc, phase):
+    # Match application-authored labels only. Never emit invalid values or provider text.
+    if phase != "cross-record validation":
+        return phase
+    text = str(exc)
+    for fragment, category in (
+        ("unrelated", "unrelated evidence attribution"),
+        ("incompatible", "incompatible evidence relation"),
+        ("contradictory", "missing contradictory evidence"),
+        ("Unknown", "unknown cross-record reference"),
+        ("Duplicate", "duplicate cross-record reference"),
+        ("trial", "trial identity mismatch"),
+        ("unavailable analysis", "unavailable analysis cited as completed"),
+    ):
+        if fragment in text:
+            return category
+    return "cross-record validation"
+
+
 def _check_findings(ids: list[str], screening: ScreeningOutput) -> None:
     known = {finding.finding_id for finding in screening.findings}
     if not set(ids) <= known:
@@ -286,6 +383,7 @@ async def run_safety(screening: ScreeningOutput, context: ToolContext) -> Invest
     ]
     tool_errors = False
     had_tool_result = False
+    phase = "provider response"
     try:
         while True:
             # Reserve a final turn; nested agents consume the same cumulative budget.
@@ -352,7 +450,9 @@ async def run_safety(screening: ScreeningOutput, context: ToolContext) -> Invest
                 content={
                     "instruction": "Return InvestigationReport. Retain uncertainty "
                     "and contradictions. "
-                    "Use only accepted IDs; supported hypotheses are not proven causality.",
+                    "Use only accepted IDs; supported hypotheses are not proven causality. "
+                    "Obey citation_constraints exactly; background is not supporting evidence.",
+                    "citation_constraints": report_constraints(screening, context),
                     "accepted_analysis_ids": [
                         x.analysis_id for x in merged_screening(screening, context).analyses
                     ],
@@ -363,13 +463,15 @@ async def run_safety(screening: ScreeningOutput, context: ToolContext) -> Invest
             )
         )
         response = await generate_with_budget(
-            context, messages, tools=[], output_schema=InvestigationReport.model_json_schema()
+            context, messages, tools=[], output_schema=report_schema(screening, context)
         )
+        phase = "report structure"
         report = InvestigationReport.model_validate(
             response.structured_output
             if response.structured_output is not None
             else json.loads(response.text or "{}")
         )
+        phase = "cross-record validation"
         validate_report(report, screening, context)
         if (tool_errors or not had_tool_result) and report.status == "completed":
             report = report.model_copy(
@@ -388,8 +490,8 @@ async def run_safety(screening: ScreeningOutput, context: ToolContext) -> Invest
         return report
     except (BudgetExceeded, TimeoutError):
         reason = "Shared investigation budget or deadline exhausted."
-    except (ValueError, ValidationError):
-        reason = "Model report rejected: invalid structure, references or evidence attribution."
+    except (ValueError, ValidationError) as exc:
+        reason = "Model report rejected: " + _rejection_category(exc, phase) + "."
     except Exception as exc:
         # Reuse the sanitised category/status formatter; never expose provider messages.
         from app.agents.evidence import safe_failure
