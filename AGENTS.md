@@ -23,8 +23,8 @@ files. If access is missing, state the blocker and continue with injected fakes.
 - Python 3.13; FastAPI, Streamlit, Pydantic v2 and the official google-genai SDK.
 - Shared contracts are version 1.0. Coordinate schema changes with the integrator.
 - Keep imports free of API calls, credential requirements and filesystem writes.
-- This commit is a scaffold. Explicit NotImplementedError/HTTP 501 placeholders
-  must not be described as implemented agents or live research.
+- Agents 1 and 3 remain separate integration dependencies on the Agent 2 branch.
+  Explicit unavailable adapters/stubs must not be described as live research.
 - Do not run paid/network tests by default. Live tests must be opt-in.
 - Do not implement the fourth Trial Improvement Planner yet.
 

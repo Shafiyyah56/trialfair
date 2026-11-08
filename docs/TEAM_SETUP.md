@@ -120,11 +120,11 @@ automated clinical decisions. Respect the standing no-email policy.
 ## Shared non-secret readiness log
 
 - Dependency lock: uv.lock committed in dae3c5b.
-- Agent implementations: scaffold only at the time of writing; check current code.
-- Shared live Gemini adapter: not yet verified.
+- Agent implementations: Agent 2 implemented on its feature branch; Agents 1/3 pending integration.
+- Shared Gemini adapter: implemented and SDK-shape tested; live execution not yet verified.
 - Agreed available model ID: pending Agent 2/account verification.
 - Tool calling and structured output smoke checks: pending.
-- Individual acknowledgements: pending; each agent updates its own handoff file.
+- Individual acknowledgements: Agent 2 acknowledged; Agents 1/3 update their own handoff files.
 
 The integrator updates this log as facts change. A pending item must not be marked
 complete merely because a teammate was given its assignment.

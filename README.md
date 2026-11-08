@@ -4,10 +4,11 @@ TrialFair helps pharmaceutical safety researchers investigate potential
 sex-specific safety signals and missing subgroup evidence in completed clinical
 trials, particularly before the next trial phase.
 
-**Current status: shared development scaffold.** Agent implementations, live Gemini
-calls, data retrieval, statistical tools, persistence and the investigation UI are
-not implemented. API run routes deliberately return HTTP 501. The fixture outputs
-are synthetic interface examples, not research findings or recorded model outputs.
+**Current status on the safety branch:** Agent 2, the shared model adapter,
+orchestration, API, local storage and dashboard are implemented and tested with
+injected services. Agents 1 and 3 still need their separate implementations and
+service wiring before a full live trial-to-report run. No live Gemini verification
+is claimed. See [Agent 2 usage and integration](docs/agent-2-usage.md).
 
 ## Start here for teammates and coding agents
 
@@ -54,17 +55,18 @@ If the contract-test dependencies are already installed, `python3 -m pytest -q`
 works without installing the full runtime. Live tests are excluded by default;
 future opt-in live tests run with `uv run pytest -m live` and require credentials.
 
-Start the scaffold API:
+Start the API:
 
 ```sh
 uv run uvicorn app.api:app --reload
 ```
 
-`GET /health` reports `status=scaffold` and `agents_implemented=false`.
-`/docs` exposes the agreed API shapes. Valid `POST /runs` and `GET /runs/{run_id}`
-currently return 501. Invalid trial inputs return 422.
+`GET /health` reports partial pipeline readiness. `/docs` exposes the agreed API
+shapes. `POST /investigations` accepts a prepared ScreeningOutput for independent
+Agent 2 execution. Missing live configuration returns 503, invalid inputs 422,
+and unknown stored run IDs 404. Agents 1/3 must be integrated for full trial runs.
 
-Start the UI placeholder in a second terminal:
+Start the dashboard in a second terminal:
 
 ```sh
 uv run streamlit run app/ui/dashboard.py

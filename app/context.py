@@ -72,8 +72,8 @@ class RunBudget:
 class ToolContext:
     """Create once per run. Never recreate the budget in a nested tool call.
 
-    Service adapters consume external_request; the model adapter/caller consumes
-    model_turn exactly once per provider attempt. The orchestrator dispatcher
+    Service adapters consume external_request; agents use generate_with_budget
+    to consume model_turn exactly once per provider attempt. The orchestrator dispatcher
     consumes evidence_request/additional_analysis and appends accepted results.
     Initial deterministic screening does not consume additional_analysis.
     Dataset references are registered in memory by the interpreter and must not

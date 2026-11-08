@@ -365,5 +365,6 @@ class TerminologyCandidate(Contract):
 
 
 class HealthResponse(Contract):
-    status: Literal["scaffold"] = "scaffold"
+    status: Literal["scaffold", "partial", "ready"] = "scaffold"
     agents_implemented: bool = False
+    components: dict[str, bool] = Field(default_factory=dict)

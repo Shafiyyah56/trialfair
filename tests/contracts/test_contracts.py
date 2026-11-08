@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from app.api import app
+from app.api import create_app
 from app.config import Settings
 from app.context import BudgetExceeded, RunBudget
 from app.contracts import (
@@ -24,6 +24,7 @@ from app.contracts import (
     SymptomMapping,
     TrialInput,
 )
+from app.runtime import RuntimeNotReady
 from app.validation import validate_planner_input, validate_run, validate_screening
 
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "synthetic"
@@ -117,8 +118,12 @@ def test_planner_snapshot_cannot_be_stale():
 def test_occurrences_do_not_create_participant_counts():
     locator = load("screening.json")["analyses"][0]["source_locators"][0]
     row = AdverseEventRow(
-        row_id="row-1", source_term="nausea", group_id="arm-a", event_occurrences=8,
-        source_locator=locator, is_synthetic=True,
+        row_id="row-1",
+        source_term="nausea",
+        group_id="arm-a",
+        event_occurrences=8,
+        source_locator=locator,
+        is_synthetic=True,
     )
     assert row.participants_affected is None
     assert row.participants_at_risk is None
@@ -130,18 +135,27 @@ def test_invalid_participant_counts(affected, at_risk):
     locator = load("screening.json")["analyses"][0]["source_locators"][0]
     with pytest.raises(ValidationError):
         AdverseEventRow(
-            row_id="row-1", source_term="nausea", group_id="arm-a",
-            participants_affected=affected, participants_at_risk=at_risk,
-            source_locator=locator, is_synthetic=True,
+            row_id="row-1",
+            source_term="nausea",
+            group_id="arm-a",
+            participants_affected=affected,
+            participants_at_risk=at_risk,
+            source_locator=locator,
+            is_synthetic=True,
         )
 
 
 def test_negated_symptom_remains_distinct_from_count_data():
     locator = load("screening.json")["analyses"][0]["source_locators"][0]
     mapping = SymptomMapping(
-        mapping_id="mapping-1", original_text="No dizziness reported",
-        normalised_term="dizziness", assertion="absent", temporality="unknown",
-        needs_review=False, explanation="Explicit negation in source.", source_locator=locator,
+        mapping_id="mapping-1",
+        original_text="No dizziness reported",
+        normalised_term="dizziness",
+        assertion="absent",
+        temporality="unknown",
+        needs_review=False,
+        explanation="Explicit negation in source.",
+        source_locator=locator,
     )
     assert mapping.assertion == "absent"
     assert "participants_affected" not in mapping.model_dump()
@@ -150,8 +164,11 @@ def test_negated_symptom_remains_distinct_from_count_data():
 def test_only_allowlisted_statistics_tools():
     with pytest.raises(ValidationError):
         AnalysisRequest(
-            request_id="request-1", requested_by="safety", tool_name="execute_python",
-            dataset_ref="synthetic-trial-1", rationale="Forbidden arbitrary execution",
+            request_id="request-1",
+            requested_by="safety",
+            tool_name="execute_python",
+            dataset_ref="synthetic-trial-1",
+            rationale="Forbidden arbitrary execution",
         )
 
 
@@ -187,9 +204,12 @@ def test_settings_need_no_key_until_live_execution(monkeypatch):
     assert RunBudget.from_settings(settings).limits["model_turn"] == 12
 
 
-def test_health_and_explicit_unimplemented_pipeline():
-    client = TestClient(app)
+def test_health_and_unconfigured_runtime():
+    def unconfigured(*args):
+        raise RuntimeNotReady("Test runtime is intentionally unconfigured")
+
+    client = TestClient(create_app(context_factory=unconfigured))
     assert client.get("/health").json()["agents_implemented"] is False
     assert client.post("/runs", json={}).status_code == 422
-    assert client.post("/runs", json={"nct_id": "NCT12345678"}).status_code == 501
-    assert client.get("/runs/unknown").status_code == 501
+    assert client.post("/runs", json={"nct_id": "NCT12345678"}).status_code == 503
+    assert client.get("/runs/unknown").status_code == 404
