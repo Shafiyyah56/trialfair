@@ -1,6 +1,6 @@
 """Opt-in live SDK check. Requires --live and local credentials; never prints the key.
 
-Run: uv run --locked python scripts/smoke_gemini.py --live
+Run: uv run --locked python -m scripts.smoke_gemini --live
 This makes up to three model requests: a plain reply, tool selection and a final
 structured response. The only tool is a local constant echo, with no clinical data.
 """

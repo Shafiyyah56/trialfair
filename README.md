@@ -7,8 +7,8 @@ trials, particularly before the next trial phase.
 **Current status on the safety branch:** Agent 2, the shared model adapter,
 orchestration, API, local storage and dashboard are implemented and tested with
 injected services. Agents 1 and 3 still need their separate implementations and
-service wiring before a full live trial-to-report run. No live Gemini verification
-is claimed. See [Agent 2 usage and integration](docs/agent-2-usage.md).
+service wiring before a full live trial-to-report run. The user-run Gemini smoke
+check passed for gemini-4-argon (SDK 2.34.0), including tools and structured output. See [Agent 2 usage and integration](docs/agent-2-usage.md).
 
 ## Start here for teammates and coding agents
 
@@ -40,8 +40,8 @@ Do not commit keys, uploaded narratives or runtime caches.
 
 **Dependency lock status:** `uv.lock` is committed. Use the locked install above;
 coordinate dependency/lock changes with the integrator. The user reported 31 tests
-passing in the local virtual environment. Live Gemini execution and SDK/model
-capabilities still require the Agent 2 smoke check described in the team checklist.
+passing in the local virtual environment; the Agent 2 implementation later passed
+60 tests. A user-run live smoke check also passed; see the team readiness log.
 
 ## Verify the foundation
 

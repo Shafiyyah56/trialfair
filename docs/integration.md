@@ -19,9 +19,10 @@ Other developers propose shared changes here before altering these interfaces.
 
 The dependency lock was committed in dae3c5b. The user reported 31 tests passing
 in the local locked virtual environment. Each developer must verify their own
-installation. Live Gemini execution is still unverified: Agent 2 owns the single
-adapter and early opt-in smoke check. Record its actual model/capabilities in the
-team checklist and Agent 2 handoff; never record credentials.
+installation. The user-run live smoke check passed for gemini-4-argon with
+google-genai 2.34.0 and models.generate_content: plain response, function calling
+and structured output all succeeded. Details are in the team checklist and
+Agent 2 handoff. Full multi-agent clinical workflow verification remains pending.
 
 ## Merge sequence
 

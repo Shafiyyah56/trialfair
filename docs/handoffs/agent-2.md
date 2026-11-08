@@ -64,8 +64,12 @@ files have not been edited.
 
 ## Unverified or blocked
 
-- Live Gemini: NOT TESTED. GEMINI_API_KEY and GEMINI_MODEL are unconfigured;
-  available account model, live tool calls and live structured output are pending.
+- Live Gemini smoke check: PASSED according to the user's Terminal output, with
+  run timestamp 2026-11-08T03:25:05.097808+00:00. Model gemini-4-argon, SDK 2.34.0,
+  API models.generate_content; plain_response, function_calling and structured_output
+  all true. The coding sandbox's own request failed with ConnectError. The observed
+  user-run success resolves the previously unverified API compatibility concern.
+  This does not verify a full live safety investigation or external evidence retrieval.
 - Local server launch: both Uvicorn and Streamlit attempted; sandbox refused bind
   on local ports. Browser-based live UI verification could not be performed here.
 - External network/GitHub: DNS unavailable from the execution environment.

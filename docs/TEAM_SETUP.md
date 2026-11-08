@@ -121,9 +121,10 @@ automated clinical decisions. Respect the standing no-email policy.
 
 - Dependency lock: uv.lock committed in dae3c5b.
 - Agent implementations: Agent 2 implemented on its feature branch; Agents 1/3 pending integration.
-- Shared Gemini adapter: implemented and SDK-shape tested; live execution not yet verified.
-- Agreed available model ID: pending Agent 2/account verification.
-- Tool calling and structured output smoke checks: pending.
+- Shared Gemini adapter: live smoke check passed, user-run on 2026-11-08.
+- Verified model ID for this account: gemini-4-argon, google-genai 2.34.0, models.generate_content.
+- Basic response, function calling and structured output: all true in the user-supplied smoke output.
+- Smoke run timestamp: 2026-11-08T03:25:05.097808+00:00. This is not a full clinical workflow test.
 - Individual acknowledgements: Agent 2 acknowledged; Agents 1/3 update their own handoff files.
 
 The integrator updates this log as facts change. A pending item must not be marked

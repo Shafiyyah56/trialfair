@@ -31,7 +31,7 @@ One opt-in check exercises a plain response, local ping tool selection, provider
 continuation and structured output, using at most three model requests:
 
 ```sh
-uv run --locked python scripts/smoke_gemini.py --live
+uv run --locked python -m scripts.smoke_gemini --live
 ```
 
 This can incur model charges. Ordinary tests do not run it. The output reports
@@ -98,11 +98,20 @@ provenance and model report references are checked before acceptance. A valid ID
 is not proof that a paper supports a claim; researchers still review scientific
 meaning and the source excerpts provided by Agent 3.
 
+## Recorded live smoke check
+
+The user supplied successful Terminal output with run timestamp
+2026-11-08T03:25:05.097808+00:00: gemini-4-argon, google-genai 2.34.0,
+models.generate_content, plain_response=true, function_calling=true and
+structured_output=true. This establishes compatibility of the smoke-tested
+features for that account at that time. It is not a full clinical workflow test.
+
 ## Known verification limits
 
 The coding environment cannot resolve external hosts or bind local listening
 ports. SDK request/response shapes and continuation signatures are tested with an
 injected transport, API routes with TestClient, and the actual dashboard with
-Streamlit AppTest. These are not a browser-based live server or Gemini verification.
+Streamlit AppTest. These are not browser-based live server verification. Live Gemini smoke evidence
+comes separately from the user-run check recorded above.
 No real-input full-pipeline latency is claimed until Agents 1/3 and the model are
 available and an actual end-to-end run is measured.
