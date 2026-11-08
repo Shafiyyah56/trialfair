@@ -1,0 +1,10 @@
+{
+  "request_id": "evidence-request-1",
+  "status": "unavailable",
+  "unresolved_questions": [
+    "No external research was performed for this fixture."
+  ],
+  "limitations": [
+    "Synthetic contract example; not a live or cached search."
+  ]
+}

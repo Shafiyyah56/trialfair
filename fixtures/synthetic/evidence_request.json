@@ -1,0 +1,10 @@
+{
+  "request_id": "evidence-request-1",
+  "trial_id": "synthetic-trial-1",
+  "finding_ids": [
+    "finding-gap-1"
+  ],
+  "question": "Is sex-stratified safety information reported in related publications?",
+  "drug_names": [],
+  "symptom_terms": []
+}

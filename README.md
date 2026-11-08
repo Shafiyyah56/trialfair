@@ -1,1 +1,118 @@
-# trialfair
+# TrialFair
+
+TrialFair helps pharmaceutical safety researchers investigate potential
+sex-specific safety signals and missing subgroup evidence in completed clinical
+trials, particularly before the next trial phase.
+
+**Current status: shared development scaffold.** Agent implementations, live Gemini
+calls, data retrieval, statistical tools, persistence and the investigation UI are
+not implemented. API run routes deliberately return HTTP 501. The fixture outputs
+are synthetic interface examples, not research findings or recorded model outputs.
+
+## Stack
+
+Python 3.13, FastAPI, Streamlit, Pydantic v2, pandas, NumPy, SciPy, statsmodels,
+httpx, SQLite and the official Google GenAI SDK. Model choice is configurable;
+verify availability and SDK capabilities with the provided hackathon account.
+
+## Setup
+
+Install Python 3.13 and [uv](https://docs.astral.sh/uv/getting-started/installation/).
+From the repository root:
+
+```sh
+uv lock
+uv sync --extra dev
+cp .env.example .env
+```
+
+Set `GEMINI_API_KEY` and `GEMINI_MODEL` only in the ignored `.env` when implementing
+and testing live calls. Neither is required for contract tests or the scaffold API.
+Do not commit keys, uploaded narratives or runtime caches.
+
+**Dependency lock status:** the scaffold environment could not resolve external
+hosts, so no `uv.lock` has been generated or verified. The integrator must run the
+commands above and commit the resolver-generated `uv.lock` before teammates install
+with `uv sync --locked --extra dev`. Do not handwrite a lockfile. SDK compatibility
+must also be verified before implementing the live adapter.
+
+## Verify the foundation
+
+```sh
+uv run pytest -q
+uv run ruff check .
+uv run ruff format --check .
+```
+
+If the contract-test dependencies are already installed, `python3 -m pytest -q`
+works without installing the full runtime. Live tests are excluded by default;
+future opt-in live tests run with `uv run pytest -m live` and require credentials.
+
+Start the scaffold API:
+
+```sh
+uv run uvicorn app.api:app --reload
+```
+
+`GET /health` reports `status=scaffold` and `agents_implemented=false`.
+`/docs` exposes the agreed API shapes. Valid `POST /runs` and `GET /runs/{run_id}`
+currently return 501. Invalid trial inputs return 422.
+
+Start the UI placeholder in a second terminal:
+
+```sh
+uv run streamlit run app/ui/dashboard.py
+```
+
+## Parallel branches
+
+All developers must start from the same shared-foundation commit on `main`.
+Each developer creates/selects only their assigned branch:
+
+```sh
+git switch main
+git pull --ff-only
+# Choose one:
+git switch -c feat/agent-1-interpreter
+git switch -c feat/agent-2-safety
+git switch -c feat/agent-3-evidence
+```
+
+If the branch already exists locally, use `git switch <branch>` instead. If it is
+already on GitHub, use `git switch --track origin/<branch>` after `git fetch`.
+
+| Branch | Responsibility | Assignment |
+| --- | --- | --- |
+| `feat/agent-1-interpreter` | Natural-language interpretation, registry parsing, Python statistics | [Agent 1](docs/agent-1.md) |
+| `feat/agent-2-safety` | Safety investigation, shared Gemini adapter, orchestration, API and dashboard | [Agent 2](docs/agent-2.md) |
+| `feat/agent-3-evidence` | Adaptive literature and related-trial investigation | [Agent 3](docs/agent-3.md) |
+
+The Agent 2 developer is the integrator and owns shared files. Coordinate changes
+in [integration notes](docs/integration.md) before changing a contract. Merge shared
+changes early so the other branches can update. Do not merge competing interfaces
+at the end of the hackathon.
+
+## Shared contracts and examples
+
+[Contracts](app/contracts.py) define all agent inputs and outputs.
+[ToolContext](app/context.py) provides injected dependencies and a single cumulative
+budget/deadline. [Validation](app/validation.py) checks cross-agent IDs and synthetic
+labels. [Fixtures](fixtures/README.md) let developers build without the other agents.
+
+Pipeline:
+
+```text
+TrialInput -> Agent 1 -> ScreeningOutput -> Agent 2 -> InvestigationReport
+                                             |        ^
+                                             v        |
+                                         Agent 3: EvidenceReport
+                                             |
+                       validated outputs -> PlannerInput (Agent 4 deferred)
+```
+
+Agent 2 can also request allowlisted statistical analyses through Agent 1's tools.
+Additional accepted analyses must be appended to ScreeningOutput before building
+PlannerInput. Agents call Python functions in process; only the dashboard uses HTTP.
+
+Read [project context](docs/project_context.md), [architecture](docs/architecture.md)
+and [data sources](docs/data_sources.md) before implementation.

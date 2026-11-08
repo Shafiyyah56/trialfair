@@ -1,0 +1,24 @@
+{
+  "trial_id": "synthetic-trial-1",
+  "status": "partial",
+  "assessed_findings": [
+    {
+      "finding_id": "finding-gap-1",
+      "conclusion": "The input cannot establish whether an AE sex difference exists.",
+      "priority": "medium",
+      "rationale": "Subgroup event denominators are unavailable.",
+      "analysis_ids": [
+        "analysis-availability-1"
+      ]
+    }
+  ],
+  "completed_analysis_ids": [
+    "analysis-availability-1"
+  ],
+  "unresolved_questions": [
+    "Do associated publications report subgroup results?"
+  ],
+  "limitations": [
+    "Synthetic interface example, not model output."
+  ]
+}

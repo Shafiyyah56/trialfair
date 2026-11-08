@@ -1,0 +1,68 @@
+{
+  "trial_bundle": {
+    "trial_id": "synthetic-trial-1",
+    "title": "Synthetic missing subgroup evidence example",
+    "sources": [
+      {
+        "source_id": "source-synthetic-1",
+        "source_type": "synthetic",
+        "title": "Synthetic contract fixture: no observed clinical data; no real drug or trial.",
+        "retrieved_at": "2026-11-08T00:00:00Z",
+        "content_hash": "906b42d8ecfe5a96ac6322d83fedc33bc0b97bf08c7e40fef7994c44c283b4cc",
+        "licence_name": "Project-generated synthetic fixture",
+        "licence_status": "unknown",
+        "access_level": "uploaded",
+        "is_synthetic": true
+      }
+    ],
+    "availability": {
+      "representation": "not_assessed",
+      "sex_stratified_ae": "missing",
+      "sex_stratified_pk": "missing",
+      "participant_level": "missing"
+    },
+    "limitations": [
+      "Synthetic contract fixture, not a clinical trial result."
+    ],
+    "is_synthetic": true
+  },
+  "analyses": [
+    {
+      "analysis_id": "analysis-availability-1",
+      "status": "completed",
+      "method": "audit_subgroup_availability",
+      "results": {
+        "sex_stratified_ae": "missing",
+        "sex_stratified_pk": "missing"
+      },
+      "source_locators": [
+        {
+          "source_id": "source-synthetic-1",
+          "location": "synthetic.description",
+          "excerpt": "No sex-stratified adverse-event results supplied."
+        }
+      ],
+      "is_synthetic": true
+    }
+  ],
+  "findings": [
+    {
+      "finding_id": "finding-gap-1",
+      "finding_type": "evidence_gap",
+      "title": "Sex-stratified adverse-event results unavailable",
+      "description": "Available input cannot support a sex-specific AE comparison.",
+      "priority": "medium",
+      "priority_rationale": "Prevents the proposed subgroup comparison.",
+      "analysis_ids": [
+        "analysis-availability-1"
+      ],
+      "source_ids": [
+        "source-synthetic-1"
+      ],
+      "limitations": [
+        "Absence from input does not establish absence from all publications."
+      ],
+      "is_synthetic": true
+    }
+  ]
+}
