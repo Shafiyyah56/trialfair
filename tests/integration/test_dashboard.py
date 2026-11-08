@@ -35,7 +35,7 @@ def test_saved_run_review_renders_without_live_execution(fixture_run):
     assert not app.exception
     assert any("simulated" in item.value for item in app.warning)
     assert any("Saved result review" in item.value for item in app.caption)
-    assert any("synthetic-trial-1" in item.value for item in app.markdown)
+    assert any("synthetic-trial-1" in item.value for item in app.caption)
 
 
 def test_saved_four_agent_report_renders_planner_actions():

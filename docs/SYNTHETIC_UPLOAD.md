@@ -44,6 +44,23 @@ are checked before model creation. Only the three supplied synthetic study-prefi
 families are supported by the curated upload profile. No arbitrary file paths,
 JSON answer keys, ZIP extraction, pickle or executable uploads are accepted.
 
+## Reviewing the report
+
+The dashboard's main inputs are **Synthetic CSV upload**, **Completed trial**
+and **Review saved run**. Additional curated/developer inputs are available via
+the sidebar checkbox. Completed-trial mode accepts a public trial identifier;
+the synthetic upload remains restricted to the supplied simulated study families.
+
+Results open on **Final report**, with prioritised Agent 4 actions and their
+rationale, required data and prerequisites. Use **Findings & analyses** for
+statistics, **Evidence & sources** for inspected excerpts and provenance, and
+**Run activity** for agent interactions. Simulation, curated evidence, partial
+status and fallback notices remain visible.
+
+**Download report** saves a standalone HTML report that can be opened in a
+browser and printed to PDF. Markdown and validated JSON exports are also provided.
+Reviewing a saved report and downloading it do not start another model run.
+
 ## Preselected evidence
 
 Each profile uses two actual retrieved publication excerpts with original record
