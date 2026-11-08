@@ -1,0 +1,8 @@
+{
+  "url": "https://clinicaltrials.gov/api/v2/studies/NCT04280705",
+  "retrieved_at": "2026-11-08T05:26:55.603610+00:00",
+  "sha256": "4595f2fc1e82ed2a9ffa1bf9709f7b73d1e2707ec07347853f471fac2d615499",
+  "licence_status": "unknown",
+  "is_synthetic": false,
+  "description": "Unmodified public API v2 response; no patient-level records. Public contact metadata is part of the original response."
+}

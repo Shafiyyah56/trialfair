@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "trial_id": "synthetic-trial-1",
+  "title": "Synthetic explicit sex-stratified participant counts; no clinical observations",
+  "condition_names": [],
+  "interventions": [],
+  "phase": null,
+  "study_status": null,
+  "sources": [
+    {
+      "schema_version": "1.0",
+      "source_id": "source-synthetic-1",
+      "source_type": "synthetic",
+      "title": "Synthetic participant event counts: 20/100 Female, 10/100 Male; source hash covers interpreter_counts.rows.json",
+      "url": null,
+      "external_id": null,
+      "retrieved_at": "2026-11-08T00:00:00Z",
+      "content_hash": "4efe63e3f69577330d6c8388d1b267080a0beb69287a6d1b48a49ce041f66546",
+      "licence_name": "Project-generated synthetic fixture",
+      "licence_url": null,
+      "licence_status": "unknown",
+      "access_level": "uploaded",
+      "is_synthetic": true
+    }
+  ],
+  "demographic_rows": [],
+  "adverse_event_rows": [
+    {
+      "schema_version": "1.0",
+      "row_id": "ae-0",
+      "source_term": "Dizziness",
+      "normalised_term": null,
+      "group_id": "arm-A",
+      "intervention": "Synthetic X 1 mg",
+      "reported_sex_category": "Female",
+      "analysis_population": "Safety population",
+      "participants_affected": 20,
+      "participants_at_risk": 100,
+      "event_occurrences": null,
+      "event_seriousness": "non_serious",
+      "reporting_window": "Day 1-7",
+      "source_locator": {
+        "schema_version": "1.0",
+        "source_id": "source-synthetic-1",
+        "location": "synthetic.ae[0]",
+        "excerpt": null
+      },
+      "is_synthetic": true
+    },
+    {
+      "schema_version": "1.0",
+      "row_id": "ae-1",
+      "source_term": "Dizziness",
+      "normalised_term": null,
+      "group_id": "arm-A",
+      "intervention": "Synthetic X 1 mg",
+      "reported_sex_category": "Male",
+      "analysis_population": "Safety population",
+      "participants_affected": 10,
+      "participants_at_risk": 100,
+      "event_occurrences": null,
+      "event_seriousness": "non_serious",
+      "reporting_window": "Day 1-7",
+      "source_locator": {
+        "schema_version": "1.0",
+        "source_id": "source-synthetic-1",
+        "location": "synthetic.ae[1]",
+        "excerpt": null
+      },
+      "is_synthetic": true
+    }
+  ],
+  "pk_rows": [],
+  "narrative_entries": [],
+  "availability": {
+    "schema_version": "1.0",
+    "representation": "not_assessed",
+    "sex_stratified_ae": "available",
+    "sex_stratified_pk": "missing",
+    "participant_level": "missing",
+    "notes": []
+  },
+  "limitations": [
+    "Hand-authored synthetic counts for deterministic screening tests; not observed clinical data."
+  ],
+  "is_synthetic": true
+}
