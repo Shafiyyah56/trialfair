@@ -19,6 +19,7 @@ from app.orchestrator import investigate_screening, run_trial
 from app.progress import ActiveRunRegistry, RunAccepted, RunProgress
 from app.runtime import RuntimeNotReady, build_context
 from app.storage import RunStore, SQLiteRunStore
+from app.synthetic_upload import SyntheticUpload, load_upload, register_upload, upload_preview
 
 
 class InvestigationInput(Contract):
@@ -101,6 +102,10 @@ def create_app(
                 context = configure_demo_context(context)
         except RuntimeNotReady as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
+        return queue_background_run(payload, context)
+
+    def queue_background_run(payload, context):
+        run_id = context.run_id
         active_runs.start(
             run_id, includes_interpretation=not isinstance(payload, InvestigationInput)
         )
@@ -154,6 +159,33 @@ def create_app(
     async def create_demo_run(trial_input: TrialInput) -> RunAccepted:
         """Explicit curated remdesivir demo with captured sources and live model stages."""
         return start_background_run(trial_input, demo=True)
+
+    @application.post("/synthetic/preview")
+    async def preview_synthetic_upload(payload: SyntheticUpload):
+        try:
+            return upload_preview(payload)
+        except (ValueError, OSError) as exc:
+            raise HTTPException(422, str(exc)) from exc
+
+    @application.post("/synthetic/runs/async", response_model=RunAccepted, status_code=202)
+    async def create_synthetic_run(payload: SyntheticUpload):
+        from app.demo import build_demo_context
+
+        try:
+            bundle = load_upload(payload)  # Validate before constructing a paid model runtime.
+        except (ValueError, OSError) as exc:
+            raise HTTPException(422, str(exc)) from exc
+        run_id = str(uuid4())
+        try:
+            context = (
+                context_factory(run_id, "live")
+                if context_factory
+                else build_demo_context(run_id, "live", registry_capture=False)
+            )
+        except RuntimeNotReady as exc:
+            raise HTTPException(503, str(exc)) from exc
+        trial_input = register_upload(context, payload, bundle)
+        return queue_background_run(trial_input, context)
 
     @application.get("/runs/{run_id}/progress", response_model=RunProgress)
     def get_run_progress(run_id: str) -> RunProgress:

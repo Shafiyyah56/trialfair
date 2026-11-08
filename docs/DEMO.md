@@ -1,5 +1,10 @@
 # TrialFair four agent demonstration
 
+For the participant-level synthetic datasets, use the new **Synthetic CSV upload**
+form and [its instructions](SYNTHETIC_UPLOAD.md). That path analyses uploaded CSVs
+and uses matched real class-context publications. The ACTT-1 path below remains
+available separately as **Curated demo**.
+
 Branch: feat/demo-integration. Agent 4's actual implementation from 0281f17 was
 imported with author attribution preserved, then integrated with the shared run.
 The normal autonomous path remains available. The explicitly selected curated

@@ -4,6 +4,7 @@ The backend owns credentials, model/tool execution and persistence. Uploaded
 screening JSON is schema checked; saved results are validated before display.
 """
 
+import base64
 import hashlib
 import json
 import sys
@@ -20,7 +21,53 @@ if _PROJECT_ROOT not in sys.path:
 
 from app.contracts import RunResult, ScreeningOutput  # noqa: E402
 from app.progress import RunAccepted, RunProgress  # noqa: E402
+from app.synthetic_upload import (  # noqa: E402
+    CSV_NAMES,
+    MAX_UPLOAD_BYTES,
+    PROFILE_LABELS,
+    SyntheticUpload,
+    sample_bundle,
+)
 from app.validation import validate_run, validate_screening  # noqa: E402
+
+
+class UploadValidationError(ValueError):
+    """Only application-authored, display-safe messages."""
+
+
+def csv_upload_payload(files, profile, confirmed):
+    if not confirmed:
+        raise UploadValidationError("Confirm these are simulated records before continuing.")
+    prepared = []
+    seen = set()
+    for file in files:
+        name = file.name.lower()
+        if name not in CSV_NAMES:
+            raise UploadValidationError(
+                "Upload only dm.csv, ae.csv, pp.csv, eg.csv or narratives.csv."
+            )
+        if name in seen:
+            raise UploadValidationError("Upload each CSV domain only once.")
+        seen.add(name)
+        raw = file.getvalue()
+        if len(raw) > MAX_UPLOAD_BYTES:
+            raise UploadValidationError("Each CSV must be at most 2 MB.")
+        prepared.append({"name": name, "data_base64": base64.b64encode(raw).decode()})
+    if not {"dm.csv", "ae.csv"} <= seen:
+        raise UploadValidationError("Select both dm.csv and ae.csv. Other CSVs are optional.")
+    return SyntheticUpload(profile=profile, is_synthetic=True, files=prepared).model_dump(
+        mode="json"
+    )
+
+
+def render_upload_preview(st, preview):
+    st.success(
+        f"Validated {preview['trial_id']} · {preview['safety_population']} simulated "
+        f"participants in the safety population · {len(preview['files'])} CSV domains"
+    )
+    st.caption(preview["note"])
+    with st.expander("Upload validation and analysis availability", expanded=True):
+        st.json({key: value for key, value in preview.items() if key != "limitations"})
 
 
 def render_result(st, result: RunResult, *, saved: bool = False) -> None:
@@ -276,14 +323,70 @@ def main() -> None:
     st.caption("Trial screening, safety investigation and external evidence for human review.")
     backend = "http://127.0.0.1:8000"
     action = st.radio(
-        "Input", ["Curated demo", "Completed trial", "Prepared screening JSON", "Review saved run"]
+        "Input",
+        [
+            "Synthetic CSV upload",
+            "Curated demo",
+            "Completed trial",
+            "Prepared screening JSON",
+            "Review saved run",
+        ],
     )
+    if st.session_state.get("last_input_action", action) != action:
+        st.session_state.pop("result", None)
+        st.session_state.pop("upload_preview", None)
+    st.session_state["last_input_action"] = action
+    source_profile = "syn401"
+    if action == "Synthetic CSV upload":
+        source_profile = st.selectbox(
+            "Real class-context source profile",
+            list(PROFILE_LABELS),
+            format_func=PROFILE_LABELS.get,
+        )
+        if st.session_state.get("last_source_profile", source_profile) != source_profile:
+            st.session_state.pop("result", None)
+            st.session_state.pop("upload_preview", None)
+        st.session_state["last_source_profile"] = source_profile
+        st.download_button(
+            "Download sample CSV bundle",
+            sample_bundle(source_profile),
+            file_name=f"{source_profile}-csv.zip",
+            mime="application/zip",
+        )
+        st.caption(
+            "Unzip the sample, then select its CSV files below. Answer keys and generating "
+            "parameters are excluded. Sources are preselected real class context, not studies "
+            "of the fictional compound."
+        )
+        with st.expander("Preselected sources for this class profile"):
+            sources = json.loads(
+                (Path(_PROJECT_ROOT) / "fixtures/curated" / f"{source_profile}.json").read_text()
+            )
+            for item in sources["items"]:
+                source = item["source"]
+                st.markdown(f"[{source['title']}]({source['url']})")
+                st.caption(f"Abstract excerpt · licence status: {source['licence_status']}")
+    validate_upload = False
     with st.form("investigation"):
         upload = None
         nct_id = ""
         narrative = ""
         run_id = ""
-        if action == "Curated demo":
+        csv_files = []
+        confirmed_synthetic = False
+        if action == "Synthetic CSV upload":
+            csv_files = st.file_uploader(
+                "Upload dm.csv and ae.csv; optionally pp.csv, eg.csv and narratives.csv",
+                type=["csv"],
+                accept_multiple_files=True,
+                max_upload_size=2,
+            )
+            confirmed_synthetic = st.checkbox(
+                "These are simulated records, with no real patient data"
+            )
+            st.caption("CSV files only, at most 2 MB each. Statistics use the uploaded values.")
+            validate_upload = st.form_submit_button("Validate files without running AI")
+        elif action == "Curated demo":
             nct_id = "NCT04280705"
             st.info(
                 "ACTT-1 remdesivir demonstration: real captured trial data, three "
@@ -305,7 +408,24 @@ def main() -> None:
         submitted = st.form_submit_button(
             "Review" if action == "Review saved run" else "Investigate"
         )
+    if validate_upload:
+        st.session_state.pop("upload_preview", None)
+        try:
+            payload = csv_upload_payload(csv_files, source_profile, confirmed_synthetic)
+            response = httpx.post(backend + "/synthetic/preview", json=payload, timeout=30)
+            response.raise_for_status()
+            st.session_state["upload_preview"] = response.json()
+        except UploadValidationError as exc:
+            st.error(str(exc))
+        except httpx.HTTPStatusError as exc:
+            st.error(str(exc.response.json().get("detail", "CSV validation failed")))
+        except httpx.RequestError:
+            st.error("Start the local FastAPI backend to validate the uploaded CSVs.")
+    if action == "Synthetic CSV upload" and not submitted and "upload_preview" in st.session_state:
+        render_upload_preview(st, st.session_state["upload_preview"])
     if submitted:
+        if action != "Review saved run":
+            st.session_state.pop("result", None)
         try:
             if upload is not None and upload.size > 2_000_000:
                 raise ValueError("JSON upload exceeds 2 MB limit")
@@ -324,7 +444,16 @@ def main() -> None:
                     else:
                         raise ValueError("Select a saved result or enter a run ID")
                 else:
-                    if action == "Prepared screening JSON":
+                    if action == "Synthetic CSV upload":
+                        payload = csv_upload_payload(csv_files, source_profile, confirmed_synthetic)
+                        preview = httpx.post(
+                            backend + "/synthetic/preview", json=payload, timeout=30
+                        )
+                        preview.raise_for_status()
+                        st.session_state["upload_preview"] = preview.json()
+                        render_upload_preview(st, preview.json())
+                        path = "/synthetic/runs"
+                    elif action == "Prepared screening JSON":
                         if upload is None:
                             raise ValueError("Select a ScreeningOutput JSON file")
                         screening = ScreeningOutput.model_validate_json(upload.getvalue())
@@ -350,6 +479,8 @@ def main() -> None:
                 validate_run(result)
                 st.session_state["result"] = result.model_dump(mode="json")
                 st.session_state["saved_review"] = action == "Review saved run"
+        except UploadValidationError as exc:
+            st.error(str(exc))
         except httpx.HTTPStatusError as exc:
             detail = exc.response.json().get("detail", "Backend rejected the request")
             st.error(str(detail))

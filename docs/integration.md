@@ -458,3 +458,18 @@ saved demo reports still validate; the previously observed 95.87-second report
 with four draft actions was checked successfully. Old notes saying planner output
 is not stored describe the pre-integration implementation. All 298 offline tests,
 Ruff lint/format and whitespace checks pass. No paid/live call was made for this merge.
+
+## Synthetic participant upload and curated class profiles
+
+Owner: Agent 2/integrator, feat/synthetic-upload-demo, per user request. Reuses the
+existing participant loader and all four agents. Adds API-specific SyntheticUpload
+and UploadedCSV envelopes in app/synthetic_upload.py (not new scientific agent
+contracts), POST /synthetic/preview and /synthetic/runs/async. Profile-compatible
+validated bundles are registered under opaque per-run IDs; filenames are fixed
+CSV domains and exact uploaded bytes/hashes are preserved. Answer keys are excluded.
+
+Curated literature now selects by explicit demo profile and validates trial ID or
+synthetic study prefix. Normal ACTT-1 behaviour remains available. SYN-401/SYN-722/
+SYN-318 have two real class-context sources each, with no direct clinical claims
+about the fictional compound. Synthetic labels and uncertainty remain explicit.
+314 offline tests pass. No dependency/lock or scientific schema migration.

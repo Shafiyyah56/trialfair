@@ -1,0 +1,67 @@
+{
+  "profile": "syn722",
+  "trial_prefix": "SYN-722-",
+  "selection": "Developer-selected real drug-class sources for a synthetic upload demonstration. They do not verify the fictional trial or its generating mechanism.",
+  "unresolved_questions": [
+    "Which observed differences remain after accounting for exposure, body size and study design?",
+    "Are the selected real-drug findings applicable enough to motivate a follow-up investigation?"
+  ],
+  "items": [
+    {
+      "source": {
+        "schema_version": "1.0",
+        "source_id": "epmc-med-8921798-9214aa01bf6f",
+        "source_type": "publication",
+        "title": "Sex difference in risk of torsade de pointes with d,l-sotalol.",
+        "url": "https://europepmc.org/article/MED/8921798",
+        "external_id": "MED:8921798",
+        "retrieved_at": "2026-11-08T12:53:55.181000Z",
+        "content_hash": "9214aa01bf6fa7c44170ffe1b466160cb3ee04ca542e8ec3a15e0e916afe5b6e",
+        "licence_name": null,
+        "licence_url": null,
+        "licence_status": "unknown",
+        "access_level": "abstract",
+        "is_synthetic": false
+      },
+      "quote": "After adjustment for these risk factors, women had threefold greater odds of developing TdP than men.",
+      "claim": "A sotalol analysis reported greater adjusted torsade odds in women.",
+      "relation": "background",
+      "study_design": "Analysis of patients exposed to sotalol across clinical trials",
+      "relevance": "Real sotalol context does not validate the mechanism or risks of fictional SYN-722.",
+      "limitations": [
+        "Real published class-context evidence; not a study of the simulated compound.",
+        "Prepared annotation of a captured abstract excerpt; human review required."
+      ],
+      "location": "abstract[865:966]",
+      "excerpt_hash": "3af5319718bbbb05447e558d336184c96570424fbcdfbbf3014925f614b0c041"
+    },
+    {
+      "source": {
+        "schema_version": "1.0",
+        "source_id": "epmc-med-26324176-65a81cce7602",
+        "source_type": "publication",
+        "title": "Sex differences in drug-induced changes in ventricular repolarization.",
+        "url": "https://europepmc.org/article/MED/26324176",
+        "external_id": "MED:26324176",
+        "retrieved_at": "2026-11-08T12:53:55.189000Z",
+        "content_hash": "65a81cce760203fb667975fa65cf26429ec4ab1f678c9bc3dba65601eb548002",
+        "licence_name": null,
+        "licence_url": null,
+        "licence_status": "unknown",
+        "access_level": "abstract",
+        "is_synthetic": false
+      },
+      "quote": "There were no sex differences in QTc prolongation for any drug, after accounting for differences in exposure.",
+      "claim": "A small crossover study found no sex difference in exposure-adjusted QTc prolongation for its tested drugs.",
+      "relation": "background",
+      "study_design": "Double-blind healthy-volunteer crossover study",
+      "relevance": "QTc change and clinical torsade risk are different endpoints; populations and drugs differ.",
+      "limitations": [
+        "Real published class-context evidence; not a study of the simulated compound.",
+        "Prepared annotation of a captured abstract excerpt; human review required."
+      ],
+      "location": "abstract[674:783]",
+      "excerpt_hash": "272756c564be1cdef61d418ba90a30fe76f26cddb6f72e54c318b23416920e39"
+    }
+  ]
+}
