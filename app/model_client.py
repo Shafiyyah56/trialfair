@@ -48,6 +48,7 @@ class ModelClient(Protocol):
         tools: list[ToolDefinition],
         output_schema: dict[str, JsonValue] | None = None,
         timeout_seconds: float,
+        thinking_level: str | None = None,
     ) -> ModelResponse: ...
 
 
@@ -132,6 +133,7 @@ class GeminiModelClient:
         tools: list[ToolDefinition],
         output_schema: dict[str, JsonValue] | None = None,
         timeout_seconds: float,
+        thinking_level: str | None = None,
     ) -> ModelResponse:
         import asyncio
         import json
@@ -163,6 +165,10 @@ class GeminiModelClient:
                     ]
                 )
             ]
+        if thinking_level is not None:
+            # Only sent when explicitly configured; models without thinking levels
+            # would otherwise reject the request.
+            config.thinking_config = types.ThinkingConfig(thinking_level=thinking_level.upper())
         if output_schema is not None:
             config.response_mime_type = "application/json"
             config.response_json_schema = _provider_schema(output_schema)
@@ -230,7 +236,9 @@ def _provider_schema(schema: dict) -> dict:
     return walk(result)
 
 
-async def generate_with_budget(context, messages, *, tools, output_schema=None) -> ModelResponse:
+async def generate_with_budget(
+    context, messages, *, tools, output_schema=None, thinking_level=None
+) -> ModelResponse:
     """Shared entry point for agent calls: count once and bound actual execution.
 
     All three agents should use this helper. ModelClient.generate itself does not
@@ -240,9 +248,11 @@ async def generate_with_budget(context, messages, *, tools, output_schema=None) 
 
     context.budget.consume("model_turn")
     async with asyncio.timeout(context.budget.remaining_seconds()):
+        extra = {"thinking_level": thinking_level} if thinking_level else {}
         return await context.model.generate(
             messages,
             tools=tools,
             output_schema=output_schema,
             timeout_seconds=context.budget.remaining_seconds(),
+            **extra,
         )

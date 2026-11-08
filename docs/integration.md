@@ -290,3 +290,22 @@ limitations keep the report partial; failed selection returns unavailable.
 Only shared Python edits are additive contracts/event identity and validation.
 RunResult, runtime, context, model adapter, config, API, storage, UI and dependencies
 remain unchanged. Live/provider and combined clinical acceptance are unverified.
+
+## Shared changes: participant-level analyses (2026-11-08, pushed to main)
+
+Owner: Agent 1 (Shafiyyah). Pushed directly to main at the user's request; please review.
+
+- `app/contracts.py`: `ToolName` gains `exposure_response` and `summarise_qtc_by_sex`.
+  Additive only; schema version stays 1.0. Agents 2 and 3 can request them through the
+  existing `AnalysisRequest`; unsupported names are still rejected.
+- `app/model_client.py`: `ModelClient.generate` and `generate_with_budget` accept an
+  optional `thinking_level`. The Gemini adapter sends `ThinkingConfig` only when it is
+  set, so default behaviour is unchanged. Test fakes using `**kwargs` need no change.
+- `app/config.py`: optional `TRIALFAIR_INTERPRETER_THINKING_LEVEL` (blank = unset).
+  Measured on gemini-4-argon with 39 interpretation texts: about 27-32 s at `low`
+  versus 37-39 s at the default. Both are close to the 35 s first-pass cap, so it is
+  left off by default.
+- Participant-level values (per-participant exposure, AE and QTc) stay in process
+  memory (`participant_table_for(bundle)`) and are never added to TrialBundle,
+  RunResult or SQLite. The new tools return `unavailable` when that data is not loaded
+  in the current server process, for example when a stored run is reopened later.

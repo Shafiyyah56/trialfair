@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,6 +19,15 @@ class Settings(BaseSettings):
     max_interpretation_texts: int = Field(
         default=20, ge=1, le=100, alias="TRIALFAIR_MAX_INTERPRETATION_TEXTS"
     )
+    interpreter_thinking_level: Literal["minimal", "low", "medium", "high"] | None = Field(
+        default=None, alias="TRIALFAIR_INTERPRETER_THINKING_LEVEL"
+    )
+
+    @field_validator("interpreter_thinking_level", mode="before")
+    @classmethod
+    def blank_thinking_level_is_unset(cls, value):
+        return None if isinstance(value, str) and not value.strip() else value
+
     max_model_turns: int = Field(default=12, gt=0, alias="TRIALFAIR_MAX_MODEL_TURNS")
     max_external_requests: int = Field(default=16, gt=0, alias="TRIALFAIR_MAX_EXTERNAL_REQUESTS")
     max_evidence_requests: int = Field(default=2, gt=0, alias="TRIALFAIR_MAX_EVIDENCE_REQUESTS")

@@ -76,6 +76,11 @@ and invokes all three agents with real source adapters. Health component flags
 describe installed implementations, not validated credentials or source uptime;
 overall health stays partial because Agent 4 is not scheduled in the default pipeline.
 
+The dashboard uses `POST /runs/async` or `POST /investigations/async`, then polls
+`GET /runs/{run_id}/progress` for sanitized agent events and completed stage outputs.
+The original synchronous endpoints remain available. Active progress is local to
+the API process; completed validated runs are persisted in SQLite.
+
 Start the dashboard in a second terminal:
 
 ```sh

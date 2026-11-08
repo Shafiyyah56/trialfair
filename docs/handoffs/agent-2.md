@@ -1,5 +1,41 @@
 # Agent 2 acknowledgement and handoff
 
+## Live pipeline updates — startup acknowledgement
+
+I read AGENTS.md, docs/HANDOFF.md, docs/TEAM_SETUP.md, README.md, the Agent 2
+assignment, project context, architecture and shared contracts. As Agent 2/integrator
+I am working on feature/live-pipeline-updates from
+dfcfcf5e0f28513f925541fadc89008411e03f94. I own the API, orchestration, storage,
+runtime, validation and dashboard changes for this work. I will reuse the version
+1.0 scientific contracts, ModelClient, ToolContext and in-process Agent 1/2/3
+interfaces; credentials remain in the ignored local environment and no email will
+be transmitted or scheduled. The starting worktree was clean and current main
+already contained the shared Agent 2 foundation. Locked dependency sync, baseline
+tests and offline implementation checks are pending; paid/network checks remain
+opt-in.
+
+Planned scope: additive asynchronous start/progress endpoints retain the existing
+synchronous API, use the existing sanitized AgentEvent stream, expose screening and
+evidence only after those validated outputs exist, and persist the final RunResult
+through the existing SQLite store. Active-run state is intentionally process-local;
+an API restart interrupts an unfinished local run. No scientific contract, agent
+tool loop, provider adapter, dependency or Agent 4 implementation is changed.
+
+Implementation complete: `app/progress.py` holds thread-safe process-local
+snapshots; the API starts background tasks and exposes additive start/progress
+routes; the orchestrator publishes validated screening at its existing boundary;
+and Streamlit polls every 750 ms to show workflow milestones, sanitized activity,
+screening findings and returned evidence before loading the stored RunResult. The
+progress bar represents fixed workflow milestones and never estimates provider or
+research completion. Existing synchronous routes remain covered and unchanged.
+
+Validation on 2026-11-08: `uv sync --locked --extra dev` passed with 68 packages;
+the complete offline suite passed with 206 tests and 1 opt-in live test deselected.
+Ruff lint, Ruff format check and `git diff --check` passed. The existing upstream
+Starlette TestClient deprecation warning remains. No paid/network test or live
+clinical run was performed, so browser-observed timing and live source/model
+behavior remain to be checked by the user after restarting both local servers.
+
 ## Research-flow correction after second live attempt
 
 Continuing feat/service-integration from 8ab8457. The user's 149.18 s run retained

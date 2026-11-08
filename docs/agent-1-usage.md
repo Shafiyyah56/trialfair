@@ -74,6 +74,33 @@ cells assume complete AE capture for treated participants. Counts use AEDECOD;
 verbatim AETERM and narratives are interpretation inputs only and never alter
 counts. CSV only, 10 MB per file, duplicate USUBJID rejected, one STUDYID.
 
+## Participant-level PK, exposure-response and QTc
+
+Optional files in the same `--participant-dir` are picked up automatically:
+
+- `pp.csv` (STUDYID, USUBJID, PPTESTCD, PPSTRESN, PPSTRESU; one visit per file).
+  AUCIFO/AUCINF/AUCLST/AUCTAU/CMAX become per arm x sex geometric-mean PKRows.
+- `eg.csv` (STUDYID, USUBJID, EGTESTCD, EGSTRESN, EGBLFL). QTCF records with exactly
+  one baseline (EGBLFL=Y) give each participant's maximum post-baseline value and change.
+
+Per-participant values are kept only in server memory. These tools use them:
+
+- `summarise_pk_by_sex`: also reports within-arm Female/Male geometric mean ratios with
+  Welch 95% CIs on log values. Ratios are never computed from aggregate summaries alone.
+- `exposure_response` (`{"term": "<AEDECOD>", "exposure_parameter": "AUCIFO"}`): runs
+  logistic regressions of AE on exposure (placebo = 0), on sex, and on exposure plus
+  sex. Compare the female odds ratio before and after exposure adjustment. Separation
+  or non-convergence makes that model unavailable; sparse events are flagged.
+- `summarise_qtc_by_sex` (`{}`): reports mean maximum QTcF change by arm and sex,
+  ICH E14 categorical counts (>450/480/500 ms; increase >30/60 ms), Female/Male
+  comparisons, and a linear concentration-QTc model with a sex interaction (uses Cmax).
+
+Screening now runs these automatically when the data exists. Findings were also
+reprioritised. A Female/Male AE comparison becomes a `potential_signal` only when its
+95% CI excludes zero, and it states the multiplicity. The remaining comparisons are
+summarised in one `evidence_gap` finding: "No conclusive Female/Male difference in N
+of M comparisons". All analyses are exploratory and unadjusted for body size.
+
 ## Interpretation flow
 
 Texts identical apart from letter case and whitespace (within the same kind:
