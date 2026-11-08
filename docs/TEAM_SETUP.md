@@ -1,6 +1,7 @@
 # Team setup and coding agent onboarding
 
-Every teammate and their coding agent must read this file before implementation.
+Every teammate and their coding agent must read [the handoff](HANDOFF.md) and this
+file before implementation.
 The repository-root AGENTS.md makes this checklist part of each agent's startup
 instructions. Read your assignment and shared contracts as well.
 
@@ -36,12 +37,15 @@ never reset, force-push or overwrite another teammate's changes.
 git fetch origin
 git switch <your-assigned-branch>
 git merge origin/main
+# Until Agent 2 is merged into main, also incorporate its shared implementation:
+git merge origin/feat/agent-2-safety
 ```
 
 For a branch only on GitHub, use `git switch --track origin/<branch>` instead.
 Resolve genuine conflicts with the affected owner. All three feature branches
 must incorporate the dependency-lock commit and these onboarding instructions;
-their original scaffold commit alone is insufficient.
+their original scaffold commit alone is insufficient. Main alone also lacks
+Agent 2 until that feature branch is merged. See HANDOFF.md for the current path.
 
 | Branch | Owner and assignment | Acknowledgement record |
 | --- | --- | --- |
@@ -64,8 +68,8 @@ uv run --locked ruff check .
 uv run --locked ruff format --check .
 ```
 
-Record actual results. The user reported 31 tests passing in the locked local
-virtual environment; this does not establish live Gemini functionality. An upstream
+Record actual results. The scaffold initially passed 31 tests; Agent 2 now
+passes 60 tests. Automated tests and live checks are separate evidence. An upstream
 TestClient deprecation warning was observed. Do not change shared dependencies or
 silence warnings without investigating them and coordinating any needed change.
 
@@ -120,11 +124,14 @@ automated clinical decisions. Respect the standing no-email policy.
 ## Shared non-secret readiness log
 
 - Dependency lock: uv.lock committed in dae3c5b.
-- Agent implementations: scaffold only at the time of writing; check current code.
-- Shared live Gemini adapter: not yet verified.
-- Agreed available model ID: pending Agent 2/account verification.
-- Tool calling and structured output smoke checks: pending.
-- Individual acknowledgements: pending; each agent updates its own handoff file.
+- Agent implementations: Agent 2 implemented on its feature branch; Agents 1/3 pending integration.
+- Shared Gemini adapter: live smoke check passed, user-run on 2026-11-08.
+- Verified model ID for this account: gemini-4-argon, google-genai 2.34.0, models.generate_content.
+- Basic response, function calling and structured output: all true in the user-supplied smoke output.
+- Smoke run timestamp: 2026-11-08T03:25:05.097808+00:00. This is not a full clinical workflow test.
+- Live Agent 2 UI: observed in Chrome, 34.63 s with live Gemini and synthetic input;
+  partial was expected because Agent 3 was not integrated. Real-data pipeline remains unverified.
+- Individual acknowledgements: Agent 2 acknowledged; Agents 1/3 update their own handoff files.
 
 The integrator updates this log as facts change. A pending item must not be marked
 complete merely because a teammate was given its assignment.

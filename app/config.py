@@ -19,9 +19,7 @@ class Settings(BaseSettings):
     max_model_turns: int = Field(default=12, gt=0, alias="TRIALFAIR_MAX_MODEL_TURNS")
     max_external_requests: int = Field(default=16, gt=0, alias="TRIALFAIR_MAX_EXTERNAL_REQUESTS")
     max_evidence_requests: int = Field(default=2, gt=0, alias="TRIALFAIR_MAX_EVIDENCE_REQUESTS")
-    max_additional_analyses: int = Field(
-        default=3, gt=0, alias="TRIALFAIR_MAX_ADDITIONAL_ANALYSES"
-    )
+    max_additional_analyses: int = Field(default=3, gt=0, alias="TRIALFAIR_MAX_ADDITIONAL_ANALYSES")
     run_timeout_seconds: float = Field(
         default=150, gt=0, le=150, alias="TRIALFAIR_RUN_TIMEOUT_SECONDS"
     )
