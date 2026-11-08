@@ -3,7 +3,12 @@
 Branch: feat/agent-2-safety. Read AGENTS.md and shared architecture first.
 Own shared contracts/context/config/model adapter and safety orchestration, API,
 storage and dashboard. Coordinate contract changes before other branches depend
-on them. Generate and verify uv.lock before the team installs locked dependencies.
+on them. Maintain the committed uv.lock and coordinate dependency changes with the team.
+
+Before implementation, read docs/TEAM_SETUP.md, acknowledge it in your first
+response and update docs/handoffs/agent-2.md on your feature branch. Merge current
+origin/main, install the committed lock with uv sync --locked --extra dev, and
+record actual checks and blockers. Reuse the shared model adapter and contracts.
 
 ## Safety agent
 

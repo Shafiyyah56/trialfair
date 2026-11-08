@@ -1,8 +1,22 @@
 # TrialFair development instructions
 
-Read README.md, docs/project_context.md, docs/architecture.md and
-app/contracts.py before implementation. Respect the user's standing no-email
+Read docs/TEAM_SETUP.md, README.md, docs/project_context.md,
+docs/architecture.md, your docs/agent-N.md assignment and app/contracts.py
+before implementation. Respect the user's standing no-email
 policy: never transmit or schedule email by any route.
+
+## Required startup acknowledgement
+
+Before implementation, explicitly acknowledge the onboarding checklist in your
+first response: assigned agent/branch, starting commit, file ownership, shared
+interfaces and verified setup or blockers. Record this in your own
+`docs/handoffs/agent-N.md` on your feature branch. Do not acknowledge for others.
+Merge the latest `origin/main` into your feature branch to obtain uv.lock and
+these instructions, preserving existing work. Use `uv sync --locked --extra dev`.
+Coordinate shared dependency/contract changes with Agent 2. Agents 1 and 3 reuse
+the one ModelClient; Agent 2 owns an early, opt-in live smoke check and records the
+actual available model and capabilities. Keep credentials in ignored local .env
+files. If access is missing, state the blocker and continue with injected fakes.
 
 ## Shared foundation
 

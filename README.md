@@ -9,6 +9,13 @@ calls, data retrieval, statistical tools, persistence and the investigation UI a
 not implemented. API run routes deliberately return HTTP 501. The fixture outputs
 are synthetic interface examples, not research findings or recorded model outputs.
 
+## Start here for teammates and coding agents
+
+Read [team setup and acknowledgement instructions](docs/TEAM_SETUP.md) before
+implementation. Every coding agent must acknowledge its assignment, branch,
+ownership and shared interfaces in its first response and record the acknowledgement
+in its own `docs/handoffs/agent-N.md`. Do not mark another agent as acknowledged.
+
 ## Stack
 
 Python 3.13, FastAPI, Streamlit, Pydantic v2, pandas, NumPy, SciPy, statsmodels,
@@ -21,27 +28,26 @@ Install Python 3.13 and [uv](https://docs.astral.sh/uv/getting-started/installat
 From the repository root:
 
 ```sh
-uv lock
-uv sync --extra dev
-cp .env.example .env
+uv sync --locked --extra dev
+# Create .env only if it does not already exist:
+cp -n .env.example .env
 ```
 
 Set `GEMINI_API_KEY` and `GEMINI_MODEL` only in the ignored `.env` when implementing
 and testing live calls. Neither is required for contract tests or the scaffold API.
 Do not commit keys, uploaded narratives or runtime caches.
 
-**Dependency lock status:** the scaffold environment could not resolve external
-hosts, so no `uv.lock` has been generated or verified. The integrator must run the
-commands above and commit the resolver-generated `uv.lock` before teammates install
-with `uv sync --locked --extra dev`. Do not handwrite a lockfile. SDK compatibility
-must also be verified before implementing the live adapter.
+**Dependency lock status:** `uv.lock` is committed. Use the locked install above;
+coordinate dependency/lock changes with the integrator. The user reported 31 tests
+passing in the local virtual environment. Live Gemini execution and SDK/model
+capabilities still require the Agent 2 smoke check described in the team checklist.
 
 ## Verify the foundation
 
 ```sh
-uv run pytest -q
-uv run ruff check .
-uv run ruff format --check .
+uv run --locked pytest -q
+uv run --locked ruff check .
+uv run --locked ruff format --check .
 ```
 
 If the contract-test dependencies are already installed, `python3 -m pytest -q`

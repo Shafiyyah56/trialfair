@@ -3,6 +3,11 @@
 Branch: feat/agent-3-evidence. Read AGENTS.md and shared architecture first.
 Own evidence.py, europe_pmc.py and tests/evidence. Reuse Agent 1's registry service.
 
+Before implementation, read docs/TEAM_SETUP.md, acknowledge it in your first
+response and update docs/handoffs/agent-3.md on your feature branch. Merge current
+origin/main, install the committed lock with uv sync --locked --extra dev, and
+record actual checks and blockers. Reuse the shared model adapter and contracts.
+
 ## Deliverables
 
 Implement run_evidence(EvidenceRequest, ToolContext) -> EvidenceReport.
