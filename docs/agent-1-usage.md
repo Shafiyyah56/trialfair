@@ -122,9 +122,14 @@ uv run ruff format --check .
 TRIALFAIR_RUN_LIVE_INTERPRETER=1 uv run python -m pytest -m live tests/interpreter/test_live.py -q
 ```
 
-The live test uses synthetic narrative input and configured shared ModelClient;
-it has not been run by Agent 1. Ordinary tests use HTTP/model fakes. Public HTTP
-fixture retrieval was performed; this is not a live model or full-pipeline test.
+The live test uses synthetic narrative input and the configured shared ModelClient.
+On 2026-11-08 it passed against actual gemini-4-argon (google-genai 2.34.0) in
+14.76 seconds: three successful responses, one model-selected tool call and one
+structured output. The synthetic negation was mapped to absent dizziness without
+a review flag; shared contracts and provenance validation passed. Independent
+synthetic statistics were unchanged before/after inference. See the Agent 1 handoff
+for scope. Ordinary tests still use HTTP/model fakes; this narrow live result does
+not establish general model accuracy or full multi-agent clinical integration.
 
 ## Integrator follow-up
 

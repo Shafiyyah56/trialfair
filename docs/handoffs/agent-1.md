@@ -78,3 +78,36 @@ regression passed. Protected shared/Agent 2/Agent 3/orchestrator files match HEA
 Merge recommendation: do not merge as integration-ready until the run-status
 blocker is resolved by the integrator; PK ratio and runtime/live limitations remain
 explicit. No commit, push or merge has been performed for these corrections.
+
+
+## Agent 1 live Gemini verification — 2026-11-08T06:41:15.880168+00:00
+
+User explicitly authorised the opt-in paid live test and supplied configuration
+in the local Git-ignored .env. No credential values were printed or persisted here.
+Model: gemini-4-argon; google-genai 2.34.0; Pydantic 2.14.3.
+
+Executed existing tests/interpreter/test_live.py through pytest with marker live
+and TRIALFAIR_RUN_LIVE_INTERPRETER=1. Temporary in-memory instrumentation delegated
+to the unchanged shared GeminiModelClient and real google.genai.client.Client,
+recording only response counts and the non-sensitive synthetic interpretation.
+No SDK response or model was faked. SDK connections were closed after execution.
+The initial sandbox attempt encountered ConnectError; the approved network-enabled
+execution passed: 1 test passed in 14.76 seconds. Three successful model responses,
+one returned tool call and one structured-output response; no provider errors.
+
+Synthetic input: "No dizziness was reported". Accepted mapping: normalised_term
+"dizziness", assertion "absent", temporality "unknown", needs_review false.
+MappingBatch/shared SymptomMapping validation, ScreeningOutput JSON round-trip and
+validate_screening provenance/synthetic-label checks passed. Synthetic label retained.
+
+Independent participant-count analysis was executed before and after live inference
+with no extra model calls: 20/100 vs 10/100, risk difference 0.1, risk ratio 2.0;
+all statistical results and sample sizes were identical. The expected Newcombe
+interval and Fisher p-value remained unchanged. Focused offline checks before live
+execution: 42 passed, 1 expected failure for the known run-status defect.
+
+Scope: one synthetic negation case and actual model-selected tool/structured-output
+flow verified. This does not establish accuracy across symptom types or verify real
+registry-to-Agent-2-to-Agent-3 execution. Run-status propagation remains blocked
+by unchanged integrator code; PK ratios remain incomplete. No contracts or other
+implementation files changed, and no commit, push or merge performed.
