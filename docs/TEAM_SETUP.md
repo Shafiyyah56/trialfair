@@ -128,7 +128,7 @@ automated clinical decisions. Respect the standing no-email policy.
 - Agent implementations: Agents 1–3 are merged into main at bece131. Runtime
   registry/literature/terminology wiring is on feat/service-integration; see
   [service integration](service-integration.md). Combined live verification is pending.
-- Integration branch checks after timeout fixes: 198 tests pass, 1 live test deselected, no xfails;
+- Integration branch checks after research-flow fixes: 202 tests pass, 1 live test deselected, no xfails;
   Ruff lint/format and locked offline installation pass.
 - Shared Gemini adapter: live smoke check passed, user-run on 2026-11-08.
 - Verified model ID for this account: gemini-4-argon, google-genai 2.34.0, models.generate_content.

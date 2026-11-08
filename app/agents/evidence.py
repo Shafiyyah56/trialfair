@@ -60,8 +60,12 @@ useful. Registry service unavailability must be reported, not replaced by invent
 records. You may suggest an allowlisted AnalysisRequest using a registered dataset;
 you do not execute statistics or recursively call the safety agent.
 
-Use tools first, with brief observable decisions, never private reasoning. When
-done return a short completion message. A separate structured turn will request
+Use tools first, with brief observable decisions, never private reasoning. Use
+at most three literature queries total and at most two tool calls
+per response. After supporting/opposing searches return candidates, inspect the
+one or two most relevant publications before any further registry inspection.
+Prefer abstract inspection for this bounded run. Then finish for synthesis.
+When done return a short completion message. A separate structured turn will request
 source-grounded synthesis. The application supplies sources and actual search records; do not
 create them yourself. Your status must be partial when requested research or source
 inspection could not be completed. No numerical comparison is a fact unless the
@@ -300,6 +304,11 @@ async def execute_evidence_tool(
         raise ValueError("Unsupported evidence tool")
     args = SCHEMAS[call.name].model_validate(call.arguments)
     if call.name == "search_publications":
+        if sum(search.service == "europe_pmc" for search in state.searches) >= 3:
+            return {
+                "error": "Literature search limit reached; inspect retrieved publications now.",
+                "retrieved_source_ids": list(state.publications),
+            }
         if request.trial_id.startswith("synthetic-") and request.trial_id in args.query:
             raise ValueError("Synthetic trial identifiers cannot be searched as real trials")
         search = SearchRecord(service="europe_pmc", query=args.query, searched_at=datetime.now(UTC))
@@ -317,6 +326,9 @@ async def execute_evidence_tool(
         ids = []
         results = []
         for record in records:
+            if len(state.publications) >= 20:
+                state.limitations.append("Publication pool is full; additional candidates omitted.")
+                break
             record = PublicationRecord.model_validate_json(record.model_dump_json())
             sid = state.add_publication(record)
             if sid in ids:
@@ -655,15 +667,23 @@ async def _run_evidence(request, context, state):
                 if registry_available
                 or tool.name not in {"search_related_trials", "inspect_trial_record"}
             ]
-            if turn == allowance - 2 and state.publications:
-                # Spend the last research opportunity reading, not growing a source list.
+            literature_queries = sum(s.service == "europe_pmc" for s in state.searches)
+            if state.publications and (turn == allowance - 2 or literature_queries >= 2):
+                # Close search once candidates cover two queries; protect time for reading.
                 tools = [tool for tool in tools if tool.name.startswith("inspect_")]
+                publication_read = any(
+                    state.sources[sid].source_type == "publication" for sid, _ in state.passages
+                )
+                if not publication_read:
+                    tools = [tool for tool in tools if tool.name == "inspect_publication"]
                 messages.append(
                     ModelMessage(
                         role="user",
                         content={
-                            "instruction": "Final turn: inspect retrieved sources. "
-                            "Searches are closed. Use returned source IDs or PMIDs.",
+                            "instruction": "Inspect the most relevant retrieved publication "
+                            "now. Searches are closed. Use returned source IDs or PMIDs. "
+                            "Select at most two publications to inspect. "
+                            "Prefer abstracts for bounded review, then finish for synthesis.",
                             "candidate_ids": list(state.publications),
                         },
                     )
@@ -673,12 +693,18 @@ async def _run_evidence(request, context, state):
             if not reply.tool_calls:
                 break
             if len(reply.tool_calls) > 5:
-                raise EvidenceToolError("too_many_tool_calls_in_one_turn")
+                state.had_failure = True
+                state.limitations.append(
+                    "Tool-call batch exceeded five; processed five calls and retained research."
+                )
             messages.append(ModelMessage(role="assistant", content=reply.model_dump(mode="json")))
-            for call in reply.tool_calls:
+            # Keep a result for every provider call so continuation history remains valid.
+            for index, call in enumerate(reply.tool_calls):
                 name = call.name if call.name in SCHEMAS else "unrecognised tool"
                 _emit(context, "tool_call", f"Selected evidence tool: {name}.")
                 try:
+                    if index >= 5:
+                        raise EvidenceToolError("tool_call_batch_limit_reached")
                     if call.name not in allowed:
                         raise EvidenceToolError("tool_not_available_in_this_research_turn")
                     async with asyncio.timeout(context.budget.remaining_seconds()):

@@ -1,5 +1,19 @@
 # Agent 2 acknowledgement and handoff
 
+## Research-flow correction after second live attempt
+
+Continuing feat/service-integration from 8ab8457. The user's 149.18 s run retained
+screening and partial investigation/evidence reports but returned zero cited items.
+I inspected the saved report/timeline: repeated searching filled the publication
+pool; an oversized model tool batch aborted before synthesis. The integrator now
+caps searches, requires publication reading once candidates are available, retains
+accepted work on pool/batch limits and preserves tool results for every provider
+call. Safety proceeds directly to final reporting when evidence returns late;
+provider failures record sanitised category/status. See verification/pipeline-live.md.
+This narrowly edits Agent 3's execution controls under integration ownership;
+grounding, scientific contracts, shared deadline and counters remain unchanged.
+202 tests pass, 1 live test deselected; Ruff lint/format pass. Live retest pending.
+
 ## Integrated live timeout correction
 
 Continuing integration on feat/service-integration from dc2b886. The user ran

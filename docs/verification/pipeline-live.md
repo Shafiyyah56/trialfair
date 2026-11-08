@@ -1,5 +1,37 @@
 # Combined live run — 2026-11-08
 
+## Second combined run — preserved partial results, still no cited evidence
+
+After timing correction 8ab8457: 149.18 seconds, partial, screening/investigation
+available, one evidence report, zero items/cited sources. Eight model turns and
+seven external requests; no top-level errors. This is not a completed research demo.
+
+The saved timeline shows interpretation fell from roughly 93 to 29 seconds.
+Six successful literature-search calls preceded two failed searches. No publication
+was inspected; only the input registry was inspected. The source pool held 20
+publications plus the registry record, consistent with the pool-limit exception.
+Recorded limitations: `search_publications failed (ValueError)` and
+`Evidence research: too_many_tool_calls_in_one_turn`. The final oversized tool
+batch aborted research before synthesis. Safety then spent roughly 16 seconds
+selecting tools before its final report attempt failed. The original provider
+category/status was not recorded, so that last failure's cause is unknown.
+
+Further corrections: cap actual literature searches at three; close search after
+two queries yield candidates and require publication inspection; prompt selection
+of one or two abstracts. Full pools retain accepted results without an exception.
+Oversized batches execute at most five calls and return a result for every call,
+including explicit rejections for the excess, preserving provider continuation
+and allowing synthesis. They still force a partial report. If evidence returns
+with 45 seconds or less, safety goes directly to final assessment. Sanitised
+provider error class/status are now retained without raw provider messages.
+
+202 offline tests pass, including oversized-batch synthesis, search caps, full
+pools, publication-first tools, complete tool history and late-evidence reporting.
+Another live retest remains pending; offline tests do not establish a timely,
+scientifically supported real report. No grounding rules or deadlines were relaxed.
+
+## First combined run
+
 User-run `scripts.smoke_pipeline --live --nct-id NCT04280705`, before the timing
 correction. Observed output: gemini-4-argon, 149.85 seconds, partial. Screening
 was retained, investigation unavailable, zero evidence reports/items/cited sources.

@@ -38,6 +38,11 @@ Evidence research is capped at 90 seconds and leaves up to 20 seconds for the
 outer investigator (15% of the configured total deadline for short runs).
 Safety tool selection leaves up to 15 seconds for final assessment. All counters
 and the original 150-second overall deadline remain shared and unchanged.
+Once evidence returns with at most 45 seconds left, safety skips further tool
+selection and requests its final report directly. Evidence performs at most three
+actual literature searches. Once two queries yield candidates, tools require
+publication inspection before further registry work. Full pools and oversized
+tool batches retain completed work and proceed to synthesis with limitations.
 If research times out, actual searches/sources survive without invented claims.
 If the final assessment still cannot finish, an explicitly unassessed partial
 InvestigationReport and PlannerInput survive alongside validated screening.
@@ -101,14 +106,15 @@ interpretation propagation, persistence, resource cleanup and a registry outage
 making zero model calls. The interpreter regression previously marked strict
 xfail is now required to pass normally.
 
-The first combined live run timed out at 149.85 seconds without cited evidence;
-see [the audit and corrections](verification/pipeline-live.md). A live retest of
-the revised time allocation and a real source-to-conclusion audit remain pending.
+Two combined live runs returned no cited evidence: the first timed out; the second
+preserved partial results but exhausted research on searching and an oversized
+tool batch. See [the audit and corrections](verification/pipeline-live.md).
+A live retest of the bounded search/inspection flow remains pending.
 The earlier standalone Agent 3 check took 132.81 seconds, close to the shared
 150-second deadline. Do not promise that the combined pipeline finishes within
 the demo budget until measured. No deadlines or grounding rules were relaxed.
 
-Integration checks after timeout corrections: 198 tests passed, 1 opt-in live test
+Integration checks after research-flow corrections: 202 tests passed, 1 opt-in live test
 deselected, no xfails.
 Ruff lint and formatting, diff whitespace and locked offline installation passed.
 The existing upstream TestClient warning remains; dependencies were not changed.

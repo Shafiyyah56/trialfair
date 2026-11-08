@@ -92,3 +92,37 @@ def test_outer_deadline_keeps_an_explicit_unassessed_investigation(
     assert not result.investigation.assessed_findings
     assert result.planner_input is not None
     assert any("deadline exhausted" in error for error in result.errors)
+
+
+def test_late_evidence_returns_directly_to_final_assessment(
+    screening,
+    context_factory,
+    final_response,
+):
+    from app.model_client import ToolCall
+
+    context, _ = context_factory(
+        [
+            ModelResponse(
+                tool_calls=[
+                    ToolCall(
+                        call_id="research",
+                        name="request_evidence",
+                        arguments={
+                            "request_id": "late-research",
+                            "trial_id": "synthetic-trial-1",
+                            "finding_ids": ["finding-gap-1"],
+                            "question": "Check external evidence",
+                        },
+                    )
+                ]
+            ),
+            final_response,
+        ],
+        settings=Settings(_env_file=None, run_timeout_seconds=40),
+    )
+    result = asyncio.run(investigate_screening(screening, context))
+    assert result.investigation is not None
+    assert len(context.model.calls) == 2
+    assert context.model.calls[-1][1]["output_schema"] is not None
+    assert result.evidence_reports[0].status == "unavailable"

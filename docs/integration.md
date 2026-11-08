@@ -28,6 +28,16 @@ contracts are unchanged. This narrowly adjusts Agent 1/3 execution timing as par
 of integration; their scientific extraction/grounding rules remain intact.
 198 offline tests pass; paid/live retest remains pending.
 
+Second live follow-up (149.18 s): partial investigation/evidence reports survived,
+but zero cited items. Research accumulated 20 publications without inspecting one,
+hit the pool cap and aborted on an oversized tool batch. The integrator now caps
+actual searches at three, closes search once two queries yield candidates and
+requires publication inspection. Pools/batches retain accepted work instead of
+aborting synthesis; every provider call receives a tool result. Safety skips more
+tool selection when evidence returns with <=45 s. Sanitised error categories/status
+now survive safety provider failures. No contracts/dependencies changed.
+202 offline tests pass; live cited-output acceptance remains unmet.
+
 Start with [the coding agent handoff](HANDOFF.md). Read [team setup and acknowledgement instructions](TEAM_SETUP.md). Each coding
 agent must acknowledge before implementation and update only its own handoff file.
 

@@ -102,10 +102,9 @@ class PipelineModel:
         if self.turn == 4:
             return calls(
                 ("inspect_publication", {"source_id": "999999999"}),
-                ("inspect_trial_record", {"nct_id": self.trial_id}),
             )
         if self.turn == 5:
-            return ModelResponse(text="Source inspection complete.")
+            return calls(("inspect_trial_record", {"nct_id": self.trial_id}))
         if self.turn == 6:
             # Bind the claim to the exact packet actually returned by the source tool.
             packets = messages[-1].content["inspected_sources"]

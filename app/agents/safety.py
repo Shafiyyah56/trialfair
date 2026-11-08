@@ -291,7 +291,8 @@ async def run_safety(screening: ScreeningOutput, context: ToolContext) -> Invest
             if remaining <= 1:
                 break
             reserve = min(15, context.settings.run_timeout_seconds * 0.1)
-            if context.budget.remaining_seconds() <= reserve:
+            evidence_returned = bool(context.evidence_reports)
+            if context.budget.remaining_seconds() <= (45 if evidence_returned else reserve):
                 tool_errors = True
                 break
             try:
@@ -385,7 +386,10 @@ async def run_safety(screening: ScreeningOutput, context: ToolContext) -> Invest
         reason = "Shared investigation budget or deadline exhausted."
     except (ValueError, ValidationError):
         reason = "Model report rejected: invalid structure, references or evidence attribution."
-    except Exception:
-        reason = "Model or investigator service unavailable; no clinical conclusion was inferred."
+    except Exception as exc:
+        # Reuse the sanitised category/status formatter; never expose provider messages.
+        from app.agents.evidence import safe_failure
+
+        reason = safe_failure(exc, "Safety investigation")
     emit_event(context, "stop", reason)
     return partial_report(screening, reason)

@@ -72,6 +72,10 @@ Wall-clock research is also capped at 90 seconds and reserves up to 20 seconds
 of the existing deadline for the outer investigator. Retrieved searches/sources
 are preserved if research times out; uncompleted synthesis creates no claims.
 The last research turn exposes inspection tools only once candidates exist.
+Search also closes once two literature queries have yielded candidates. Until a
+publication has been inspected, that phase offers only inspect_publication.
+At most three actual literature searches run. Oversized model batches process
+five calls and reject excess calls explicitly without losing the synthesis step.
 Unavailable registry tools are not offered to the model. This
 is a bounded MVP investigation, not an exhaustive literature review.
 
