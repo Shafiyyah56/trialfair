@@ -47,6 +47,13 @@ async def smoke(args):
         )
         return bool(records)
     context = build_context(str(uuid4()), "live")
+    if args.schema_only:
+        from scripts.evidence_schema_check import check_schema
+
+        try:
+            return await check_schema(context)
+        finally:
+            await context.model.aclose()
     context.emit = lambda event: print(f"{event.event_type}: {event.summary}", flush=True)
     request = EvidenceRequest(
         request_id=str(uuid4()),
@@ -94,7 +101,11 @@ if __name__ == "__main__":
     parser.add_argument("--live", action="store_true", help="Allow actual network/model requests")
     parser.add_argument("--drug", action="append", help="Drug term; repeat for more than one")
     parser.add_argument("--symptom", action="append", help="Symptom term; repeat as needed")
-    parser.add_argument("--sources-only", action="store_true", help="Do not call Gemini")
+    checks = parser.add_mutually_exclusive_group()
+    checks.add_argument("--sources-only", action="store_true", help="Do not call Gemini")
+    checks.add_argument(
+        "--schema-only", action="store_true", help="One model call, no literature searches"
+    )
     parser.add_argument(
         "--query", default="zolpidem AND (sex OR women OR female) AND (exposure OR impairment)"
     )
@@ -114,4 +125,6 @@ if __name__ == "__main__":
             f"Evidence check failed ({type(exc).__name__}); no credentials logged."
         ) from None
     if not success:
+        if args.schema_only:
+            raise SystemExit("Schema check failed; review the redacted validation message above.")
         raise SystemExit("No source-grounded evidence returned; review the recorded limitations.")

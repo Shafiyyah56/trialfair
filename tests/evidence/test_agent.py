@@ -10,9 +10,11 @@ from app.agents.evidence import (
     EvidenceDraft,
     EvidenceState,
     EvidenceSynthesis,
+    SynthesisClaim,
     compile_evidence_report,
     execute_evidence_tool,
     run_evidence,
+    synthesis_schema,
 )
 from app.contracts import EvidenceItem, EvidenceRequest, PublicationRecord, SourceRecord
 from app.model_client import ModelResponse, ToolCall
@@ -87,8 +89,11 @@ def item(sid="lit-support", quote=SUPPORT, relation="supports", eid="evidence-1"
 def draft(*items):
     return ModelResponse(
         structured_output=EvidenceSynthesis(
-            evidence_items=list(items),
+            evidence_items=[SynthesisClaim.from_evidence_item(item) for item in items],
             status="completed",
+            unresolved_questions=[],
+            analysis_suggestions=[],
+            limitations=[],
         ).model_dump(mode="json")
     )
 
@@ -507,3 +512,49 @@ def test_unconfigured_registry_tools_not_offered(context_factory):
     assert "inspect_trial_record" not in names
     assert report.evidence_items
     assert any("literature-only" in value for value in report.limitations)
+
+
+def test_compact_wire_schema_is_flat_required_and_has_no_fanout_bounds():
+    import json
+
+    schema = synthesis_schema()
+    encoded = json.dumps(schema)
+    assert "$ref" not in encoded and "$defs" not in schema
+    assert "maxItems" not in encoded and "anyOf" not in encoded
+
+    def check(node):
+        if isinstance(node, dict):
+            if node.get("type") == "object":
+                assert set(node["required"]) == set(node["properties"])
+            for value in node.values():
+                check(value)
+        elif isinstance(node, list):
+            for value in node:
+                check(value)
+
+    check(schema)
+    item_properties = schema["properties"]["evidence_items"]["items"]["properties"]
+    assert "source_locator" not in item_properties
+    assert item_properties["excerpt"]["type"] == "string"
+
+
+def test_flat_wire_does_not_weaken_source_or_relation_validation(context_factory):
+    claim = SynthesisClaim.from_evidence_item(item())
+    converted = claim.to_evidence_item()
+    assert converted.source_id == item().source_id
+    assert converted.source_locator == item().source_locator
+    assert converted.relation == item().relation
+    assert converted.study_design is None  # Do not invent optional study metadata.
+    claim.relation = "proven-safe"
+    with pytest.raises(ValueError):
+        claim.to_evidence_item()
+
+
+def test_schema_diagnostic_redacts_key_and_urls():
+    from scripts.evidence_schema_check import redact_provider_message
+
+    key = "unit-test-secret-credential"
+    message = f"Invalid schema at evidence_items. URL https://example.com/?key={key} api_key={key}"
+    result = redact_provider_message(message, key)
+    assert key not in result and "example.com" not in result
+    assert "Invalid schema at evidence_items" in result

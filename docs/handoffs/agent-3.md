@@ -64,8 +64,8 @@ Shared runtime changes included to make this component usable:
 ## Actual verification on 2026-11-08
 
 - Locked offline dependency sync: passed.
-- Full pytest suite: 105 passed, one inherited Starlette/httpx deprecation warning.
-- Agent 3-specific tests: 45 cover source, research and nested integration behaviour.
+- Full pytest suite: 108 passed, one inherited Starlette/httpx deprecation warning.
+- Agent 3-specific tests: 48 cover source, research and nested integration behaviour.
 - Ruff lint/format and lock consistency: passed; no dependency changes.
 - Documentation links and diff whitespace checks: passed.
 - A real Europe PMC core response was retrieved through Chrome and parsed by the
@@ -123,8 +123,32 @@ Corrective changes:
   as conclusively diagnosed from the old generic log.
 - CLI now prints synthesis passage count and cited-source count.
 
-Current automated verification: 105 tests pass, including 45 evidence tests. The
+Current automated verification: 108 tests pass, including 48 evidence tests. The
 new regressions cover inspection reservation, abstract fallback, alias resolution,
 provider schema shape, safe final-error diagnostics and unavailable registry tools.
 The full live check needs a rerun of the same smoke command; it is not yet marked
 passed. No findings were hardcoded or fabricated to make the smoke test succeed.
+
+## Second live failure and compact transport schema
+
+The user reran research: four passages were inspected, but final synthesis failed
+with ClientError HTTP 400. The run had 3 search attempts, 5 sources, zero grounded
+items, 4 model turns, 7 external requests and 88.94 seconds. HTTP 503/500 responses
+from Europe PMC were recovered with limited results/abstract fallback; they do not
+explain the model's final schema rejection. This live test is not marked passed.
+
+The provider-only synthesis transport now uses flat, required-only fields and no
+array cardinality bounds/optional clinical metadata branching. References are
+inlined before transport. The returned claims still become EvidenceItem through
+Pydantic and retain all exact-quote, source, finding-ID and relation checks. Invalid
+claims are rejected without discarding other valid claims. Public contracts and
+Agent 1 analysis interfaces are unchanged.
+
+scripts/evidence_schema_check.py implements a one-call --schema-only path in the
+existing smoke CLI. It sends synthetic input and no papers, and can report an
+explicitly redacted provider validation message without exposing exception details
+or secrets. Regression checks verify flat required schema shape, retained local
+scientific validation and diagnostic key/URL redaction. Current full test count:108.
+
+Next live validation: run the --schema-only command first. If accepted, rerun
+--live and review actual grounded claims. Full live Agent 3 success remains pending.

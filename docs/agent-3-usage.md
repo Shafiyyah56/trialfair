@@ -151,7 +151,7 @@ execution. Health reports evidence implementation present and full pipeline part
 
 ## Actual verification so far
 
-- Full suite: 105 tests passed before final documentation; 45 cover Agent 3 source,
+- Full suite: 108 tests passed before final documentation; 48 cover Agent 3 source,
   research and integration behaviour. See the handoff for final check results.
 - The actual nested Agent 2 -> Agent 3 -> revised hypothesis path passes with
   injected synthetic publications/model responses, one shared budget and valid
@@ -186,3 +186,36 @@ provider failure; live confirmation of the new path remains required.
 Regression tests cover those paths. Rerun the same --live command and inspect both
 evidence_items and cited_sources. Partial can be scientifically honest; no grounded
 items still means this live smoke test has not passed.
+
+## Schema-only check after the second live attempt
+
+The next user-run attempt successfully inspected four passages but final synthesis
+still returned ClientError HTTP 400: 3 search attempts, 5 sources, zero evidence,
+4 model calls, 7 external requests and 88.94 seconds. Europe PMC 503/500 responses
+also occurred; they are independent of the final model request rejection.
+
+The provider response schema now uses flat required-only claim fields, without
+optional clinical metadata branches, const schema-version fields, array bounds or
+nested source locators. Local conversion still builds the unchanged EvidenceItem/
+SourceLocator and all source, relation, excerpt and request checks remain enforced.
+Optional study context belongs in relevance/limitations when supported; it is not
+invented to fill structured metadata fields. The schema is inlined for transport.
+
+Google documents schema complexity as a possible source of 400 errors:
+https://docs.cloud.google.com/vertex-ai/generative-ai/docs/multimodal/control-generated-output
+The original generic error is insufficient to prove the precise rejected field.
+
+Before another full research run, test only that exact schema:
+
+```sh
+.venv/bin/python -m scripts.smoke_evidence --live --schema-only
+```
+
+This makes one model request with synthetic input and no source searches. It
+prints accepted=true when the provider accepts the schema and returns a valid
+object. On rejection, only the provider's separately redacted validation message
+is shown; no exception details, headers, prompts or credentials are dumped. This
+explicit diagnostic is restricted to synthetic schema-check input.
+
+If accepted, rerun the normal --live research check and inspect its evidence. A
+successful schema probe is not proof of a successful research investigation.

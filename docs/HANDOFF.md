@@ -43,7 +43,7 @@ merely to make an installation work.
 - Agent 1: still required for real trial ingestion, statistics and registry/
   terminology adapters. Do not infer completion from the working UI.
 - Agent 4: deferred. PlannerInput is available; no planner output is implemented.
-- Automated checks on the evidence branch: 105 tests pass; Ruff lint/format and
+- Automated checks on the evidence branch: 108 tests pass; Ruff lint/format and
   lock consistency pass. Agent 2's earlier milestone had 60 tests.
 - Live Gemini smoke: user-run on 2026-11-08, gemini-4-argon, google-genai 2.34.0,
   models.generate_content; plain reply, function calling and JSON output passed.

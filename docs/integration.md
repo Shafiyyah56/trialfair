@@ -116,3 +116,10 @@ tools. This is a runtime capability flag, not a replacement registry implementat
 Full-text failure may return a clearly labelled abstract fallback, with limitations.
 The first live attempt had zero grounded items; see the Agent 3 handoff for the
 corrective changes and pending retest. It is not recorded as a live success.
+
+The second live attempt inspected passages but encountered HTTP 400 in final
+synthesis. Only the internal provider transport changed: flat required claim fields
+and inline schema, then local conversion to the existing EvidenceItem/SourceLocator.
+The optional study context is reported in relevance/limitations when supported.
+No public scientific schema or source-grounding validation was relaxed. An explicit
+synthetic --schema-only diagnostic now isolates provider acceptance in one call.
