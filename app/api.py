@@ -1,7 +1,7 @@
 """Local research API with injected runtimes and validated persisted results.
 
-The default runtime has Agent 2 and Europe PMC-backed Agent 3. Missing upstream
-components never become fake live results. Bind to localhost for the hackathon;
+The default runtime connects Agents 1–3 to the registry and Europe PMC. Unavailable
+sources never become fake live results. Bind to localhost for the hackathon;
 there is no account or public-hosting security layer in this MVP.
 """
 
@@ -54,20 +54,15 @@ def create_app(
             run_store().save(result)
             return result
         finally:
-            closer = getattr(context.model, "aclose", None)
-            if closer is not None:
-                try:
-                    await closer()
-                except Exception:
-                    # Cleanup must not erase an already validated/persisted result.
-                    pass
+            await context.aclose()
 
     @application.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
         return HealthResponse(
             status="partial",
             agents_implemented=False,
-            components={"safety": True, "interpreter": False, "evidence": True, "planner": False},
+            # Implementation flags, not credential/source connectivity checks.
+            components={"safety": True, "interpreter": True, "evidence": True, "planner": False},
         )
 
     @application.post("/runs", response_model=RunResult)
@@ -76,7 +71,7 @@ def create_app(
 
     @application.post("/investigations", response_model=RunResult)
     async def create_investigation(payload: InvestigationInput) -> RunResult:
-        """Investigate prepared screening without pretending Agent 1 is implemented."""
+        """Investigate a prepared screening without repeating trial ingestion."""
         return await execute(payload)
 
     @application.get("/runs/{run_id}", response_model=RunResult)

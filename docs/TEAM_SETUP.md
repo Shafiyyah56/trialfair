@@ -125,8 +125,11 @@ automated clinical decisions. Respect the standing no-email policy.
 ## Shared non-secret readiness log
 
 - Dependency lock: uv.lock committed in dae3c5b.
-- Agent implementations: Agents 2/3 and Europe PMC wiring are present on the evidence branch;
-  Agent 1 ingestion/statistics/registry are still pending.
+- Agent implementations: Agents 1–3 are merged into main at bece131. Runtime
+  registry/literature/terminology wiring is on feat/service-integration; see
+  [service integration](service-integration.md). Combined live verification is pending.
+- Integration branch checks: 195 tests pass, 1 live test deselected, no xfails;
+  Ruff lint/format and locked offline installation pass.
 - Shared Gemini adapter: live smoke check passed, user-run on 2026-11-08.
 - Verified model ID for this account: gemini-4-argon, google-genai 2.34.0, models.generate_content.
 - Basic response, function calling and structured output: all true in the user-supplied smoke output.

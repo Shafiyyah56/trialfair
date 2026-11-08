@@ -1,5 +1,33 @@
 # Agent 2 acknowledgement and handoff
 
+## Service integration follow-up — 2026-11-08
+
+I read AGENTS.md, HANDOFF, TEAM_SETUP, assignments, architecture and contracts.
+As Agent 2/integrator I am working on feat/service-integration from bece131
+(merged main containing Agents 1–3). I own runtime/context, API, orchestration,
+dashboard and integration tests, reuse ModelClient and version 1.0 contracts,
+preserve provenance and keep credentials local. This is my acknowledgement only.
+Baseline: 185 passed, 1 deselected, 1 strict expected failure. Network/port
+restrictions in the coding sandbox still block combined live verification.
+
+The default runtime now connects the actual registry, Europe PMC, terminology,
+analysis and evidence implementations with one run budget and owned HTTP client.
+ToolContext.aclose handles resource cleanup. Incomplete interpretation/review or
+requested evidence cannot be overridden by the safety model's completed status.
+The existing strict-xfail regression is now a normal test. No dependency, lock
+or scientific contract change. Agent 4 remains deferred.
+
+Read [service integration](../service-integration.md) for exact ownership,
+offline test scope and the opt-in combined smoke command. Shared changes are
+recorded in integration.md; earlier component milestone notes below are historical.
+
+Final checks: 195 passed, 1 live test deselected, no expected failures; the existing
+upstream TestClient deprecation warning remains. Ruff lint/format, diff whitespace
+and offline `uv sync --locked --extra dev` passed. The opt-in combined CLI refuses
+execution without --live. Local live credentials are configured (values not logged).
+Fresh fetch failed with github.com DNS resolution blocked in the coding sandbox;
+no combined paid/live check or local server launch was performed here.
+
 Status: ACKNOWLEDGED; implementation complete for independent/injected operation.
 Live Gemini smoke and a browser-observed synthetic investigation passed.
 Real-data multi-agent research remains pending, as detailed below.

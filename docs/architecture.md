@@ -78,6 +78,11 @@ tool loop and final structured extraction if the actual model requires it.
 
 ## API and UI
 
+Default runtime composition and verification scope are in service-integration.md.
+Each run owns its model and default shared HTTP client; API routes close both via
+ToolContext.aclose in finally. Direct context users must do the same. Injected
+source clients remain caller-owned unless registered in context.resource_closers.
+
 FastAPI owns POST /runs, POST /investigations, GET /runs/{run_id} and GET /health. Streamlit is only a
 client/display layer. A synchronous bounded run is sufficient initially. Show an
 honest running indicator; show the recorded tool timeline once available. The implemented SQLite store

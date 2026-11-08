@@ -3,8 +3,8 @@
 Agent 2 implements the Safety Investigator, Gemini SDK adapter, bounded
 orchestration, SQLite persistence, FastAPI routes and Streamlit dashboard. It
 supports independent investigation of a prepared Agent 1 ScreeningOutput JSON.
-Agent 4 is not implemented. Agent 3 and its Europe PMC client are now wired on
-the evidence branch; Agent 1 remains a separate implementation dependency.
+Agent 4 is not implemented. Agents 1–3 and both source adapters are connected on
+feat/service-integration. See [integration verification](service-integration.md).
 See [Agent 3 usage](agent-3-usage.md) for research behaviour and live checks.
 
 ## Install and check
@@ -83,8 +83,8 @@ http://127.0.0.1:8000/docs.
 - Prepared screening JSON: select an actual ScreeningOutput from Agent 1 or the
   explicitly synthetic fixtures/synthetic/screening.json. Executing it calls the
   live configured model. A simulated input does not become a real clinical result.
-- Completed trial: accepts an NCT ID and optional symptom descriptions; requires
-  Agent 1's implementation and real service composition. It is not fully wired yet.
+- Completed trial: accepts an NCT ID and optional symptom descriptions; runs
+  Agent 1 ingestion/statistics followed by safety and requested external research.
 - Review saved run: upload RunResult JSON or enter a stored run ID. This only
   displays a saved result; it does not pretend to call a model. The original
   fixtures/synthetic/run_result.json is a zero-execution interface example.
@@ -97,9 +97,11 @@ recommendations or fake live progress events.
 
 ## API and composition
 
-- GET /health: Agent 2 available; full agent pipeline still partial.
-- POST /runs: TrialInput -> run_trial. Missing Agent 1 remains an explicit failed
-  run, not fake data. Missing credentials return HTTP 503 before execution.
+- GET /health: Agents 1–3 implemented; planner deferred, overall status partial.
+  Flags do not probe credentials or source availability.
+- POST /runs: TrialInput -> run_trial. Retrieval failures remain explicit failed
+  runs; subsequent failures retain verified partial work. Missing credentials return
+  HTTP 503 before execution.
 - POST /investigations: {"screening": <ScreeningOutput>, "mode": "live"} ->
   investigate_screening. Research/tool failures preserve verified partial work.
 - GET /runs/{run_id}: retrieve a validated stored result, or HTTP 404.
@@ -141,6 +143,6 @@ injected transport, API routes with TestClient, and the actual dashboard with
 Streamlit AppTest. Separate live smoke and browser evidence come from the
 user-run checks recorded above. The coding sandbox restrictions did not prevent
 the user from starting servers normally.
-No real-input full-pipeline latency is claimed until Agent 1 is implemented
-and wired and an actual end-to-end run is measured. The model itself has passed
+No real-input full-pipeline latency is claimed until an actual combined live
+run is measured. The model itself has passed
 the recorded smoke check.

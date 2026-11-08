@@ -2,8 +2,8 @@
 
 Agent 3 is the External Evidence Investigator. It receives EvidenceRequest and
 returns EvidenceReport without executing statistics or calling Agent 2 recursively.
-Its Europe PMC client is wired into the default runtime on feat/agent-3-evidence.
-Agent 1's registry adapter and trial-data interpretation remain dependencies.
+Its Europe PMC client and Agent 1's registry adapter are wired into the default
+runtime on feat/service-integration. See [integration verification](service-integration.md).
 Agent 4 is deferred.
 
 ## What is implemented
@@ -52,7 +52,8 @@ for tests; its owner closes it. Default requests use a temporary managed client.
 The normal runtime builds EuropePMCClient using its own run budget and
 TRIALFAIR_DATA_DIR/cache/europe_pmc. It already dispatches run_evidence through the
 existing evidence handler. Custom RuntimeServices passed by an integrator remain
-respected. Agent 1 still needs to supply/wire the registry and terminology adapters.
+respected. The default runtime now also wires Agent 1's registry and terminology
+adapters and closes its shared run-owned HTTP client through context.aclose().
 
 Do not append the EvidenceReport to context.evidence_reports inside Agent 3;
 Agent 2's dispatcher validates and appends it once. Reports echo the request ID.
@@ -146,8 +147,9 @@ meaningful literature investigation. The existing synthetic missing-data fixture
 has no real drug/trial and is not a realistic publication-search benchmark. Public
 searches for its fictitious trial identifier are rejected.
 
-Completed-trial input still needs Agent 1. JSON result review is separate from live
-execution. Health reports evidence implementation present and full pipeline partial.
+Completed-trial input now runs the merged Agent 1 interpreter/statistics. JSON
+result review is separate from live execution. Health reports the first three
+agents present and the full four-agent pipeline partial.
 
 ## Actual verification so far
 

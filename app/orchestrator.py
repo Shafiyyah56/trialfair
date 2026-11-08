@@ -68,7 +68,22 @@ async def _run(trial_input, screening, context, *, mode):
             evidence_reports=context.evidence_reports,
         )
     status = "failed" if screening is None else "partial"
-    if investigation and investigation.status == "completed" and not errors:
+    interpretation_pending = screening is not None and (
+        any(mapping.needs_review for mapping in screening.symptom_mappings)
+        or any(
+            limitation.startswith(
+                ("Interpretation incomplete", "Interpretation limited", "Follow-up interpretation")
+            )
+            for limitation in screening.trial_bundle.limitations
+        )
+    )
+    if (
+        investigation
+        and investigation.status == "completed"
+        and not errors
+        and not interpretation_pending
+        and all(report.status == "completed" for report in context.evidence_reports)
+    ):
         status = "completed"
     result = RunResult(
         run_id=context.run_id,

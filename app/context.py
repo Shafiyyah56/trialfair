@@ -93,3 +93,24 @@ class ToolContext:
     datasets: dict[str, TrialBundle] = field(default_factory=dict)
     additional_analyses: list[AnalysisResult] = field(default_factory=list)
     evidence_reports: list[EvidenceReport] = field(default_factory=list)
+    resource_closers: list[Callable[[], Awaitable[None]]] = field(default_factory=list, repr=False)
+    _closed: bool = field(default=False, init=False, repr=False)
+
+    async def aclose(self) -> None:
+        """Close the run's model and owned resources once, including after failed runs.
+
+        Injected service clients remain caller-owned unless explicitly registered.
+        Cleanup failures must not mask a verified result or prevent other cleanup.
+        """
+        if self._closed:
+            return
+        self._closed = True
+        closers = list(reversed(self.resource_closers))
+        model_closer = getattr(self.model, "aclose", None)
+        if model_closer is not None:
+            closers.append(model_closer)
+        for closer in closers:
+            try:
+                await closer()
+            except Exception:
+                pass

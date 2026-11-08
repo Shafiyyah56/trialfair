@@ -53,7 +53,7 @@ async def smoke(args):
         try:
             return await check_schema(context)
         finally:
-            await context.model.aclose()
+            await context.aclose()
     context.emit = lambda event: print(f"{event.event_type}: {event.summary}", flush=True)
     request = EvidenceRequest(
         request_id=str(uuid4()),
@@ -93,7 +93,7 @@ async def smoke(args):
         )
         return bool(report.evidence_items)
     finally:
-        await context.model.aclose()
+        await context.aclose()
 
 
 if __name__ == "__main__":

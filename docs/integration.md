@@ -1,5 +1,23 @@
 # Integration coordination
 
+## Current integration status — feat/service-integration
+
+Agent 2/integrator connects merged Agents 1–3 from main bece131. The existing
+RuntimeServices signature and scientific contracts stay compatible. build_context
+now constructs ClinicalTrialsClient and EuropePMCClient with one shared budget and
+HTTP client, plus empty SuppliedTerminology (no guessed licensed codes).
+ToolContext adds resource_closers and idempotent async aclose; the API and smoke
+scripts call it in finally. Injected source clients remain caller-owned.
+
+Agreement: implemented by the assigned integration owner; no schema/dependency
+migration. Incomplete/limited interpretation, review mappings and incomplete
+evidence prevent run-level completed status. Scientific subgroup evidence gaps
+alone remain valid findings. The strict expected-failure completion regression
+is now a normal passing test. Agent 1's population/window PK constraints remain.
+See [integration verification](service-integration.md) and Agent 2's handoff.
+
+The sections below retain the component-by-component implementation history.
+
 Start with [the coding agent handoff](HANDOFF.md). Read [team setup and acknowledgement instructions](TEAM_SETUP.md). Each coding
 agent must acknowledge before implementation and update only its own handoff file.
 
