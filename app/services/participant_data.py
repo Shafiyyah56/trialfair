@@ -16,14 +16,19 @@ Scientific rules applied here:
   UNDIFFERENTIATED). Other values are preserved as reported. Unknown or additional
   categories get their own rows and are never merged into Female/Male.
 - Serious and non-serious events are separate rows, mirroring registry AE tables.
+- Optional PK (PP domain) becomes per arm x sex geometric-mean PKRows. Optional ECG (EG
+  domain, QTcF) is summarised per participant. Participant-level values are kept only
+  in this process's memory (ParticipantTable) for allowlisted analyses; they are never
+  copied into TrialBundle, run results or storage.
 - CSV only: no pickle, executable content or arbitrary formats.
 """
 
 import csv
 import hashlib
 import io
+import math
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -32,6 +37,7 @@ from app.contracts import (
     DataAvailability,
     DemographicRow,
     NarrativeEntry,
+    PKRow,
     SourceLocator,
     SourceRecord,
     TrialBundle,
@@ -52,6 +58,42 @@ SERIOUSNESS = {"Y": "serious", "N": "non_serious"}
 POPULATION = "Safety population (participants with a recorded first dose)"
 WINDOW = "Treatment-emergent: onset on or after first-dose date"
 MAX_LOCATOR_LINES = 40
+PP_REQUIRED = ("STUDYID", "USUBJID", "PPTESTCD", "PPSTRESN", "PPSTRESU")
+EG_REQUIRED = ("STUDYID", "USUBJID", "EGTESTCD", "EGSTRESN", "EGBLFL")
+# Exposure parameters summarised as geometric means (log-normal by convention).
+EXPOSURE_PARAMETERS = ("AUCIFO", "AUCINF", "AUCLST", "AUCTAU", "CMAX")
+QTC_TESTCD = "QTCF"
+
+
+@dataclass
+class ParticipantTable:
+    """Participant-level values for allowlisted analyses. In-memory only, never serialised."""
+
+    study_id: str
+    is_synthetic: bool
+    source_ids: dict[str, str]  # domain -> source_id
+    participants: dict[str, dict]  # USUBJID -> sex, armcd, arm, placebo
+    teae: dict[str, set[str]] = field(default_factory=dict)  # AEDECOD -> USUBJIDs
+    exposures: dict[str, dict[str, float]] = field(default_factory=dict)  # PPTESTCD -> values
+    exposure_units: dict[str, str] = field(default_factory=dict)
+    ecg: dict[str, dict] = field(default_factory=dict)  # USUBJID -> baseline/max values
+
+
+_TABLES: dict[str, ParticipantTable] = {}
+
+
+def _table_key(sources) -> str | None:
+    parts = sorted(
+        f"{s.source_id}:{s.content_hash}" for s in sources if s.source_id.startswith("participant-")
+    )
+    return hashlib.sha256("|".join(parts).encode()).hexdigest() if parts else None
+
+
+def participant_table_for(bundle: TrialBundle) -> ParticipantTable | None:
+    """Return participant-level data loaded in this process for exactly these sources."""
+    key = _table_key(bundle.sources)
+    table = _TABLES.get(key) if key else None
+    return table if table is not None and table.study_id == bundle.trial_id else None
 
 
 class ParticipantDataError(ValueError):
@@ -134,6 +176,8 @@ def load_participant_dataset(
     is_synthetic: bool,
     title: str | None = None,
     narratives_path: Path | None = None,
+    pp_path: Path | None = None,
+    eg_path: Path | None = None,
 ) -> TrialBundle:
     """Load DM and AE CSV files into a validated, source-linked TrialBundle.
 
@@ -235,6 +279,7 @@ def load_participant_dataset(
     # (term, seriousness, armcd, sex) -> {"subjects": set, "lines": list}
     cells: dict[tuple[str, str, str, str], dict] = {}
     terms: set[tuple[str, str]] = set()
+    teae_subjects: dict[str, set[str]] = {}
     for line, row in ae.rows:
         p = safety.get(row["USUBJID"])
         if p is None:
@@ -261,6 +306,7 @@ def load_participant_dataset(
         if onset < p["first_dose"]:
             excluded["pre_existing"] += 1
             continue
+        teae_subjects.setdefault(term, set()).add(row["USUBJID"])
         seriousness = SERIOUSNESS.get(row["AESER"].upper(), "unspecified")
         if seriousness == "unspecified":
             unspecified_seriousness += 1
@@ -360,7 +406,53 @@ def load_participant_dataset(
             "only; they do not alter derived counts."
         )
 
-    return TrialBundle(
+    table = ParticipantTable(
+        study_id=study_id,
+        is_synthetic=is_synthetic,
+        source_ids={"dm": dm.source.source_id, "ae": ae.source.source_id},
+        participants={
+            sid: {
+                "sex": p["sex"],
+                "armcd": p["armcd"],
+                "arm": p["arm"],
+                "placebo": "placebo" in p["arm"].casefold(),
+            }
+            for sid, p in safety.items()
+        },
+        teae=teae_subjects,
+    )
+    pk_rows: list[PKRow] = []
+    availability_notes = []
+    if pp_path is not None:
+        pp = _read_csv(
+            pp_path,
+            PP_REQUIRED,
+            "participant-pp",
+            is_synthetic=is_synthetic,
+            retrieved_at=retrieved_at,
+        )
+        _check_study(pp, study_id)
+        sources.append(pp.source)
+        table.source_ids["pp"] = pp.source.source_id
+        pk_rows, pk_limitations = _load_pk(pp, safety, arms, table, is_synthetic)
+        limitations.extend(pk_limitations)
+    else:
+        availability_notes.append("No PK domain supplied with the participant-level files.")
+    if eg_path is not None:
+        eg = _read_csv(
+            eg_path,
+            EG_REQUIRED,
+            "participant-eg",
+            is_synthetic=is_synthetic,
+            retrieved_at=retrieved_at,
+        )
+        _check_study(eg, study_id)
+        sources.append(eg.source)
+        table.source_ids["eg"] = eg.source.source_id
+        limitations.extend(_load_ecg(eg, safety, table))
+    pk_sexes = {r.reported_sex_category for r in pk_rows}
+
+    bundle = TrialBundle(
         trial_id=study_id,
         title=title or f"Participant-level dataset {study_id}",
         interventions=sorted(set(arms.values())),
@@ -368,13 +460,142 @@ def load_participant_dataset(
         narrative_entries=narratives,
         demographic_rows=demographic_rows,
         adverse_event_rows=adverse_event_rows,
+        pk_rows=pk_rows,
         availability=DataAvailability(
             representation="available",
             sex_stratified_ae="available" if {"Female", "Male"} <= sexes else "missing",
-            sex_stratified_pk="missing",
+            sex_stratified_pk="available" if {"Female", "Male"} <= pk_sexes else "missing",
             participant_level="available",
-            notes=["No PK domain supplied with the participant-level files."],
+            notes=availability_notes,
         ),
         limitations=limitations,
         is_synthetic=is_synthetic,
     )
+    _TABLES[_table_key(bundle.sources)] = table
+    return bundle
+
+
+def _check_study(table: _Table, study_id: str) -> None:
+    studies = {r["STUDYID"] for _, r in table.rows}
+    if studies and studies != {study_id}:
+        raise ParticipantDataError(f"{table.name}: STUDYID must match DM/AE ({study_id})")
+
+
+def _positive_float(value: str) -> float | None:
+    try:
+        number = float(value)
+    except ValueError:
+        return None
+    return number if math.isfinite(number) and number > 0 else None
+
+
+def _load_pk(pp: _Table, safety, arms, table: ParticipantTable, is_synthetic):
+    excluded = {"not_in_safety_population": 0, "non_positive_or_missing": 0}
+    lines: dict[tuple[str, str], dict[str, int]] = {}
+    for line, row in pp.rows:
+        code = row["PPTESTCD"].upper()
+        if code not in EXPOSURE_PARAMETERS:
+            continue
+        sid = row["USUBJID"]
+        if sid not in safety:
+            excluded["not_in_safety_population"] += 1
+            continue
+        value = _positive_float(row["PPSTRESN"])
+        if value is None:
+            excluded["non_positive_or_missing"] += 1
+            continue
+        values = table.exposures.setdefault(code, {})
+        if sid in values:
+            raise ParticipantDataError(
+                f"{pp.name}: line {line} repeats {code} for {sid}; supply one visit per file"
+            )
+        unit = row["PPSTRESU"]
+        if table.exposure_units.setdefault(code, unit) != unit:
+            raise ParticipantDataError(f"{pp.name}: {code} uses more than one unit")
+        values[sid] = value
+        lines.setdefault((code, sid), {})[sid] = line
+    rows = []
+    for code, values in sorted(table.exposures.items()):
+        groups: dict[tuple[str, str], list[tuple[str, float]]] = {}
+        for sid, value in values.items():
+            p = safety[sid]
+            groups.setdefault((p["armcd"], p["sex"]), []).append((sid, value))
+        for (armcd, sex), members in sorted(groups.items()):
+            logs = [math.log(v) for _, v in members]
+            n = len(logs)
+            mean = sum(logs) / n
+            variability = None
+            if n >= 2:
+                sd = math.sqrt(sum((x - mean) ** 2 for x in logs) / (n - 1))
+                variability = f"geometric CV {100 * math.sqrt(math.exp(sd**2) - 1):.1f}%"
+            member_lines = sorted(lines[(code, sid)][sid] for sid, _ in members)
+            rows.append(
+                PKRow(
+                    row_id=f"pk-{_slug(armcd)}-{_slug(code)}-{_slug(sex)}",
+                    parameter=code,
+                    value=round(math.exp(mean), 6),
+                    unit=table.exposure_units[code],
+                    summary_statistic="geometric mean",
+                    reported_sex_category=sex,
+                    group_id=armcd,
+                    dose=arms[armcd],
+                    sample_size=n,
+                    variability=variability,
+                    source_locator=SourceLocator(
+                        source_id=pp.source.source_id,
+                        location=f"{pp.name} lines {_lines(member_lines)}",
+                        excerpt=f"{code} geometric mean of {n} participants",
+                    ),
+                    is_synthetic=is_synthetic,
+                )
+            )
+    limitations = [
+        "PK summaries are geometric means of participant-level values from one visit; "
+        "Female/Male ratios are computed from participant-level values only.",
+        f"Excluded PK records: {excluded['not_in_safety_population']} outside the safety "
+        f"population, {excluded['non_positive_or_missing']} missing or non-positive.",
+    ]
+    return rows, limitations
+
+
+def _load_ecg(eg: _Table, safety, table: ParticipantTable) -> list[str]:
+    baseline: dict[str, list[float]] = {}
+    post: dict[str, list[tuple[float, int]]] = {}
+    excluded = 0
+    for line, row in eg.rows:
+        if row["EGTESTCD"].upper() != QTC_TESTCD:
+            continue
+        sid = row["USUBJID"]
+        if sid not in safety:
+            excluded += 1
+            continue
+        try:
+            value = float(row["EGSTRESN"])
+        except ValueError:
+            excluded += 1
+            continue
+        if not math.isfinite(value) or value <= 0:
+            excluded += 1
+            continue
+        if row["EGBLFL"].upper() == "Y":
+            baseline.setdefault(sid, []).append(value)
+        else:
+            post.setdefault(sid, []).append((value, line))
+    no_baseline = 0
+    for sid, values in post.items():
+        base = baseline.get(sid)
+        if not base or len(base) != 1:
+            no_baseline += 1
+            continue
+        peak = max(v for v, _ in values)
+        table.ecg[sid] = {
+            "baseline": base[0],
+            "max_post": peak,
+            "max_change": max(v - base[0] for v, _ in values),
+            "lines": [ln for _, ln in values],
+        }
+    return [
+        f"ECG ({QTC_TESTCD}): {len(table.ecg)} participants with one baseline and at least "
+        f"one post-baseline value; {no_baseline} without a unique baseline and {excluded} "
+        "records outside the safety population or non-numeric were excluded."
+    ]

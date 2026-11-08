@@ -26,6 +26,8 @@ ToolName = Literal[
     "audit_subgroup_availability",
     "compare_adverse_event_rates",
     "summarise_pk_by_sex",
+    "exposure_response",
+    "summarise_qtc_by_sex",
 ]
 CompletionStatus = Literal["completed", "partial", "unavailable"]
 

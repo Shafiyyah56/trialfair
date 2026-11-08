@@ -84,6 +84,11 @@ def _event(context, kind, summary, ids=()):
     )
 
 
+def _thinking(context):
+    """Optional model reasoning level for interpretation calls (unset = model default)."""
+    return getattr(context.settings, "interpreter_thinking_level", None)
+
+
 def _check_batch(batch, expected_ids, allowed_codes):
     seen = [j.entry_id for j in batch.judgements]
     if sorted(seen) != sorted(expected_ids):
@@ -134,7 +139,9 @@ async def _refine(bundle, context, distinct, flagged, judgements, allowed_codes)
             },
         ),
     ]
-    response = await generate_with_budget(context, messages, tools=tools)
+    response = await generate_with_budget(
+        context, messages, tools=tools, thinking_level=_thinking(context)
+    )
     if not response.tool_calls:
         return judgements
     if len(response.tool_calls) > 2 * len(flagged):
@@ -176,7 +183,11 @@ async def _refine(bundle, context, distinct, flagged, judgements, allowed_codes)
         ModelMessage(role="user", content="Return final judgements for the flagged entries.")
     )
     response = await generate_with_budget(
-        context, messages, tools=[], output_schema=JudgementBatch.model_json_schema()
+        context,
+        messages,
+        tools=[],
+        output_schema=JudgementBatch.model_json_schema(),
+        thinking_level=_thinking(context),
     )
     refined = _check_batch(
         JudgementBatch.model_validate(response.structured_output), flagged, allowed_codes
@@ -242,7 +253,11 @@ async def _interpret(bundle, context):
         ]
         async with asyncio.timeout(min(35, context.budget.remaining_seconds() * 0.3)):
             response = await generate_with_budget(
-                context, messages, tools=[], output_schema=JudgementBatch.model_json_schema()
+                context,
+                messages,
+                tools=[],
+                output_schema=JudgementBatch.model_json_schema(),
+                thinking_level=_thinking(context),
             )
         judgements = _check_batch(
             JudgementBatch.model_validate(response.structured_output),
@@ -303,6 +318,183 @@ async def _interpret(bundle, context):
         "distinct texts remain flagged for review",
     )
     return mappings, limitations
+
+
+def _excludes(interval, null):
+    return interval is not None and (interval[0] > null or interval[1] < null)
+
+
+def _signal(title, description, rationale, analysis, endpoint=None, priority="medium"):
+    return Finding(
+        finding_id=f"finding-{uuid4().hex}",
+        finding_type="potential_signal",
+        title=title,
+        description=description,
+        endpoint=endpoint,
+        priority=priority,
+        priority_rationale=rationale,
+        analysis_ids=[analysis.analysis_id],
+        source_ids=list(dict.fromkeys(loc.source_id for loc in analysis.source_locators)),
+        limitations=analysis.limitations,
+        is_synthetic=analysis.is_synthetic,
+    )
+
+
+def _comparison_findings(bundle, comparisons):
+    """Signal only intervals excluding zero; summarise the rest with multiplicity stated."""
+    rows_by_id = {r.row_id: r for r in bundle.adverse_event_rows}
+    completed = [c for c in comparisons if c.status == "completed"]
+    total = len(completed)
+    findings, inconclusive = [], []
+    for comparison in completed:
+        if not _excludes(comparison.results["risk_difference_ci95"], 0):
+            inconclusive.append(comparison)
+            continue
+        row = rows_by_id[comparison.parameters["row_ids"][0]]
+        low, high = comparison.results["risk_difference_ci95"]
+        direction = "higher" if low > 0 else "lower"
+        findings.append(
+            _signal(
+                f"Female participants had a {direction} {row.source_term} rate ({row.group_id})",
+                f"Risk difference {comparison.results['risk_difference']:+.3f} "
+                f"(95% CI {low:+.3f} to {high:+.3f}). One of {total} exploratory "
+                "Female/Male comparisons in this screening; no multiplicity adjustment, so "
+                "some intervals are expected to exclude zero by chance.",
+                "The 95% interval excludes zero in an exploratory, unadjusted comparison; "
+                "not a clinical threshold or causal effect.",
+                comparison,
+                endpoint=row.source_term,
+            )
+        )
+    if inconclusive:
+        findings.append(
+            Finding(
+                finding_id=f"finding-{uuid4().hex}",
+                finding_type="evidence_gap",
+                title=f"No conclusive Female/Male difference in {len(inconclusive)} of "
+                f"{total} exploratory AE comparisons",
+                description="These intervals include zero. With small subgroups this means "
+                "the data cannot distinguish a difference from chance; it does not show "
+                "that rates are equal or that the drug is safe for either sex.",
+                priority="low",
+                priority_rationale="Imprecise or null comparisons; reported so absence of a "
+                "signal is not mistaken for evidence of no difference.",
+                analysis_ids=[c.analysis_id for c in inconclusive],
+                source_ids=list(
+                    dict.fromkeys(loc.source_id for c in inconclusive for loc in c.source_locators)
+                ),
+                limitations=[
+                    "Non-significance is not evidence of equivalence or safety.",
+                    "Multiple exploratory comparisons; no multiplicity adjustment.",
+                ],
+                is_synthetic=any(c.is_synthetic for c in inconclusive),
+            )
+        )
+    return findings
+
+
+async def _participant_level_findings(bundle, analyses, dataset_ref, context):
+    """Run participant-level analyses when the data supports them; signal clear intervals."""
+    from app.services.participant_data import participant_table_for
+
+    table = participant_table_for(bundle)
+    if table is None:
+        return []
+    findings = []
+    pk = next((a for a in analyses if a.method == "summarise_pk_by_sex"), None)
+    if pk is not None and pk.status == "completed":
+        for ratio in pk.results.get("participant_level_ratios", []):
+            if ratio["status"] == "completed" and _excludes(ratio["ratio_ci95"], 1):
+                low, high = ratio["ratio_ci95"]
+                direction = "higher" if low > 1 else "lower"
+                findings.append(
+                    _signal(
+                        f"Female {ratio['parameter']} exposure {direction} than male "
+                        f"({ratio['group_id']})",
+                        f"Female/male geometric mean ratio {ratio['geometric_mean_ratio']:.2f} "
+                        f"(95% CI {low:.2f} to {high:.2f}; n={ratio['n_female']} female, "
+                        f"{ratio['n_male']} male). Not adjusted for body size.",
+                        "Participant-level exposure interval excludes 1; exposure differences "
+                        "can precede AE differences that small subgroups cannot show.",
+                        pk,
+                    )
+                )
+    if table.exposures:
+        for term in sorted(table.teae):
+            if not table.teae[term]:
+                continue
+            analysis = await execute_analysis(
+                AnalysisRequest(
+                    request_id=f"initial-{uuid4().hex}",
+                    requested_by="interpreter",
+                    tool_name="exposure_response",
+                    dataset_ref=dataset_ref,
+                    parameters={"term": term},
+                    rationale="Initial participant-level exposure-response screening",
+                ),
+                context,
+            )
+            analyses.append(analysis)
+            model = (
+                analysis.results.get("exposure_model", {}) if analysis.status == "completed" else {}
+            )
+            if model.get("status") != "completed":
+                continue
+            exposure = model["terms"]["exposure"]
+            if not _excludes(exposure["or_ci95"], 1):
+                continue
+            sex = analysis.results["sex_unadjusted_model"]
+            adjusted = analysis.results["sex_exposure_adjusted_model"]
+
+            def describe(fit, name):
+                if fit.get("status") != "completed":
+                    return "not estimable"
+                t = fit["terms"][name]
+                return f"{t['odds_ratio']:.2f} (95% CI {t['or_ci95'][0]:.2f}-{t['or_ci95'][1]:.2f})"
+
+            findings.append(
+                _signal(
+                    f"{term} risk increases with drug exposure",
+                    f"Odds ratio per median dosed exposure {describe(model, 'exposure')}. "
+                    f"Female odds ratio unadjusted {describe(sex, 'female')}; adjusted for "
+                    f"exposure {describe(adjusted, 'female')}. Compare these to judge whether "
+                    "a sex difference is accounted for by exposure.",
+                    "Participant-level exposure-response interval excludes 1; exploratory.",
+                    analysis,
+                    endpoint=term,
+                )
+            )
+    if table.ecg:
+        qtc = await execute_analysis(
+            AnalysisRequest(
+                request_id=f"initial-{uuid4().hex}",
+                requested_by="interpreter",
+                tool_name="summarise_qtc_by_sex",
+                dataset_ref=dataset_ref,
+                rationale="Initial participant-level QTc screening",
+            ),
+            context,
+        )
+        analyses.append(qtc)
+        if qtc.status == "completed":
+            for comparison in qtc.results["female_male_comparisons"]:
+                flagged = _excludes(comparison["difference_ci95"], 0) or any(
+                    _excludes(o["risk_difference_ci95"], 0) for o in comparison["outliers"].values()
+                )
+                if flagged:
+                    findings.append(
+                        _signal(
+                            f"QTc response differs by sex ({comparison['group_id']})",
+                            "Female minus male mean maximum QTcF change "
+                            f"{comparison['mean_max_change_difference_ms']:+.1f} ms (95% CI "
+                            f"{comparison['difference_ci95'][0]:+.1f} to "
+                            f"{comparison['difference_ci95'][1]:+.1f}); see ICH E14 category "
+                            "counts and the concentration-QTc model in the analysis.",
+                            "An interval excludes the null in exploratory QTc comparisons.",
+                            qtc,
+                        )
+                    )
+    return findings
 
 
 async def run_interpreter(trial_input: TrialInput, context: ToolContext) -> ScreeningOutput:
@@ -448,31 +640,8 @@ async def run_interpreter(trial_input: TrialInput, context: ToolContext) -> Scre
         )
         analyses.append(comparison)
         comparisons.append(comparison)
-    findings = []
-    rows_by_id = {r.row_id: r for r in bundle.adverse_event_rows}
-    for comparison in comparisons:
-        if comparison.status == "completed" and comparison.results["risk_difference"] != 0:
-            compared = rows_by_id[comparison.parameters["row_ids"][0]]
-            findings.append(
-                Finding(
-                    finding_id=f"finding-{uuid4().hex}",
-                    finding_type="potential_signal",
-                    title="Exploratory difference in reported participant event rates: "
-                    f"{compared.source_term} ({compared.group_id})",
-                    endpoint=compared.source_term,
-                    description="Selected categories have different observed event proportions. "
-                    "Review the interval, source context and multiplicity before interpretation.",
-                    priority="low",
-                    priority_rationale="Descriptive screening candidate; no clinical "
-                    "threshold or established causal effect.",
-                    analysis_ids=[comparison.analysis_id],
-                    source_ids=list(
-                        dict.fromkeys(loc.source_id for loc in comparison.source_locators)
-                    ),
-                    limitations=comparison.limitations,
-                    is_synthetic=comparison.is_synthetic,
-                )
-            )
+    findings = _comparison_findings(bundle, comparisons)
+    findings += await _participant_level_findings(bundle, analyses, dataset_ref, context)
     audit = analyses[1]
     missing = audit.results.get("missing_fields", [])
     if missing:
@@ -575,6 +744,8 @@ def main():
                 narratives_path=notes
                 if (notes := args.participant_dir / "narratives.csv").exists()
                 else None,
+                pp_path=pp if (pp := args.participant_dir / "pp.csv").exists() else None,
+                eg_path=eg if (eg := args.participant_dir / "eg.csv").exists() else None,
             )
             validate_screening(ScreeningOutput(trial_bundle=bundle))
             if args.with_gemini:
