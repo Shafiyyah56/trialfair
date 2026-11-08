@@ -5,6 +5,11 @@ This is the entry point for Agents 1 and 3 integrating with the completed Agent 
 
 ## Current integration update — 2026-11-08
 
+Latest: feat/demo-integration integrates all four agents, planner report storage,
+validation, API and progress/UI. Read [the demo runbook](DEMO.md). It includes an
+explicit curated-source profile; 265 offline tests pass. Actual live four-agent
+provider/browser verification remains pending. Older status notes below are history.
+
 Agents 1–3 are merged into main through bece131. The follow-up branch
 feat/service-integration wires all real adapters, closes run-owned resources,
 and propagates incomplete interpretation/evidence into partial run status.

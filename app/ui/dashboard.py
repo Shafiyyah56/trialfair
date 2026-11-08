@@ -6,13 +6,21 @@ screening JSON is schema checked; saved results are validated before display.
 
 import hashlib
 import json
+import sys
 import time
+from pathlib import Path
 
 import httpx
 
-from app.contracts import RunResult, ScreeningOutput
-from app.progress import RunAccepted, RunProgress
-from app.validation import validate_run, validate_screening
+# Streamlit's console entry point places this file's directory on sys.path.
+# Resolve the package from the checkout even without an editable installation.
+_PROJECT_ROOT = str(Path(__file__).resolve().parents[2])
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
+from app.contracts import RunResult, ScreeningOutput  # noqa: E402
+from app.progress import RunAccepted, RunProgress  # noqa: E402
+from app.validation import validate_run, validate_screening  # noqa: E402
 
 
 def render_result(st, result: RunResult, *, saved: bool = False) -> None:
@@ -21,6 +29,19 @@ def render_result(st, result: RunResult, *, saved: bool = False) -> None:
     label = "Saved result review" if saved else "Execution result"
     st.caption(f"{label} · mode: {result.mode} · model: {result.model_id or 'none recorded'}")
     st.write(f"Status: **{result.status}** · duration: {result.duration_ms / 1000:.2f}s")
+    columns = st.columns(4)
+    columns[0].metric(
+        "Screening findings", len(result.screening.findings) if result.screening else 0
+    )
+    columns[1].metric("Evidence items", sum(len(r.evidence_items) for r in result.evidence_reports))
+    columns[2].metric(
+        "Cited sources",
+        len({e.source_id for r in result.evidence_reports for e in r.evidence_items}),
+    )
+    columns[3].metric(
+        "Follow-up actions",
+        len(result.planner_report.recommendations) if result.planner_report else 0,
+    )
     for error in result.errors:
         st.warning(error)
     screening = result.screening
@@ -73,12 +94,44 @@ def render_result(st, result: RunResult, *, saved: bool = False) -> None:
         st.caption(f"Request {report.request_id}: {report.status}")
         for item in report.evidence_items:
             st.write(f"**{item.relation}** · {item.claim}")
+            if item.source_locator.excerpt:
+                with st.expander("Inspect supporting source excerpt"):
+                    st.write(item.source_locator.excerpt)
             st.caption(f"Source {item.source_id} · {item.source_locator.location}")
             st.caption(item.relevance)
             for limitation in item.limitations:
                 st.caption(limitation)
         for limitation in report.limitations:
             st.caption(limitation)
+    st.subheader("Next investigations for human review")
+    if result.planner_report:
+        plan = result.planner_report
+        st.caption(f"Planner status: {plan.status} · human approval required")
+        for recommendation in plan.recommendations:
+            with st.expander(
+                f"{recommendation.priority.upper()} · {recommendation.action}", expanded=True
+            ):
+                st.write(recommendation.rationale)
+                st.caption(recommendation.priority_rationale)
+                st.write(f"Resolves: {recommendation.resolves_question}")
+                st.write(f"Data: {recommendation.availability} · {recommendation.feasibility}")
+                if recommendation.required_data:
+                    st.write("Required data: " + "; ".join(recommendation.required_data))
+                if recommendation.prerequisites:
+                    st.write("Prerequisites: " + "; ".join(recommendation.prerequisites))
+                st.caption("Linked findings: " + ", ".join(recommendation.finding_ids))
+                st.caption(
+                    "Evidence: " + (", ".join(recommendation.evidence_ids) or "evidence gap")
+                )
+                for limitation in recommendation.limitations:
+                    st.caption(limitation)
+        for limitation in plan.limitations:
+            st.warning(limitation)
+        with st.expander("Planning input limitations and unresolved questions"):
+            for line in [*plan.input_limitations, *plan.unresolved_questions]:
+                st.write(line)
+    else:
+        st.info("No planning output is available in this saved run.")
     st.subheader("Traceable sources")
     sources = {x.source_id: x for x in bundle.sources}
     for report in result.evidence_reports:
@@ -103,7 +156,7 @@ def render_result(st, result: RunResult, *, saved: bool = False) -> None:
         )
     for limitation in bundle.limitations:
         st.caption(limitation)
-    st.caption("Research support for human review. Trial Improvement Planner is not implemented.")
+    st.caption("Research support for human review. No proposed action is executed automatically.")
     st.download_button(
         "Download validated run JSON",
         result.model_dump_json(indent=2),
@@ -117,15 +170,37 @@ def render_live_progress(st, progress: RunProgress) -> None:
     st.subheader("Investigation pipeline")
     st.progress(progress.progress, text=progress.stage)
     if progress.active_agent:
+        st.caption(f"Active agent: **{progress.active_agent.title()}**")
         latest = progress.events[-1].summary if progress.events else "Starting this stage"
         st.caption(latest)
 
+    stage_nodes = {
+        "interpreter": ("1 Data screening", progress.screening is not None),
+        "safety": ("2 Safety investigation", progress.investigation is not None),
+        "evidence": ("3 Evidence review", bool(progress.evidence_reports)),
+        "planner": ("4 Follow up planning", progress.planner_report is not None),
+    }
+    dot = [
+        'digraph { rankdir=LR; bgcolor="transparent"; '
+        'node [shape=box style="rounded,filled" fontname="Arial" color="#cbd5e1"];'
+    ]
+    for name, (label, available) in stage_nodes.items():
+        color = (
+            "#dbeafe" if progress.active_agent == name else "#dcfce7" if available else "#f1f5f9"
+        )
+        dot.append(f'{name} [label="{label}" fillcolor="{color}"];')
+    dot.append(
+        "interpreter -> safety; safety -> evidence; evidence -> safety; safety -> planner; }"
+    )
+    st.graphviz_chart("\n".join(dot), use_container_width=True)
+    st.caption("Blue: active agent · Green: output available · Grey: pending")
     stages = [
         ("Trial data screening", progress.screening is not None),
         ("Safety investigation", progress.investigation is not None),
         ("External evidence", bool(progress.evidence_reports)),
+        ("Follow-up planning", progress.planner_report is not None),
     ]
-    columns = st.columns(3)
+    columns = st.columns(4)
     for column, (label, complete) in zip(columns, stages, strict=True):
         column.metric(label, "Available" if complete else "Pending")
 
@@ -150,12 +225,13 @@ def render_live_progress(st, progress: RunProgress) -> None:
             "interpreter": "Trial data interpretation",
             "safety": "Safety investigation",
             "evidence": "External evidence research",
+            "planner": "Follow-up planning",
             "orchestrator": "Result validation",
         }
         st.dataframe(
             [
                 {
-                    "stage": labels[event.agent],
+                    "stage": labels.get(event.agent, event.agent.title()),
                     "activity": event.summary,
                 }
                 for event in progress.events[-8:]
@@ -173,7 +249,7 @@ def run_with_live_updates(st, backend: str, path: str, payload: dict) -> RunResu
     response.raise_for_status()
     accepted = RunAccepted.model_validate(response.json())
     panel = st.empty()
-    deadline = time.monotonic() + 170
+    deadline = time.monotonic() + 930
     while time.monotonic() < deadline:
         response = httpx.get(backend + accepted.progress_url, timeout=10)
         response.raise_for_status()
@@ -199,13 +275,22 @@ def main() -> None:
     st.write("Investigate sex-specific clinical trial safety signals and missing evidence.")
     st.caption("Trial screening, safety investigation and external evidence for human review.")
     backend = "http://127.0.0.1:8000"
-    action = st.radio("Input", ["Prepared screening JSON", "Completed trial", "Review saved run"])
+    action = st.radio(
+        "Input", ["Curated demo", "Completed trial", "Prepared screening JSON", "Review saved run"]
+    )
     with st.form("investigation"):
         upload = None
         nct_id = ""
         narrative = ""
         run_id = ""
-        if action == "Completed trial":
+        if action == "Curated demo":
+            nct_id = "NCT04280705"
+            st.info(
+                "ACTT-1 remdesivir demonstration: real captured trial data, three "
+                "preselected publications and prepared evidence annotations. Other model "
+                "stages run live when available. This is not an autonomous literature search."
+            )
+        elif action == "Completed trial":
             nct_id = st.text_input("ClinicalTrials.gov NCT identifier")
             narrative = st.text_area("Optional trial symptom descriptions", max_chars=20000)
             st.caption(
@@ -247,7 +332,7 @@ def main() -> None:
                         path = "/investigations"
                         payload = {"screening": screening.model_dump(mode="json"), "mode": "live"}
                     else:
-                        path = "/runs"
+                        path = "/demo/runs" if action == "Curated demo" else "/runs"
                         payload = {"nct_id": nct_id.strip(), "mode": "live"}
                         if narrative.strip():
                             digest = hashlib.sha256(narrative.encode()).hexdigest()

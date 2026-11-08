@@ -85,11 +85,20 @@ def create_app(
         finally:
             await context.aclose()
 
-    def start_background_run(payload) -> RunAccepted:
-        factory = context_factory or build_context
+    def start_background_run(payload, *, demo=False) -> RunAccepted:
+        if demo:
+            from app.demo import DEMO_TRIAL, build_demo_context, configure_demo_context
+
+            if payload.nct_id != DEMO_TRIAL or payload.mode != "live":
+                raise HTTPException(422, "Curated demo requires NCT04280705 and live model mode.")
+            factory = context_factory or build_demo_context
+        else:
+            factory = context_factory or build_context
         run_id = str(uuid4())
         try:
             context = factory(run_id, payload.mode)
+            if demo and context_factory is not None:
+                context = configure_demo_context(context)
         except RuntimeNotReady as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         active_runs.start(
@@ -98,7 +107,13 @@ def create_app(
         downstream_emit = context.emit
 
         def capture(event):
-            active_runs.record_event(run_id, event, context.evidence_reports)
+            active_runs.record_event(
+                run_id,
+                event,
+                context.evidence_reports,
+                investigation=context.investigation_report,
+                planner_report=context.planner_report,
+            )
             downstream_emit(event)
 
         context.emit = capture
@@ -110,10 +125,10 @@ def create_app(
     @application.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
         return HealthResponse(
-            status="partial",
-            agents_implemented=False,
+            status="ready",
+            agents_implemented=True,
             # Implementation flags, not credential/source connectivity checks.
-            components={"safety": True, "interpreter": True, "evidence": True, "planner": False},
+            components={"safety": True, "interpreter": True, "evidence": True, "planner": True},
         )
 
     @application.post("/runs", response_model=RunResult)
@@ -134,6 +149,11 @@ def create_app(
     async def create_investigation_async(payload: InvestigationInput) -> RunAccepted:
         """Start prepared-screening investigation without repeating interpretation."""
         return start_background_run(payload)
+
+    @application.post("/demo/runs/async", response_model=RunAccepted, status_code=202)
+    async def create_demo_run(trial_input: TrialInput) -> RunAccepted:
+        """Explicit curated remdesivir demo with captured sources and live model stages."""
+        return start_background_run(trial_input, demo=True)
 
     @application.get("/runs/{run_id}/progress", response_model=RunProgress)
     def get_run_progress(run_id: str) -> RunProgress:

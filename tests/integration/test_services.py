@@ -46,6 +46,23 @@ class PipelineModel:
 
     async def generate(self, messages, **kwargs):
         self.turn += 1
+        if self.turn == 9:
+            self.candidates = messages[-1].content["candidates"]
+            findings = sorted({fid for c in self.candidates for fid in c["finding_ids"]})
+            return calls(*[("inspect_finding", {"identifier": fid}) for fid in findings])
+        if self.turn == 10:
+            return ModelResponse(
+                structured_output={
+                    "choices": [
+                        {
+                            "recommendation_id": c["recommendation_id"],
+                            "priority": "high",
+                            "reason": "follow_up",
+                        }
+                        for c in self.candidates[:8]
+                    ]
+                }
+            )
         if self.turn == 1:
             assert len(messages[-1].content["entries"]) == 20
             return ModelResponse(
@@ -220,7 +237,7 @@ def test_api_connects_all_agents_sources_statistics_and_storage(monkeypatch, tmp
     assert context.registry.budget is context.literature.budget is context.budget
     assert context.budget.used == {
         "external_request": 4,
-        "model_turn": 8,
+        "model_turn": 10,
         "additional_analysis": 1,
         "evidence_request": 1,
     }
@@ -229,6 +246,8 @@ def test_api_connects_all_agents_sources_statistics_and_storage(monkeypatch, tmp
     assert sum(a.analysis_id == added for a in result.screening.analyses) == 1
     assert len([r for r in requests if r.url.path.endswith("/NCT04280705")]) == 1
     assert result.planner_input.evidence_reports == result.evidence_reports
+    assert result.planner_report.recommendations
+    assert any(event.agent == "planner" for event in result.events)
     saved = client.get(f"/runs/{result.run_id}").json()
     assert saved["evidence_reports"] == response.json()["evidence_reports"]
     assert http_client.is_closed and model.closed == 1

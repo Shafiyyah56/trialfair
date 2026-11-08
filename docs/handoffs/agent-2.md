@@ -193,3 +193,65 @@ files have not been edited.
 Start with docs/HANDOFF.md for the branch update recipe, exact shared interfaces,
 role-specific requirements and remaining service wiring. Then read
 docs/agent-2-usage.md for launch and smoke-check commands.
+
+## Full demo integration in progress
+
+Integrator acknowledgement: feat/demo-integration from 9c117d9, after reading
+current onboarding, architecture, assignments and shared interfaces. I own shared
+runtime/API/orchestration/progress/UI integration and reuse the single ModelClient,
+ToolContext and scientific contracts. Agent 4 implementation is being supplied by
+its owner; the user's current instruction supersedes the old deferral. No email
+is sent and no credentials are exposed. Baseline: 216 offline tests passed.
+
+Explicit curated demo for NCT04280705 uses the original hash-checked public trial
+capture and three short source-backed remdesivir excerpts selected from original
+Europe PMC responses. Prepared annotations are clearly labelled, never represented
+as a fresh autonomous search. Source hashes/dates/licences remain intact; only
+short excerpts are packaged. Human vs animal evidence and subgroup uncertainty
+remain explicit. A source-linked rules fallback is labelled when the safety model
+cannot finish. Normal autonomous execution remains available separately.
+
+The demo has its own visible endpoint/profile and a configurable 600-second shared
+budget (18 model turns minimum); normal default remains 150 seconds. There are no
+nested budget resets. UI polling supports the longer configured deadline. A new
+async API integration test verifies cited evidence, actual progress and persistence
+with injected model calls and no network calls. Agent 4 wiring remains pending
+its pushed implementation at this checkpoint.
+
+Agent 4 is now integrated: original GitHub commit 0281f17 imported via browser
+patch with author attribution preserved (local imported commit 84971d2), followed
+by integrator-owned orchestration/runtime/API/storage/progress/UI changes. All four
+agents share the same model, counters and original deadline, with phase reservation
+for planning. RunResult.planner_report is optional for backward-readable saved runs
+and validated against the exact final PlannerInput. Curated demo source/model/draft
+labels remain visible. No Agent 4 acknowledgement was made on its owner's behalf.
+
+Current checks: 264 passed, 1 live test deselected; Ruff lint/format pass. Actual
+Streamlit component rendering is tested, including the four-agent diagram. The
+sandbox backend launch returned Operation not permitted; the user was asked to
+start backend/dashboard in Terminal for actual browser/provider verification.
+No actual all-four live run has been claimed. See DEMO.md for exact commands.
+
+Final additional UI check renders a complete synthetic four-agent saved report,
+including planner cards and metrics. Total now 265 offline tests, 1 live test
+excluded. Locked offline installation, Ruff lint/format and whitespace checks pass.
+The configured model remains gemini-4-argon; credentials were only checked for
+presence. No keys were printed or copied. No local server or paid run was launched
+successfully from this sandbox. The user's Terminal is required for live QA.
+
+Actual browser check now completed: 95.87 s, partial, three curated cited sources
+and four explicitly rules-based follow-up actions. Safety/planner inspections
+ran, but final model outputs were rejected; do not call this complete autonomous
+research. Source review and draft fallbacks remained visible. Saved report was
+reopened successfully in the browser. See verification/demo-live.md. The live
+check exposed launcher package-path and planner timeline-label bugs; both are
+fixed and regression-tested. Current suite contains 266 offline tests.
+
+Merge-conflict resolution: incorporated origin/main 64cf634 (Agent 4 functional
+fixes and SYN-401 dataset) into feat/demo-integration. All newer planner code is
+preserved except the existing demo-only time cap. New disposition and evidence/
+hypothesis validation coexist with RunResult planner report validation. Current
+API/storage/progress/UI remain wired. Both owners' integration history is retained;
+Agent 4's own acknowledgement/handoff is preserved from main. Existing partial
+live demo report still validates. 298 tests pass, Ruff lint/format and whitespace
+checks pass. No synthetic fixture is relabelled as clinical evidence.

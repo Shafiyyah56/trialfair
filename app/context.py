@@ -1,6 +1,7 @@
 """In-process dependency injection and one bounded budget shared by every agent."""
 
 from collections.abc import Awaitable, Callable
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from threading import Lock
 from time import monotonic
@@ -13,6 +14,9 @@ from app.contracts import (
     AnalysisResult,
     EvidenceReport,
     EvidenceRequest,
+    InvestigationReport,
+    PlannerInput,
+    PlannerReport,
     TrialBundle,
 )
 from app.model_client import ModelClient
@@ -67,6 +71,18 @@ class RunBudget:
                 raise BudgetExceeded(f"Run budget exhausted: {kind}")
             self.used[kind] = self.used.get(kind, 0) + 1
 
+    @contextmanager
+    def reserving_planning(self, seconds: float, model_turns: int = 3):
+        """Allocate the final phase inside the original budget; never reset used counters."""
+        deadline, turns = self.deadline, self.limits["model_turn"]
+        self.deadline = max(monotonic(), deadline - seconds)
+        self.limits["model_turn"] = max(self.used.get("model_turn", 0), turns - model_turns)
+        try:
+            yield
+        finally:
+            self.deadline = deadline
+            self.limits["model_turn"] = turns
+
 
 @dataclass
 class ToolContext:
@@ -93,6 +109,10 @@ class ToolContext:
     datasets: dict[str, TrialBundle] = field(default_factory=dict)
     additional_analyses: list[AnalysisResult] = field(default_factory=list)
     evidence_reports: list[EvidenceReport] = field(default_factory=list)
+    investigation_report: InvestigationReport | None = None
+    planner_report: PlannerReport | None = None
+    planner_handler: Callable[[PlannerInput, "ToolContext"], Awaitable[PlannerReport]] | None = None
+    demo_profile: str | None = None
     resource_closers: list[Callable[[], Awaitable[None]]] = field(default_factory=list, repr=False)
     _closed: bool = field(default=False, init=False, repr=False)
 

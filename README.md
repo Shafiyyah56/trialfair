@@ -4,17 +4,17 @@ TrialFair helps pharmaceutical safety researchers investigate potential
 sex-specific safety signals and missing subgroup evidence in completed clinical
 trials, particularly before the next trial phase.
 
-**Current status on feat/service-integration:** Agents 1–3 are merged and connected:
-trial ingestion/statistics, safety investigation, ClinicalTrials.gov and Europe PMC.
-The API, storage and dashboard use the shared model and budget. The complete path
-has an offline integration check. The first combined live run timed out; revised
-time allocation awaits a live retest. See [the audit](docs/verification/pipeline-live.md).
-Agent 4 supports independent snapshot planning on `feat/agent-4-planner`; see
-[planner usage](docs/agent-4-usage.md). Default pipeline scheduling remains pending. Agent 2's live Gemini/synthetic demonstration passed. Agent 3's live
-research returned two audited items with partial status; see the
-[live-check scope and limitations](docs/verification/agent-3-live.md).
-See [Agent 3 usage](docs/agent-3-usage.md) and [Agent 2 usage](docs/agent-2-usage.md).
-See [service integration and live verification](docs/service-integration.md).
+**Current status on feat/demo-integration:** all four agents connect through the
+shared runtime, progress API, storage and dashboard. PlannerReport is validated
+against the final PlannerInput. The branch passes 265 offline tests. Actual live
+four-agent provider/browser verification remains pending.
+
+For the presentation, use the explicitly labelled **Curated demo**: real captured
+ACTT-1 trial data and three developer-selected real publication excerpts, with
+live model stages and visible fallbacks if a provider fails. Normal autonomous
+research remains a separate input option. Read [the demo runbook](docs/DEMO.md)
+for exact commands, labels, limits and the presentation story. Earlier autonomous
+live runs returned partial results; no complete clinical validation is claimed.
 
 ## Start here for teammates and coding agents
 

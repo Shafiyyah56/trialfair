@@ -38,6 +38,9 @@ numbers and retrieved evidence IDs for research claims. Distinguish associations
 confounding, mechanistic hypotheses and causal evidence. Seek contradictory
 findings. Do not recommend patient-specific doses or make clinical decisions.
 Do not invent sources, thresholds, counts, findings or terminology codes.
+Animal findings are mechanistic background, not evidence of clinical harm in women.
+Preserve curated-source labels; a prepared review is not an autonomous literature search.
+An overall null result does not establish safety equivalence across sexes.
 
 Use inspect_finding/inspect_analysis to examine data. Request additional analysis
 only on a registered dataset with a supported tool and compatible data. Request
@@ -275,6 +278,7 @@ async def run_safety(screening: ScreeningOutput, context: ToolContext) -> Invest
         "registered_dataset_refs": list(context.datasets),
         "analysis_ids": [x.analysis_id for x in screening.analyses],
         "is_synthetic": screening.trial_bundle.is_synthetic,
+        "available_evidence_reports": [r.model_dump(mode="json") for r in context.evidence_reports],
     }
     messages = [
         ModelMessage(role="system", content=SYSTEM_PROMPT),

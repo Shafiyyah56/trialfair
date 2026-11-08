@@ -108,11 +108,12 @@ def test_runtime_wires_one_shared_budget_into_real_literature_client(monkeypatch
     asyncio.run(context.aclose())
 
 
-def test_health_reports_first_three_agents_and_deferred_planner():
+def test_health_reports_all_four_implementations():
     from fastapi.testclient import TestClient
 
     health = TestClient(create_app()).get("/health").json()
     assert health["components"]["evidence"] is True
     assert health["components"]["interpreter"] is True
-    assert health["components"]["planner"] is False
-    assert health["agents_implemented"] is False
+    assert health["components"]["planner"] is True
+    assert health["agents_implemented"] is True
+    assert health["status"] == "ready"

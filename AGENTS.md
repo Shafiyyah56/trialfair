@@ -28,7 +28,8 @@ files. If access is missing, state the blocker and continue with injected fakes.
   docs/service-integration.md for wiring, cleanup and verification scope.
   Offline integration is checked separately from live research; do not confuse them.
 - Do not run paid/network tests by default. Live tests must be opt-in.
-- Do not implement the fourth Trial Improvement Planner yet.
+- Agent 4 is now implemented and integrated under explicit user approval. Reuse
+  its PlannerReport and read docs/DEMO.md for the full four-agent demonstration.
 
 ## File ownership
 

@@ -209,7 +209,7 @@ def test_health_and_unconfigured_runtime():
         raise RuntimeNotReady("Test runtime is intentionally unconfigured")
 
     client = TestClient(create_app(context_factory=unconfigured))
-    assert client.get("/health").json()["agents_implemented"] is False
+    assert client.get("/health").json()["agents_implemented"] is True
     assert client.post("/runs", json={}).status_code == 422
     assert client.post("/runs", json={"nct_id": "NCT12345678"}).status_code == 503
     assert client.get("/runs/unknown").status_code == 404
