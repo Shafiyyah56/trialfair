@@ -5,9 +5,10 @@ Own shared contracts/context/config/model adapter and safety orchestration, API,
 storage and dashboard. Coordinate contract changes before other branches depend
 on them. Maintain the committed uv.lock and coordinate dependency changes with the team.
 
-Before implementation, read docs/TEAM_SETUP.md, acknowledge it in your first
+Before implementation, read docs/HANDOFF.md and docs/TEAM_SETUP.md, acknowledge it in your first
 response and update docs/handoffs/agent-2.md on your feature branch. Merge current
-origin/main, install the committed lock with uv sync --locked --extra dev, and
+origin/main and (until merged there) origin/feat/agent-2-safety as described in the
+handoff, install the committed lock with uv sync --locked --extra dev, and
 record actual checks and blockers. Reuse the shared model adapter and contracts.
 
 ## Safety agent

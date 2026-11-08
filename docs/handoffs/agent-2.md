@@ -1,7 +1,8 @@
 # Agent 2 acknowledgement and handoff
 
 Status: ACKNOWLEDGED; implementation complete for independent/injected operation.
-Full live research and browser-server verification remain pending as detailed below.
+Live Gemini smoke and a browser-observed synthetic investigation passed.
+Real-data multi-agent research remains pending, as detailed below.
 
 ## Startup acknowledgement
 
@@ -16,7 +17,8 @@ This acknowledgement is for Agent 2 only.
 - Fresh fetch failed: github.com DNS unavailable in the execution environment.
 - Locked offline sync passed: uv 0.13.7, Python 3.13, google-genai 2.34.0.
 - An ignored .env template was created only because none existed. No credentials
-  were overwritten or printed. Neither key nor model was configured at verification.
+  were overwritten or printed. Neither key nor model was configured during initial
+  automated verification; the user configured them before the subsequent live checks.
 
 ## Implementation handoff
 
@@ -62,16 +64,26 @@ files have not been edited.
 - Dashboard rendered successfully in Streamlit AppTest with a labelled synthetic
   saved-run example. No claim of a live clinical or model result.
 
-## Unverified or blocked
+## Subsequent live verification on 2026-11-08
 
-- Live Gemini smoke check: PASSED according to the user's Terminal output, with
-  run timestamp 2026-11-08T03:25:05.097808+00:00. Model gemini-4-argon, SDK 2.34.0,
-  API models.generate_content; plain_response, function_calling and structured_output
-  all true. The coding sandbox's own request failed with ConnectError. The observed
-  user-run success resolves the previously unverified API compatibility concern.
-  This does not verify a full live safety investigation or external evidence retrieval.
-- Local server launch: both Uvicorn and Streamlit attempted; sandbox refused bind
-  on local ports. Browser-based live UI verification could not be performed here.
+- User-run smoke output at 2026-11-08T03:25:05.097808+00:00: model
+  gemini-4-argon, SDK 2.34.0, API models.generate_content; plain_response,
+  function_calling and structured_output all true. This resolves the previous
+  uncertainty about using this endpoint with Argon for the smoke-tested features.
+- The user launched the local FastAPI and Streamlit servers. The assistant inspected
+  the actual Chrome page at localhost:8501, showing a live model investigation on
+  fixtures/synthetic/screening.json. Recorded duration: 34.63 seconds, status partial.
+- The displayed timeline showed inspect_finding, inspect_analysis and request_evidence,
+  followed by a validated final assessment. Missing subgroup evidence remained an
+  evidence gap; synthetic input and unavailable literature were explicitly labelled.
+- Agent 3 was a stub, so partial was expected. No actual literature search or real
+  clinical safety conclusion was verified by this run. This is an observed synthetic
+  Agent 2 demonstration, not full real-input pipeline latency.
+- Local server and smoke commands worked in the user's Terminal. The coding
+  sandbox itself could not bind ports or complete external model requests.
+
+## Remaining blockers and integration work
+
 - External network/GitHub: DNS unavailable from the execution environment.
 - Agents 1 and 3 remain stubs on this branch. Full NCT ingestion and actual external
   research require their implementations and RuntimeServices wiring. Evidence-tool
@@ -80,4 +92,6 @@ files have not been edited.
 - An unrelated untracked `uv 2.lock` appeared during work and was left untouched;
   the canonical dependency file remains uv.lock.
 
-See docs/agent-2-usage.md for exact launch, smoke-check and integration instructions.
+Start with docs/HANDOFF.md for the branch update recipe, exact shared interfaces,
+role-specific requirements and remaining service wiring. Then read
+docs/agent-2-usage.md for launch and smoke-check commands.

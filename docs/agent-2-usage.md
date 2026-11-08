@@ -47,6 +47,21 @@ preserved. Private thought text is not emitted into events or reports.
 
 ## Launch locally
 
+Run commands from the TrialFair repository root. If uv is unavailable on PATH but
+.venv is already installed, the equivalent commands are:
+
+```sh
+.venv/bin/python -m uvicorn app.api:app --host 127.0.0.1 --port 8000
+# In a second terminal:
+.venv/bin/python -m streamlit run app/ui/dashboard.py
+```
+
+The smoke command in that case is
+`.venv/bin/python -m scripts.smoke_gemini --live`. Use module invocation from the
+repository root so imports resolve. Stop each server with Ctrl+C in its terminal.
+
+With uv available:
+
 Run in one terminal:
 
 ```sh
@@ -106,12 +121,24 @@ models.generate_content, plain_response=true, function_calling=true and
 structured_output=true. This establishes compatibility of the smoke-tested
 features for that account at that time. It is not a full clinical workflow test.
 
-## Known verification limits
+## Observed live Agent 2 demonstration
+
+After the smoke check, the user launched FastAPI/Streamlit and ran the synthetic
+screening example. The assistant inspected the Chrome page at localhost:8501:
+mode live, model gemini-4-argon, duration 34.63 s, status partial. The timeline
+showed inspect_finding, inspect_analysis and request_evidence. The assessment
+preserved the missing subgroup evidence and unavailable external research. This
+verifies a live Agent 2 run with simulated input, not a real trial or literature
+investigation. See docs/HANDOFF.md for the next integration acceptance check.
+
+## Environment limitations
 
 The coding environment cannot resolve external hosts or bind local listening
 ports. SDK request/response shapes and continuation signatures are tested with an
 injected transport, API routes with TestClient, and the actual dashboard with
-Streamlit AppTest. These are not browser-based live server verification. Live Gemini smoke evidence
-comes separately from the user-run check recorded above.
-No real-input full-pipeline latency is claimed until Agents 1/3 and the model are
-available and an actual end-to-end run is measured.
+Streamlit AppTest. Separate live smoke and browser evidence come from the
+user-run checks recorded above. The coding sandbox restrictions did not prevent
+the user from starting servers normally.
+No real-input full-pipeline latency is claimed until Agents 1/3 are implemented
+and wired and an actual end-to-end run is measured. The model itself has passed
+the recorded smoke check.

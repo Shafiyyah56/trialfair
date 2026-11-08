@@ -1,6 +1,6 @@
 # Integration coordination
 
-Read [team setup and acknowledgement instructions](TEAM_SETUP.md). Each coding
+Start with [the coding agent handoff](HANDOFF.md). Read [team setup and acknowledgement instructions](TEAM_SETUP.md). Each coding
 agent must acknowledge before implementation and update only its own handoff file.
 
 ## Baseline ownership
@@ -11,7 +11,8 @@ Other developers propose shared changes here before altering these interfaces.
 
 ## Before parallel development
 
-1. Merge current origin/main into each feature branch, including committed uv.lock.
+1. Merge current origin/main and, until merged there, origin/feat/agent-2-safety
+   into your feature branch. See HANDOFF.md; main alone lacks the shared adapter.
 2. Install with uv sync --locked --extra dev and run tests and Ruff.
 3. Verify which model and SDK API the temporary account actually supports.
 4. Everyone starts from the same main commit and selects their assigned branch.
@@ -27,8 +28,10 @@ Agent 2 handoff. Full multi-agent clinical workflow verification remains pending
 ## Merge sequence
 
 1. Shared scaffold and verified dependency lock.
-2. Agent 1 data/statistics and Agent 3 evidence implementations independently.
-3. Agent 2 integration, live adapter, storage and dashboard.
+2. Review/merge Agent 2 shared adapter, safety, storage and dashboard; or merge
+   that remote feature branch into each teammate branch while review is pending.
+3. Agent 1 data/statistics and Agent 3 evidence independently, followed by real
+   service wiring in app/runtime.py and integration checks.
 4. Real-input end-to-end checks, latency measurement and failure rehearsal.
 5. Agent 4 planning implementation only once PlannerInput is stable.
 
@@ -38,7 +41,8 @@ Add proposals with: owner, affected interfaces, reason, migration, agreement sta
 and example payload. Keep schema version 1.0 until an agreed compatibility change
 requires a new version. Do not leave a proposal as an unexplained breaking edit.
 
-No proposals pending in the initial scaffold.
+No unresolved contract-change proposal is recorded. The additive shared changes
+below are implemented by Agent 2 and must be incorporated before integration.
 
 ## Agent 2 integration changes on feat/agent-2-safety
 

@@ -8,11 +8,15 @@ trials, particularly before the next trial phase.
 orchestration, API, local storage and dashboard are implemented and tested with
 injected services. Agents 1 and 3 still need their separate implementations and
 service wiring before a full live trial-to-report run. The user-run Gemini smoke
-check passed for gemini-4-argon (SDK 2.34.0), including tools and structured output. See [Agent 2 usage and integration](docs/agent-2-usage.md).
+check passed for gemini-4-argon (SDK 2.34.0), including tools and structured output.
+A live Agent 2 investigation with synthetic input was also observed in Chrome
+(34.63 s, partial because external evidence was not integrated).
+See [Agent 2 usage and integration](docs/agent-2-usage.md).
 
 ## Start here for teammates and coding agents
 
-Read [team setup and acknowledgement instructions](docs/TEAM_SETUP.md) before
+Start with [the coding agent handoff](docs/HANDOFF.md), then read
+[team setup and acknowledgement instructions](docs/TEAM_SETUP.md) before
 implementation. Every coding agent must acknowledge its assignment, branch,
 ownership and shared interfaces in its first response and record the acknowledgement
 in its own `docs/handoffs/agent-N.md`. Do not mark another agent as acknowledged.
@@ -75,7 +79,9 @@ uv run streamlit run app/ui/dashboard.py
 ## Parallel branches
 
 All developers must start from the same shared-foundation commit on `main`.
-Each developer creates/selects only their assigned branch:
+Each developer creates/selects only their assigned branch. While Agent 2 remains
+unmerged into main, also merge origin/feat/agent-2-safety into that branch using
+the instructions in docs/HANDOFF.md; main alone lacks the shared implementation:
 
 ```sh
 git switch main

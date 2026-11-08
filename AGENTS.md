@@ -1,6 +1,6 @@
 # TrialFair development instructions
 
-Read docs/TEAM_SETUP.md, README.md, docs/project_context.md,
+Read docs/HANDOFF.md, docs/TEAM_SETUP.md, README.md, docs/project_context.md,
 docs/architecture.md, your docs/agent-N.md assignment and app/contracts.py
 before implementation. Respect the user's standing no-email
 policy: never transmit or schedule email by any route.
@@ -11,11 +11,12 @@ Before implementation, explicitly acknowledge the onboarding checklist in your
 first response: assigned agent/branch, starting commit, file ownership, shared
 interfaces and verified setup or blockers. Record this in your own
 `docs/handoffs/agent-N.md` on your feature branch. Do not acknowledge for others.
-Merge the latest `origin/main` into your feature branch to obtain uv.lock and
-these instructions, preserving existing work. Use `uv sync --locked --extra dev`.
+Follow docs/HANDOFF.md to merge current shared work into your feature branch,
+preserving existing work. Until Agent 2 is merged into main, merge
+`origin/feat/agent-2-safety` as well as `origin/main`; main alone lacks its adapter. Use `uv sync --locked --extra dev`.
 Coordinate shared dependency/contract changes with Agent 2. Agents 1 and 3 reuse
-the one ModelClient; Agent 2 owns an early, opt-in live smoke check and records the
-actual available model and capabilities. Keep credentials in ignored local .env
+the one ModelClient. Its gemini-4-argon smoke check and live synthetic Agent 2 run
+have passed; see the handoff for scope and remaining real-data integration checks. Keep credentials in ignored local .env
 files. If access is missing, state the blocker and continue with injected fakes.
 
 ## Shared foundation

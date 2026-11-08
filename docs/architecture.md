@@ -51,7 +51,7 @@ One RunBudget is created per run. It is never reset inside agents:
 
 | Kind | Default limit | Consumed by |
 | --- | --- | --- |
-| model_turn | 12 | Model adapter/caller, once per actual provider attempt |
+| model_turn | 12 | generate_with_budget, once per actual provider attempt |
 | external_request | 16 | Service adapter, once per actual HTTP attempt |
 | evidence_request | 2 | Orchestrator tool dispatcher |
 | additional_analysis | 3 | Orchestrator tool dispatcher after initial screening |
@@ -70,17 +70,19 @@ cache status. Replay runs and model outputs must be explicitly labelled.
 ## Model adapter
 
 model_client.py defines provider-neutral messages, tool definitions, tool calls
-and structured output. The integrator implements the one google-genai adapter.
-Verify model/API capabilities with the hackathon account first. A model output
+and structured output. The integrator maintains the one implemented google-genai adapter.
+The gemini-4-argon smoke check passed with SDK 2.34.0. See HANDOFF.md for the
+verified scope. Agents call generate_with_budget and preserve continuation tokens. A model output
 must pass the destination Pydantic schema; tools must be allowlisted. Separate the
 tool loop and final structured extraction if the actual model requires it.
 
 ## API and UI
 
-FastAPI owns POST /runs, GET /runs/{run_id} and GET /health. Streamlit is only a
+FastAPI owns POST /runs, POST /investigations, GET /runs/{run_id} and GET /health. Streamlit is only a
 client/display layer. A synchronous bounded run is sufficient initially. Show an
-honest running indicator; show the recorded tool timeline once available. Persist
-validated results with SQLite only after storage implementation. No import-time
+honest running indicator; show the recorded tool timeline once available. The implemented SQLite store
+validates persisted results and removes top-level narratives/mappings from saved
+snapshots; evidence excerpts can still contain supplied information. No import-time
 network calls, database creation or credential checks.
 
 Log short tool decisions/results, not hidden chain-of-thought, raw sensitive

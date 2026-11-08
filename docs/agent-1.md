@@ -4,9 +4,10 @@ Branch: feat/agent-1-interpreter. Read AGENTS.md and the shared architecture fir
 Implement the interpreter, registry client, terminology service and statistics.
 Do not change shared schemas without agreement from the integrator.
 
-Before implementation, read docs/TEAM_SETUP.md, acknowledge it in your first
+Before implementation, read docs/HANDOFF.md and docs/TEAM_SETUP.md, acknowledge it in your first
 response and update docs/handoffs/agent-1.md on your feature branch. Merge current
-origin/main, install the committed lock with uv sync --locked --extra dev, and
+origin/main and (until merged there) origin/feat/agent-2-safety as described in the
+handoff, install the committed lock with uv sync --locked --extra dev, and
 record actual checks and blockers. Reuse the shared model adapter and contracts.
 
 ## Deliverables
