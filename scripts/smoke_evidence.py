@@ -75,6 +75,7 @@ async def smoke(args):
                     "searches": len(report.searches),
                     "sources": len(report.sources),
                     "evidence_items": len(report.evidence_items),
+                    "cited_sources": len({item.source_id for item in report.evidence_items}),
                     "duration_seconds": round(monotonic() - started, 2),
                     "budget_used": context.budget.used,
                     "report_path": str(output),

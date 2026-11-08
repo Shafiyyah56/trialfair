@@ -9,6 +9,7 @@ import pytest
 from app.agents.evidence import (
     EvidenceDraft,
     EvidenceState,
+    EvidenceSynthesis,
     compile_evidence_report,
     execute_evidence_tool,
     run_evidence,
@@ -85,7 +86,7 @@ def item(sid="lit-support", quote=SUPPORT, relation="supports", eid="evidence-1"
 
 def draft(*items):
     return ModelResponse(
-        structured_output=EvidenceDraft(
+        structured_output=EvidenceSynthesis(
             evidence_items=list(items),
             status="completed",
         ).model_dump(mode="json")
@@ -399,3 +400,110 @@ def test_evidence_ids_are_unique_across_research_requests(context_factory):
         EvidenceDraft(evidence_items=[item()], status="partial"), other_request, context, state
     )
     assert first.evidence_items[0].evidence_id != second.evidence_items[0].evidence_id
+
+
+def test_last_research_turn_inspects_and_synthesis_uses_fresh_grounded_context(context_factory):
+    context, _ = context_factory(
+        [
+            calls(call("search_publications", query="first focused query")),
+            calls(call("search_publications", query="opposing results query")),
+            calls(call("inspect_publication", source_id="lit-support")),
+            draft(item()),
+        ]
+    )
+    context.literature = FakeLiterature([[publication()], [publication()]])
+    report = asyncio.run(run_evidence(request(), context))
+    assert report.evidence_items
+    last_tools = {tool.name for tool in context.model.calls[2][1]["tools"]}
+    assert "inspect_publication" in last_tools
+    assert "search_publications" not in last_tools
+    final_messages = context.model.calls[-1][0]
+    assert {message.role for message in final_messages} == {"system", "user"}
+    packet = final_messages[-1].content["inspected_sources"][0]
+    assert packet["passage"] == SUPPORT
+    assert context.model.calls[-1][1]["tools"] == []
+
+
+def test_full_text_failure_uses_explicit_abstract_fallback_and_known_pmid(context_factory):
+    from app.services.europe_pmc import LiteratureUnavailable
+
+    state = EvidenceState()
+    record = publication()
+    record.pmid = "999999999"
+    record.pmcid = "PMC999999999"
+    record.full_text_available = True
+    state.add_publication(record)
+    context, _ = context_factory()
+
+    async def unavailable(pmcid):
+        raise LiteratureUnavailable("Full-text service unavailable")
+
+    context.literature = SimpleNamespace(fetch_open_access_full_text=unavailable)
+    result = asyncio.run(
+        execute_evidence_tool(
+            call("inspect_publication", source_id="999999999", full_text=True),
+            request(),
+            context,
+            state,
+        )
+    )
+    assert result["review_scope"] == "abstract"
+    assert result["passage"] == SUPPORT
+    assert result["source"]["source_id"] == "lit-support"
+    assert "abstract instead" in result["fallback"]
+    report = compile_evidence_report(
+        EvidenceDraft(evidence_items=[item()], status="completed"), request(), context, state
+    )
+    assert len(report.evidence_items) == 1
+    assert report.status == "partial"
+
+
+def test_final_provider_schema_has_no_recursive_or_untyped_analysis_dictionary():
+    import json
+
+    schema = EvidenceSynthesis.model_json_schema()
+    assert "JsonValue" not in json.dumps(schema)
+    assert "AnalysisRequest" not in schema.get("$defs", {})
+    assert (
+        schema["$defs"]["AnalysisSuggestion"]["properties"]["parameters_json"]["type"] == "string"
+    )
+
+
+def test_final_failure_reports_category_and_http_code_without_provider_text(context_factory):
+    class ProviderError(RuntimeError):
+        code = 400
+
+    context, _ = context_factory(
+        [
+            calls(call("search_publications", query="focused query")),
+            calls(call("inspect_publication", source_id="lit-support")),
+            ModelResponse(),
+            ProviderError("raw credential=private-value must not be logged"),
+        ]
+    )
+    context.literature = FakeLiterature([[publication()]])
+    report = asyncio.run(run_evidence(request(), context))
+    assert any(
+        "Final evidence synthesis" in value and "HTTP 400" in value for value in report.limitations
+    )
+    assert "private-value" not in report.model_dump_json()
+    assert report.sources and not report.evidence_items
+
+
+def test_unconfigured_registry_tools_not_offered(context_factory):
+    context, _ = context_factory(
+        [
+            calls(call("search_publications", query="focused query")),
+            calls(call("inspect_publication", source_id="lit-support")),
+            ModelResponse(),
+            draft(item()),
+        ]
+    )
+    context.registry = SimpleNamespace(is_available=False)
+    context.literature = FakeLiterature([[publication()]])
+    report = asyncio.run(run_evidence(request(), context))
+    names = {tool.name for _, options in context.model.calls for tool in options["tools"]}
+    assert "search_related_trials" not in names
+    assert "inspect_trial_record" not in names
+    assert report.evidence_items
+    assert any("literature-only" in value for value in report.limitations)

@@ -106,3 +106,13 @@ See docs/agent-3-usage.md for constructor signatures, constraints, source handli
 CLI verification commands and limitations. Agents 1/2 should incorporate this
 feature branch (or the merged main) before testing the full evidence path.
 Restart the backend so imported handlers come from the newly merged implementation.
+
+Agent 3 follow-up after the first live attempt: the public EvidenceReport and
+AnalysisRequest contracts remain unchanged. The internal provider DTO is now
+EvidenceSynthesis; optional parameters are JSON strings at that provider boundary
+and become validated AnalysisRequest dictionaries before return. MissingService
+adds is_available=False so the evidence agent does not offer unconfigured registry
+tools. This is a runtime capability flag, not a replacement registry implementation.
+Full-text failure may return a clearly labelled abstract fallback, with limitations.
+The first live attempt had zero grounded items; see the Agent 3 handoff for the
+corrective changes and pending retest. It is not recorded as a live success.

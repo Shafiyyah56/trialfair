@@ -18,6 +18,9 @@ Agent 4 is deferred.
 - Actual successful and failed search attempts, retrieved sources, access levels,
   licences, hashes, timestamps and inspection locators.
 - Final sources/searches assembled by application code, not invented by the model.
+- A separate synthesis request sees only actual inspected passages, not the tool
+  conversation. Its provider schema avoids recursive/untyped analysis dictionaries;
+  optional suggestions are converted back to validated AnalysisRequest objects.
 - Short exact excerpts checked against inspected passages. Uninspected previews,
   fake identifiers, wrong source locations and invented quotes are rejected.
 - Abstract-only and metadata-only scope limitations. Metadata/title review can
@@ -62,13 +65,18 @@ resolve to the request and returned tool results.
 
 One research call uses at most four model turns from the existing shared budget
 and reserves two available model turns for the outer Safety Investigator. It
-allows up to three tool-selection turns plus a final structured-output turn. This
+allows up to three tool-selection turns plus a final structured-output turn.
+At least three available local turns are needed for a search, inspection and report.
+The last research turn exposes inspection tools only once candidates exist.
+Unavailable registry tools are not offered to the model. This
 is a bounded MVP investigation, not an exhaustive literature review.
 
 Each tool turn accepts at most five calls; search page sizes are 1–5 and the
-candidate pool is at most 20 distinct works. Publication inspection exposes one
-12,000-character passage at a time with explicit offsets. Full articles are not
-silently represented as entirely reviewed. Registry excerpts are also bounded.
+candidate pool is at most 20 distinct works. Publication inspection accepts returned source IDs or known retrieved PMID/PMCID/DOI
+aliases and exposes one 12,000-character passage at a time with explicit offsets. Full articles are not
+silently represented as entirely reviewed. If a requested full-text fetch is
+unavailable, an existing abstract is inspected instead with an explicit fallback
+limitation and partial status; the code never pretends to have read the body. Registry excerpts are also bounded.
 
 HTTP requests use the hard remaining deadline, at most a 12-second network timeout,
 no automatic retries/redirects and a 3 MB decoded-response limit. Each actual HTTP
@@ -143,7 +151,7 @@ execution. Health reports evidence implementation present and full pipeline part
 
 ## Actual verification so far
 
-- Full suite: 100 tests passed before final documentation; 40 cover Agent 3 source,
+- Full suite: 105 tests passed before final documentation; 45 cover Agent 3 source,
   research and integration behaviour. See the handoff for final check results.
 - The actual nested Agent 2 -> Agent 3 -> revised hypothesis path passes with
   injected synthetic publications/model responses, one shared budget and valid
@@ -159,3 +167,22 @@ Official source API reference: https://dev.europepmc.org/RestfulWebService
 The implementation uses resultType=core for abstracts and the permitted
 /{PMCID}/fullTextXML endpoint for open-access body text. Article-specific licences
 and abstract/full-text access remain explicit.
+
+## First live attempt and follow-up fix
+
+The user-run initial research attempt reached Europe PMC and executed searches,
+but returned zero evidence items: 6 successful searches, 20 retrieved sources,
+4 model turns, 7 external requests and 57.1 seconds. Registry lookup was unavailable,
+one publication inspection failed, and a generic final-report error prevented an
+answer. This was not a successful source-grounded live investigation.
+
+The follow-up fixes reserve the last research turn for inspection, hide unavailable
+registry tools, accept aliases only for already-retrieved publications, explicitly
+fall back to abstracts, and isolate final synthesis in a simpler provider schema
+and fresh grounded context. Error categories/HTTP codes are exposed without raw
+provider messages. The initial generic exception did not establish the exact
+provider failure; live confirmation of the new path remains required.
+
+Regression tests cover those paths. Rerun the same --live command and inspect both
+evidence_items and cited_sources. Partial can be scientifically honest; no grounded
+items still means this live smoke test has not passed.

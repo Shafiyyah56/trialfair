@@ -24,6 +24,8 @@ class RuntimeNotReady(ValueError):
 class MissingService:
     """Explicit service placeholder until the owning branch provides an adapter."""
 
+    is_available = False
+
     def __getattr__(self, name):
         async def unavailable(*args, **kwargs):
             raise NotImplementedError("Required source adapter is not yet wired")

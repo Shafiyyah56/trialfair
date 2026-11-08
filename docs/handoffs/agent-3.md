@@ -64,8 +64,8 @@ Shared runtime changes included to make this component usable:
 ## Actual verification on 2026-11-08
 
 - Locked offline dependency sync: passed.
-- Full pytest suite: 100 passed, one inherited Starlette/httpx deprecation warning.
-- Agent 3-specific tests: 40 cover source, research and nested integration behaviour.
+- Full pytest suite: 105 passed, one inherited Starlette/httpx deprecation warning.
+- Agent 3-specific tests: 45 cover source, research and nested integration behaviour.
 - Ruff lint/format and lock consistency: passed; no dependency changes.
 - Documentation links and diff whitespace checks: passed.
 - A real Europe PMC core response was retrieved through Chrome and parsed by the
@@ -96,3 +96,35 @@ The synthetic missing-data fixture has no real drug/trial and is not a realistic
 literature-search benchmark. It remains useful for contract/error-path tests.
 The optional knowledge graph was deferred in favour of a working grounded loop.
 The unrelated untracked uv 2.lock duplicate was left untouched.
+
+## Initial live failure and corrective follow-up
+
+The user supplied an initial actual run with live gemini-4-argon: 6 successful
+literature searches, 20 source records, zero evidence items, 4 model turns,
+7 external requests and 57.1 seconds. The result was partial and the CLI correctly
+reported no source-grounded evidence. This does not count as a successful live
+research check. The saved report confirmed these counts; the failed artifact was
+preserved under ignored .trialfair/verification before retry.
+
+Inspection showed the final research turn was spent searching rather than reading
+and exceptions were too generic to diagnose the exact final provider failure.
+Corrective changes:
+- Reserve the last research turn for source inspection and require enough shared
+  turns to search, inspect and synthesise.
+- MissingService declares is_available=False; unavailable registry tools are hidden.
+- Resolve PMID/PMCID/DOI aliases only within the actual retrieved publication pool.
+- If full text is unavailable, inspect an existing abstract with an explicit
+  fallback limitation. No body review is claimed.
+- Final synthesis is a fresh, no-tool extraction over exact inspected packets,
+  using EvidenceSynthesis without recursive/untyped analysis parameter schemas.
+  Analysis suggestions are converted back to the unchanged shared AnalysisRequest.
+- Record safe error classes, field locations and HTTP status codes, never provider
+  error text, URLs or credentials. The original provider failure is not asserted
+  as conclusively diagnosed from the old generic log.
+- CLI now prints synthesis passage count and cited-source count.
+
+Current automated verification: 105 tests pass, including 45 evidence tests. The
+new regressions cover inspection reservation, abstract fallback, alias resolution,
+provider schema shape, safe final-error diagnostics and unavailable registry tools.
+The full live check needs a rerun of the same smoke command; it is not yet marked
+passed. No findings were hardcoded or fabricated to make the smoke test succeed.

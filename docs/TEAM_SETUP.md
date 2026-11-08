@@ -69,7 +69,7 @@ uv run --locked ruff format --check .
 ```
 
 Record actual results. The scaffold initially passed 31 tests; Agent 2 now
-passed 60 tests; the evidence branch now passes 100. Automated and live checks
+passed 60 tests; the evidence branch now passes 105. Automated and live checks
 are separate evidence. An upstream
 TestClient deprecation warning was observed. Do not change shared dependencies or
 silence warnings without investigating them and coordinating any needed change.
