@@ -69,7 +69,7 @@ uv run --locked ruff format --check .
 ```
 
 Record actual results. The scaffold initially passed 31 tests; Agent 2 now
-passed 60 tests; the evidence branch now passes 105. Automated and live checks
+passed 60 tests; the evidence branch now passes 110. Automated and live checks
 are separate evidence. An upstream
 TestClient deprecation warning was observed. Do not change shared dependencies or
 silence warnings without investigating them and coordinating any needed change.
@@ -133,6 +133,8 @@ automated clinical decisions. Respect the standing no-email policy.
 - Smoke run timestamp: 2026-11-08T03:25:05.097808+00:00. This is not a full clinical workflow test.
 - Live Agent 2 UI: observed in Chrome, 34.63 s with live Gemini and synthetic input;
   partial was expected because Agent 3 was not integrated. Real-data pipeline remains unverified.
+- Agent 3 live check: compact schema accepted; real literature run returned two
+  audited items in 132.81 s, partial. See verification/agent-3-live.md for limits.
 - Individual acknowledgements: Agents 2/3 acknowledged; Agent 1 updates its own handoff file.
 
 The integrator updates this log as facts change. A pending item must not be marked

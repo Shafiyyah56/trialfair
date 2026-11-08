@@ -38,12 +38,13 @@ merely to make an installation work.
 - Agent 2: implemented safety tool loop, model adapter, bounded orchestration,
   FastAPI, SQLite, Streamlit and PlannerInput assembly.
 - Agent 3: implemented on feat/agent-3-evidence with a real Europe PMC client
-  wired into the runtime. See [Agent 3 usage](agent-3-usage.md). Full live research
-  verification is separate from injected integration tests.
+  wired into the runtime. See [Agent 3 usage](agent-3-usage.md). A live research
+  check returned two audited items with partial status; see
+  [the verification scope](verification/agent-3-live.md).
 - Agent 1: still required for real trial ingestion, statistics and registry/
   terminology adapters. Do not infer completion from the working UI.
 - Agent 4: deferred. PlannerInput is available; no planner output is implemented.
-- Automated checks on the evidence branch: 108 tests pass; Ruff lint/format and
+- Automated checks on the evidence branch: 110 tests pass; Ruff lint/format and
   lock consistency pass. Agent 2's earlier milestone had 60 tests.
 - Live Gemini smoke: user-run on 2026-11-08, gemini-4-argon, google-genai 2.34.0,
   models.generate_content; plain reply, function calling and JSON output passed.

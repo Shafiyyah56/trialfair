@@ -8,8 +8,9 @@ trials, particularly before the next trial phase.
 adapter, bounded orchestration, Europe PMC client, API, storage and dashboard are
 implemented. Agent 1 still needs its trial ingestion, statistics and registry/
 terminology adapters before a full real-trial pipeline is available. Agent 4 is
-deferred. Agent 2's live Gemini/synthetic demonstration passed; the full live
-Agent 3 research check is a separate verification step.
+deferred. Agent 2's live Gemini/synthetic demonstration passed. Agent 3's live
+research returned two audited items with partial status; see the
+[live-check scope and limitations](docs/verification/agent-3-live.md).
 See [Agent 3 usage](docs/agent-3-usage.md) and [Agent 2 usage](docs/agent-2-usage.md).
 
 ## Start here for teammates and coding agents

@@ -1,154 +1,97 @@
 # Agent 3 acknowledgement and handoff
 
-Status: ACKNOWLEDGED; standalone and nested implementation tested. Full live Agent 3
-research verification is not yet claimed. Agent 1 remains an integration dependency.
+Status: ACKNOWLEDGED. Implementation and nested integration tests pass. A real
+literature/Gemini smoke run returned two source-audited items with partial status.
+Agent 1 and full real-trial integration remain pending.
 
-## Startup acknowledgement
+## Startup and branch
 
-I read AGENTS.md, docs/HANDOFF.md, TEAM_SETUP.md, my assignment, README, project
-context, architecture and contracts. I implemented Agent 3 on feat/agent-3-evidence,
-starting from 8ea532c after fast-forwarding the shared Agent 2 work. I own the
-research agent, Europe PMC adapter and evidence tests. I reuse the shared model,
-generate_with_budget, ToolContext and the existing registry Protocol. No separate
-Gemini client, registry adapter or statistics engine was introduced. This is not
-an acknowledgement on behalf of Agent 1.
+I read AGENTS.md, HANDOFF.md, TEAM_SETUP.md, my assignment, README, project context,
+architecture and contracts. Work is on feat/agent-3-evidence, starting from 8ea532c
+with the shared Agent 2 implementation. No Agent 1 implementation file or shared
+scientific contract was changed. This acknowledges Agent 3 only.
 
-- Fresh fetch failed because github.com DNS was unavailable to the coding sandbox.
-- Locked offline sync passed; scientific contracts and dependency lock are unchanged.
-- Existing local credentials were not overwritten, printed or committed.
-- Agent 2's earlier live model compatibility is recorded separately; it does not
-  establish that Agent 3 has completed a live literature investigation.
+Fresh fetch/push from the coding sandbox failed due to restricted networking.
+The user's Terminal can reach the model/source APIs. Existing credentials were
+not overwritten, printed or committed. The unrelated untracked uv 2.lock duplicate
+was left untouched.
 
-## Files and public interfaces
+## Public interfaces and ownership
 
-- app/agents/evidence.py: run_evidence(EvidenceRequest, ToolContext) -> EvidenceReport.
-  Bounded adaptive tool selection and query refinement; inspected-source grounding;
-  source-assembled reports; abstract/full-text limitations; contradiction support;
-  duplicate/overlap handling; suggested analyses and explicit partial/unavailable.
-- app/services/europe_pmc.py: EuropePMCClient(budget, cache_dir=None, http_client=None).
-  Implements the unchanged EuropePMCService Protocol for core searches, exact
-  publication lookup and permitted open-access full text. Preserves DOI/PMID/PMCID,
-  authors/year, hashes, dates, licences and access level. Bounded, allowlisted,
-  cached requests with no implicit retries or redirects.
-- tests/evidence: source transport tests, research behaviour tests and actual nested
-  Agent 2/3 integration with injected synthetic literature/model results.
-- scripts/smoke_evidence.py: explicit --live check, optional --sources-only, progress
-  output and a saved report under ignored .trialfair/evidence-smoke.json.
-- docs/agent-3-usage.md: source/runtime interfaces, limits, verification and commands.
+- app.agents.evidence.run_evidence(EvidenceRequest, ToolContext) -> EvidenceReport.
+- app.services.europe_pmc.EuropePMCClient(budget, cache_dir=None, http_client=None),
+  implementing the unchanged EuropePMCService Protocol: search_publications,
+  fetch_publication_metadata and fetch_open_access_full_text (all async).
+- app/runtime.py creates the real Europe PMC adapter with the same run budget and
+  configured ignored cache. Explicit RuntimeServices injection is respected.
+  Registry/terminology still use Agent 1's interfaces; no duplicate client exists.
+- API readiness and UI wording reflect the implemented evidence component and
+  outstanding Agent 1 work. No planner output is implemented.
 
-Shared runtime changes included to make this component usable:
-- app/runtime.py constructs EuropePMCClient with the existing per-run budget and
-  ignored cache directory. Existing explicit RuntimeServices injection is respected.
-- app/api.py marks evidence implementation present; the pipeline stays partial.
-- Dashboard status text now says Agent 1 ingestion/registry are still required.
-- Documentation records the integration point and updated component readiness.
-- No Agent 1 implementation file or scientific payload schema was changed.
+## Behaviour and integration requirements
 
-## Important integration rules
+The model selects searches, refines weak queries, inspects sources and synthesises
+claims. The last research turn is reserved for inspection. Search attempts, actual
+sources, access/licence metadata, hashes, dates and exact passages are retained.
+Registry tools are hidden when MissingService.is_available=False.
 
-- Do not append the final report into context.evidence_reports inside Agent 3;
-  Agent 2 validates and appends it once. Return the original request_id.
-- Final sources and actual search attempts are assembled from tool state, not from
-  model-written source metadata. A cited excerpt must match an inspected passage.
-- Exact excerpt matching checks provenance, not semantic entailment or clinical
-  validity. Researchers must review relevance, methods, effect sizes and claims.
-- Evidence IDs are application-namespaced by request so repeated model labels do
-  not collide when Agent 2 makes multiple investigations.
-- Suggested analyses remain suggestions; Agent 2 decides and executes allowed tools.
-- Registry tools use context.registry. Agent 1 must implement and wire it; Agent 3
-  never substitutes a separate fake/live registry service.
-- Runtime wiring for Europe PMC is included. Restart the backend after merging so
-  handlers point to the new implementation. Merge the feature branch/main rather
-  than manually copying only evidence.py and losing the service wiring.
+Final generation uses the compact flat required-only provider schema. Its transport
+claims are converted into unchanged EvidenceItem/SourceLocator models and checked
+against actual inspected passages. Invalid relations, sources, excerpts or finding
+references remain rejected. Valid excerpts establish provenance, not full semantic
+entailment, clinical causality or regulatory approval.
 
-## Actual verification on 2026-11-08
+Agent 2's dispatcher validates/appends the returned report once. Agent 3 does not
+append it itself, reset the shared budget, execute statistics or call Agent 2
+recursively. Suggested analyses return as validated AnalysisRequest objects for
+Agent 2 to decide. IDs are namespaced per request to avoid collisions.
 
-- Locked offline dependency sync: passed.
-- Full pytest suite: 108 passed, one inherited Starlette/httpx deprecation warning.
-- Agent 3-specific tests: 48 cover source, research and nested integration behaviour.
-- Ruff lint/format and lock consistency: passed; no dependency changes.
-- Documentation links and diff whitespace checks: passed.
-- A real Europe PMC core response was retrieved through Chrome and parsed by the
-  actual adapter's record parser: two abstracts and explicit cc by-nc metadata.
-  The query was TITLE:zolpidem AND (sex OR gender) AND (pharmacokinetics OR impairment).
-  The response remains under ignored .trialfair/verification; no article content
-  was committed or presented as a verified clinical finding.
-- Direct sources-only CLI request from the coding sandbox failed with
-  LiteratureUnavailable. Live HTTP/Gemini execution from that environment is not
-  established. Chrome access does not mean the command-line HTTP client can connect.
-- No full live Agent 3/Gemini result is claimed unless recorded in a subsequent
-  verification entry from the actual user's environment.
+Full-text failure explicitly falls back to an available abstract, preserving its
+scope and partial status. Failed body requests are not repeated for that source
+within the same run. Missingness and search failure never become proof of safety.
+Cache hits retain original retrieval times. No hidden SDK retries or fake replay.
 
-## Remaining work and acceptance
+Restart the backend after merging so imported handlers use this implementation.
+Read docs/agent-3-usage.md for exact constructor and runtime details. Merge the
+feature branch/updated main rather than copying only evidence.py and omitting wiring.
 
-1. Run `.venv/bin/python -m scripts.smoke_evidence --live --sources-only` from the
-   repo root in a network-enabled Terminal.
-2. Run `.venv/bin/python -m scripts.smoke_evidence --live` for the actual Gemini
-   investigation. Review .trialfair/evidence-smoke.json, not just its status label.
-3. Verify relevance, short excerpts, contradictions, access/licence metadata and
-   independent-study counts. A partial result may truthfully reflect limited
-   coverage or missing registry access. Do not replace it with hardcoded evidence.
-4. Implement/wire Agent 1; test real trial ingestion, valid statistics, actual
-   literature investigation and the combined report under the shared deadline.
-5. Measure real end-to-end latency and keep uncertainty visible before Agent 4.
+## Actual verification
 
-The synthetic missing-data fixture has no real drug/trial and is not a realistic
-literature-search benchmark. It remains useful for contract/error-path tests.
-The optional knowledge graph was deferred in favour of a working grounded loop.
-The unrelated untracked uv 2.lock duplicate was left untouched.
+- Locked offline dependency sync and lock consistency passed; no dependency changes.
+- Full suite: 110 tests passed, including 50 evidence tests; one inherited
+  Starlette/httpx deprecation warning. Ruff lint/format and whitespace checks pass.
+- Injected tests exercise the actual Agent 2 -> Agent 3 -> revised hypothesis path,
+  source transport/cache/error handling, supporting/contradicting evidence,
+  deduplication, quote rejection, budget cancellation and valid PlannerInput.
+- The user-run compact schema probe returned accepted=true for gemini-4-argon,
+  1527 schema bytes, one model turn. Earlier schema-rejected runs are not counted
+  as successes.
+- The subsequent user-run research returned two accepted items from two cited
+  sources, six inspected passages, 132.81 s and partial status. Both accepted
+  excerpts and their metadata hashes were checked against the actual source cache.
+- See docs/verification/agent-3-live.md for the source audit, unverified formulation
+  comparison, rejected-item limits and exact live-check history.
 
-## Initial live failure and corrective follow-up
+The latest small changes add rejection reason counts, failed-body memoisation and
+a prompt rule against inferring release formulation from dose/route. Automated
+checks cover them; the earlier observed live run is not relabelled as their live test.
 
-The user supplied an initial actual run with live gemini-4-argon: 6 successful
-literature searches, 20 source records, zero evidence items, 4 model turns,
-7 external requests and 57.1 seconds. The result was partial and the CLI correctly
-reported no source-grounded evidence. This does not count as a successful live
-research check. The saved report confirmed these counts; the failed artifact was
-preserved under ignored .trialfair/verification before retry.
+## Remaining acceptance work
 
-Inspection showed the final research turn was spent searching rather than reading
-and exceptions were too generic to diagnose the exact final provider failure.
-Corrective changes:
-- Reserve the last research turn for source inspection and require enough shared
-  turns to search, inspect and synthesise.
-- MissingService declares is_available=False; unavailable registry tools are hidden.
-- Resolve PMID/PMCID/DOI aliases only within the actual retrieved publication pool.
-- If full text is unavailable, inspect an existing abstract with an explicit
-  fallback limitation. No body review is claimed.
-- Final synthesis is a fresh, no-tool extraction over exact inspected packets,
-  using EvidenceSynthesis without recursive/untyped analysis parameter schemas.
-  Analysis suggestions are converted back to the unchanged shared AnalysisRequest.
-- Record safe error classes, field locations and HTTP status codes, never provider
-  error text, URLs or credentials. The original provider failure is not asserted
-  as conclusively diagnosed from the old generic log.
-- CLI now prints synthesis passage count and cited-source count.
+1. Human-review scientific meaning and source comparability. Abstract grounding
+   does not substitute for full-text review. A formulation comparison in the
+   observed report needs explicit source confirmation, as noted in the audit.
+2. Implement/wire Agent 1 registry, terminology, ingestion and deterministic tools.
+3. Run a real completed NCT record through all three agents and verify the combined
+   report, contradictions, uncertainty, failure handling and shared deadline.
+4. Measure integrated latency: the 132.81 s standalone research run leaves little
+   time for other stages. No integrated timing success is claimed.
+5. Implement Agent 4 only after stable actual outputs are available.
 
-Current automated verification: 108 tests pass, including 48 evidence tests. The
-new regressions cover inspection reservation, abstract fallback, alias resolution,
-provider schema shape, safe final-error diagnostics and unavailable registry tools.
-The full live check needs a rerun of the same smoke command; it is not yet marked
-passed. No findings were hardcoded or fabricated to make the smoke test succeed.
+Optional repeat checks (not ordinary automated tests):
+- Sources only: .venv/bin/python -m scripts.smoke_evidence --live --sources-only
+- Schema only: .venv/bin/python -m scripts.smoke_evidence --live --schema-only
+- Research: .venv/bin/python -m scripts.smoke_evidence --live
 
-## Second live failure and compact transport schema
-
-The user reran research: four passages were inspected, but final synthesis failed
-with ClientError HTTP 400. The run had 3 search attempts, 5 sources, zero grounded
-items, 4 model turns, 7 external requests and 88.94 seconds. HTTP 503/500 responses
-from Europe PMC were recovered with limited results/abstract fallback; they do not
-explain the model's final schema rejection. This live test is not marked passed.
-
-The provider-only synthesis transport now uses flat, required-only fields and no
-array cardinality bounds/optional clinical metadata branching. References are
-inlined before transport. The returned claims still become EvidenceItem through
-Pydantic and retain all exact-quote, source, finding-ID and relation checks. Invalid
-claims are rejected without discarding other valid claims. Public contracts and
-Agent 1 analysis interfaces are unchanged.
-
-scripts/evidence_schema_check.py implements a one-call --schema-only path in the
-existing smoke CLI. It sends synthetic input and no papers, and can report an
-explicitly redacted provider validation message without exposing exception details
-or secrets. Regression checks verify flat required schema shape, retained local
-scientific validation and diagnostic key/URL redaction. Current full test count:108.
-
-Next live validation: run the --schema-only command first. If accepted, rerun
---live and review actual grounded claims. Full live Agent 3 success remains pending.
+The original synthetic missing-data fixture has no real drug/trial and is not a
+publication-search benchmark. The optional knowledge graph remains deferred.

@@ -558,3 +558,51 @@ def test_schema_diagnostic_redacts_key_and_urls():
     result = redact_provider_message(message, key)
     assert key not in result and "example.com" not in result
     assert "Invalid schema at evidence_items" in result
+
+
+def test_rejected_claims_report_reason_counts_without_dropping_grounded_claim(context_factory):
+    state = EvidenceState()
+    record = publication()
+    state.add_publication(record)
+    state.register_passage(record.source, f"abstract[0:{len(SUPPORT)}]", SUPPORT)
+    unknown = item(sid="unretrieved-paper", eid="bad-source")
+    misquoted = item(eid="bad-quote")
+    misquoted.source_locator.excerpt = "An invented source quotation which was not retrieved."
+    context, _ = context_factory()
+    report = compile_evidence_report(
+        EvidenceDraft(evidence_items=[unknown, misquoted, item()], status="completed"),
+        request(),
+        context,
+        state,
+    )
+    assert len(report.evidence_items) == 1
+    reasons = next(value for value in report.limitations if value.startswith("Rejection reasons:"))
+    assert "source_not_retrieved=1" in reasons
+    assert "excerpt_not_verbatim=1" in reasons
+    assert "invented source quotation" not in report.model_dump_json()
+    assert report.status == "partial"
+
+
+def test_failed_full_text_fetch_not_repeated_within_same_run(context_factory):
+    from app.services.europe_pmc import LiteratureUnavailable
+
+    state = EvidenceState()
+    record = publication()
+    record.pmcid = "PMC999999999"
+    record.full_text_available = True
+    state.add_publication(record)
+    attempts = []
+
+    async def unavailable(pmcid):
+        attempts.append(pmcid)
+        raise LiteratureUnavailable("Temporarily unavailable")
+
+    context, _ = context_factory()
+    context.literature = SimpleNamespace(fetch_open_access_full_text=unavailable)
+    command = call("inspect_publication", source_id="lit-support", full_text=True)
+    first = asyncio.run(execute_evidence_tool(command, request(), context, state))
+    second = asyncio.run(execute_evidence_tool(command, request(), context, state))
+    assert len(attempts) == 1
+    assert first["review_scope"] == second["review_scope"] == "abstract"
+    assert second["cached_full_text_failure"] is True
+    assert first["fallback"] == second["fallback"]

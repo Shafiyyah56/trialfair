@@ -151,7 +151,7 @@ execution. Health reports evidence implementation present and full pipeline part
 
 ## Actual verification so far
 
-- Full suite: 108 tests passed before final documentation; 48 cover Agent 3 source,
+- Full suite: 110 tests passed before final documentation; 50 cover Agent 3 source,
   research and integration behaviour. See the handoff for final check results.
 - The actual nested Agent 2 -> Agent 3 -> revised hypothesis path passes with
   injected synthetic publications/model responses, one shared budget and valid
@@ -160,8 +160,9 @@ execution. Health reports evidence implementation present and full pipeline part
 - A real Europe PMC core response was independently retrieved through Chrome.
   The actual parser accepted two records with abstracts and returned their explicit
   cc by-nc licence metadata. That validates response shape, not claim interpretation.
-- Full live Agent 3/Gemini verification is pending unless recorded subsequently in
-  docs/handoffs/agent-3.md. It is not inferred from Agent 2's prior smoke test.
+- A subsequent live run returned two accepted, source-audited items with partial
+  status. See [live verification and audit](verification/agent-3-live.md) for scope,
+  limitations, scientific review notes and the preceding failed attempts.
 
 Official source API reference: https://dev.europepmc.org/RestfulWebService
 The implementation uses resultType=core for abstracts and the permitted
@@ -219,3 +220,17 @@ explicit diagnostic is restricted to synthetic schema-check input.
 
 If accepted, rerun the normal --live research check and inspect its evidence. A
 successful schema probe is not proof of a successful research investigation.
+
+## Latest live-check status
+
+The compact schema probe passed. The subsequent real-literature run returned two
+accepted items from two sources, after six inspections, in 132.81 seconds. Both
+excerpts and metadata hashes were audited against the source cache. Status partial
+is retained because the research remained abstract-only and incomplete. This is
+bounded component verification, not full clinical or integrated-pipeline acceptance.
+See [the audit](verification/agent-3-live.md), including a formulation comparison
+that needs explicit source confirmation and the limited combined-run time budget.
+
+The observed four rejected items have no per-item reasons recorded in that older
+report. New runs include aggregate rejection reason codes without exposing raw
+rejected claim text. Failed full-text requests are memoised only within their run.
