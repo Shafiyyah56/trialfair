@@ -2,6 +2,7 @@
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
+from time import monotonic, sleep
 
 from fastapi.testclient import TestClient
 
@@ -100,6 +101,61 @@ def test_api_runs_and_retrieves_validated_output(
     assert saved.json()["planner_input"] is not None
     assert client.get("/runs/nonexistent").status_code == 404
     assert client.post("/investigations", json={"screening": {}}).status_code == 422
+
+
+def test_async_api_exposes_real_progress_and_persists_result(
+    screening,
+    context_factory,
+    final_response,
+    tmp_path,
+):
+    def make_context(run_id, mode):
+        context, _ = context_factory(responses(final_response))
+        context.run_id = run_id
+        return context
+
+    store = SQLiteRunStore(tmp_path / "runs.sqlite")
+    with TestClient(create_app(context_factory=make_context, store=store)) as client:
+        accepted = client.post(
+            "/investigations/async",
+            json={"screening": screening.model_dump(mode="json"), "mode": "replay"},
+        )
+        assert accepted.status_code == 202
+        body = accepted.json()
+        assert body["status"] == "queued"
+
+        deadline = monotonic() + 2
+        progress = None
+        while monotonic() < deadline:
+            progress_response = client.get(body["progress_url"])
+            assert progress_response.status_code == 200
+            progress = progress_response.json()
+            if progress["result_available"]:
+                break
+            sleep(0.01)
+
+        assert progress is not None
+        assert progress["result_available"] is True
+        assert progress["progress"] == 1
+        assert progress["screening"]["trial_bundle"]["trial_id"] == "synthetic-trial-1"
+        assert any(event["agent"] == "safety" for event in progress["events"])
+        saved = client.get(f"/runs/{body['run_id']}")
+        assert saved.status_code == 200
+
+
+def test_unknown_active_run_is_not_a_saved_run(context_factory, tmp_path):
+    def make_context(run_id, mode):
+        context, _ = context_factory()
+        context.run_id = run_id
+        return context
+
+    client = TestClient(
+        create_app(
+            context_factory=make_context,
+            store=SQLiteRunStore(tmp_path / "runs.sqlite"),
+        )
+    )
+    assert client.get("/runs/unknown/progress").status_code == 404
 
 
 def test_invalid_provenance_cannot_become_a_completed_run(screening, context_factory):

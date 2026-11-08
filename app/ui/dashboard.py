@@ -6,10 +6,12 @@ screening JSON is schema checked; saved results are validated before display.
 
 import hashlib
 import json
+import time
 
 import httpx
 
 from app.contracts import RunResult, ScreeningOutput
+from app.progress import RunAccepted, RunProgress
 from app.validation import validate_run, validate_screening
 
 
@@ -110,6 +112,84 @@ def render_result(st, result: RunResult, *, saved: bool = False) -> None:
     )
 
 
+def render_live_progress(st, progress: RunProgress) -> None:
+    """Render only actual emitted activity and completed stage outputs."""
+    st.subheader("Investigation pipeline")
+    st.progress(progress.progress, text=progress.stage)
+    if progress.active_agent:
+        latest = progress.events[-1].summary if progress.events else "Starting this stage"
+        st.caption(latest)
+
+    stages = [
+        ("Trial data screening", progress.screening is not None),
+        ("Safety investigation", progress.investigation is not None),
+        ("External evidence", bool(progress.evidence_reports)),
+    ]
+    columns = st.columns(3)
+    for column, (label, complete) in zip(columns, stages, strict=True):
+        column.metric(label, "Available" if complete else "Pending")
+
+    if progress.screening:
+        with st.expander("Screening output", expanded=True):
+            st.write(progress.screening.trial_bundle.title)
+            for finding in progress.screening.findings:
+                st.write(f"**{finding.priority.upper()} · {finding.title}**")
+                st.caption(finding.description)
+
+    if progress.evidence_reports:
+        with st.expander("Evidence output", expanded=True):
+            for report in progress.evidence_reports:
+                st.write(f"Request {report.request_id}: **{report.status}**")
+                for item in report.evidence_items:
+                    st.write(f"{item.relation.title()}: {item.claim}")
+                    st.caption(f"Source {item.source_id} · {item.source_locator.location}")
+
+    if progress.events:
+        st.write("Live activity")
+        labels = {
+            "interpreter": "Trial data interpretation",
+            "safety": "Safety investigation",
+            "evidence": "External evidence research",
+            "orchestrator": "Result validation",
+        }
+        st.dataframe(
+            [
+                {
+                    "stage": labels[event.agent],
+                    "activity": event.summary,
+                }
+                for event in progress.events[-8:]
+            ],
+            hide_index=True,
+            use_container_width=True,
+        )
+    if progress.error:
+        st.warning(progress.error)
+
+
+def run_with_live_updates(st, backend: str, path: str, payload: dict) -> RunResult:
+    """Start a background run and poll its real sanitized progress snapshots."""
+    response = httpx.post(backend + path + "/async", json=payload, timeout=10)
+    response.raise_for_status()
+    accepted = RunAccepted.model_validate(response.json())
+    panel = st.empty()
+    deadline = time.monotonic() + 170
+    while time.monotonic() < deadline:
+        response = httpx.get(backend + accepted.progress_url, timeout=10)
+        response.raise_for_status()
+        progress = RunProgress.model_validate(response.json())
+        with panel.container():
+            render_live_progress(st, progress)
+        if progress.result_available:
+            result_response = httpx.get(f"{backend}/runs/{accepted.run_id}", timeout=10)
+            result_response.raise_for_status()
+            return RunResult.model_validate(result_response.json())
+        if progress.status == "failed":
+            raise ValueError(progress.error or "Investigation stopped before producing a result")
+        time.sleep(0.75)
+    raise httpx.TimeoutException("Investigation progress polling exceeded the local time limit")
+
+
 def main() -> None:
     """Execute through the API or review a saved result; never silently replay live input."""
     import streamlit as st
@@ -181,9 +261,7 @@ def main() -> None:
                                     },
                                 }
                             ]
-                    response = httpx.post(backend + path, json=payload, timeout=160)
-                    response.raise_for_status()
-                    result = RunResult.model_validate(response.json())
+                    result = run_with_live_updates(st, backend, path, payload)
                 validate_run(result)
                 st.session_state["result"] = result.model_dump(mode="json")
                 st.session_state["saved_review"] = action == "Review saved run"

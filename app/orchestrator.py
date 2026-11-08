@@ -1,6 +1,7 @@
 """Run-scoped orchestration; preserve verified results across timeouts and failures."""
 
 import asyncio
+from collections.abc import Callable
 from time import monotonic
 
 from app.agents.interpreter import run_interpreter
@@ -9,20 +10,37 @@ from app.context import ToolContext
 from app.contracts import PlannerInput, RunResult, ScreeningOutput, TrialInput
 from app.validation import validate_run, validate_screening
 
+ScreeningSink = Callable[[ScreeningOutput], None]
+
 
 async def investigate_screening(
-    screening: ScreeningOutput, context: ToolContext, *, mode: str = "live"
+    screening: ScreeningOutput,
+    context: ToolContext,
+    *,
+    mode: str = "live",
+    on_screening: ScreeningSink | None = None,
 ) -> RunResult:
     """Independent Agent 2 entry point for an already validated Agent 1 payload."""
-    return await _run(None, screening, context, mode=mode)
+    return await _run(None, screening, context, mode=mode, on_screening=on_screening)
 
 
-async def run_trial(trial_input: TrialInput, context: ToolContext) -> RunResult:
+async def run_trial(
+    trial_input: TrialInput,
+    context: ToolContext,
+    *,
+    on_screening: ScreeningSink | None = None,
+) -> RunResult:
     """Interpreter -> investigator -> validated PlannerInput; Agent 4 stays deferred."""
-    return await _run(trial_input, None, context, mode=trial_input.mode)
+    return await _run(
+        trial_input,
+        None,
+        context,
+        mode=trial_input.mode,
+        on_screening=on_screening,
+    )
 
 
-async def _run(trial_input, screening, context, *, mode):
+async def _run(trial_input, screening, context, *, mode, on_screening=None):
     started = monotonic()
     events = []
     downstream_emit = context.emit
@@ -39,6 +57,8 @@ async def _run(trial_input, screening, context, *, mode):
             if screening is None:
                 screening = await run_interpreter(trial_input, context)
             validate_screening(screening)
+            if on_screening is not None:
+                on_screening(screening.model_copy(deep=True))
             # Register the canonical bundle for additional analyses if Agent 1 did not.
             context.datasets.setdefault(screening.trial_bundle.trial_id, screening.trial_bundle)
             investigation = await run_safety(screening, context)
