@@ -1,0 +1,147 @@
+{
+  "exposure_mediated": {
+    "sims": 500,
+    "ae_ci_excludes_zero_rate": {
+      "Somnolence PBO": 0.004,
+      "Somnolence SYN5": 0.016,
+      "Somnolence SYN10": 0.036,
+      "Dizziness PBO": 0.008,
+      "Dizziness SYN5": 0.024,
+      "Dizziness SYN10": 0.038,
+      "Headache PBO": 0.054,
+      "Headache SYN5": 0.076,
+      "Headache SYN10": 0.064,
+      "Nausea PBO": 0.014,
+      "Nausea SYN5": 0.012,
+      "Nausea SYN10": 0.008,
+      "Fatigue PBO": 0.012,
+      "Fatigue SYN5": 0.02,
+      "Fatigue SYN10": 0.026
+    },
+    "any_false_positive_per_trial": 0.188,
+    "pk_auc_gmr_median": {
+      "SYN5": 1.303,
+      "SYN10": 1.286
+    },
+    "pk_ci_excludes_one_rate": {
+      "SYN5": 0.454,
+      "SYN10": 0.418
+    }
+  },
+  "high_exposure": {
+    "sims": 500,
+    "ae_ci_excludes_zero_rate": {
+      "Somnolence PBO": 0.004,
+      "Somnolence SYN5": 0.018,
+      "Somnolence SYN10": 0.058,
+      "Dizziness PBO": 0.008,
+      "Dizziness SYN5": 0.022,
+      "Dizziness SYN10": 0.044,
+      "Headache PBO": 0.054,
+      "Headache SYN5": 0.08,
+      "Headache SYN10": 0.064,
+      "Nausea PBO": 0.014,
+      "Nausea SYN5": 0.012,
+      "Nausea SYN10": 0.01,
+      "Fatigue PBO": 0.012,
+      "Fatigue SYN5": 0.018,
+      "Fatigue SYN10": 0.022
+    },
+    "any_false_positive_per_trial": 0.182,
+    "pk_auc_gmr_median": {
+      "SYN5": 1.454,
+      "SYN10": 1.435
+    },
+    "pk_ci_excludes_one_rate": {
+      "SYN5": 0.714,
+      "SYN10": 0.71
+    }
+  },
+  "intrinsic_sensitivity": {
+    "sims": 500,
+    "ae_ci_excludes_zero_rate": {
+      "Somnolence PBO": 0.004,
+      "Somnolence SYN5": 0.034,
+      "Somnolence SYN10": 0.138,
+      "Dizziness PBO": 0.008,
+      "Dizziness SYN5": 0.024,
+      "Dizziness SYN10": 0.086,
+      "Headache PBO": 0.054,
+      "Headache SYN5": 0.074,
+      "Headache SYN10": 0.074,
+      "Nausea PBO": 0.014,
+      "Nausea SYN5": 0.014,
+      "Nausea SYN10": 0.01,
+      "Fatigue PBO": 0.012,
+      "Fatigue SYN5": 0.018,
+      "Fatigue SYN10": 0.016
+    },
+    "any_false_positive_per_trial": 0.174,
+    "pk_auc_gmr_median": {
+      "SYN5": 1.303,
+      "SYN10": 1.286
+    },
+    "pk_ci_excludes_one_rate": {
+      "SYN5": 0.454,
+      "SYN10": 0.418
+    }
+  },
+  "null": {
+    "sims": 500,
+    "ae_ci_excludes_zero_rate": {
+      "Somnolence PBO": 0.006,
+      "Somnolence SYN5": 0.018,
+      "Somnolence SYN10": 0.024,
+      "Dizziness PBO": 0.01,
+      "Dizziness SYN5": 0.018,
+      "Dizziness SYN10": 0.01,
+      "Headache PBO": 0.022,
+      "Headache SYN5": 0.034,
+      "Headache SYN10": 0.026,
+      "Nausea PBO": 0.014,
+      "Nausea SYN5": 0.01,
+      "Nausea SYN10": 0.008,
+      "Fatigue PBO": 0.006,
+      "Fatigue SYN5": 0.016,
+      "Fatigue SYN10": 0.01
+    },
+    "any_false_positive_per_trial": 0.258,
+    "pk_auc_gmr_median": {
+      "SYN5": 1.002,
+      "SYN10": 0.987
+    },
+    "pk_ci_excludes_one_rate": {
+      "SYN5": 0.046,
+      "SYN10": 0.052
+    }
+  },
+  "weight_only": {
+    "sims": 500,
+    "ae_ci_excludes_zero_rate": {
+      "Somnolence PBO": 0.004,
+      "Somnolence SYN5": 0.01,
+      "Somnolence SYN10": 0.03,
+      "Dizziness PBO": 0.008,
+      "Dizziness SYN5": 0.022,
+      "Dizziness SYN10": 0.028,
+      "Headache PBO": 0.054,
+      "Headache SYN5": 0.074,
+      "Headache SYN10": 0.062,
+      "Nausea PBO": 0.014,
+      "Nausea SYN5": 0.012,
+      "Nausea SYN10": 0.01,
+      "Fatigue PBO": 0.012,
+      "Fatigue SYN5": 0.02,
+      "Fatigue SYN10": 0.018
+    },
+    "any_false_positive_per_trial": 0.184,
+    "pk_auc_gmr_median": {
+      "SYN5": 1.139,
+      "SYN10": 1.123
+    },
+    "pk_ci_excludes_one_rate": {
+      "SYN5": 0.15,
+      "SYN10": 0.148
+    }
+  }
+}

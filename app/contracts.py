@@ -355,10 +355,22 @@ class PlannerRecommendation(Contract):
     limitations: list[str] = Field(default_factory=list)
 
 
+class PlannerFindingDisposition(Contract):
+    """Completion of planning review is distinct from resolution of uncertainty."""
+
+    finding_id: Identifier
+    status: Literal["resolved", "unresolved", "requires_further_investigation"]
+    rationale: Identifier
+    recommendation_ids: list[Identifier] = Field(default_factory=list)
+    analysis_ids: list[Identifier] = Field(default_factory=list)
+    evidence_ids: list[Identifier] = Field(default_factory=list)
+
+
 class PlannerReport(Contract):
     trial_id: Identifier
     status: CompletionStatus
     recommendations: list[PlannerRecommendation] = Field(default_factory=list, max_length=8)
+    finding_dispositions: list[PlannerFindingDisposition] = Field(default_factory=list)
     unresolved_questions: list[str] = Field(default_factory=list)
     input_limitations: list[str] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)

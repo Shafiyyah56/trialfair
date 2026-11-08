@@ -200,8 +200,6 @@ def validate_planner_report(report: PlannerReport, planner: PlannerInput) -> Non
         raise ValueError("Incomplete or limited upstream inputs prevent completed planning")
     if report.status == "unavailable" and report.recommendations:
         raise ValueError("Unavailable planning cannot contain selected recommendations")
-    if report.status == "completed" and planner.screening.findings and not report.recommendations:
-        raise ValueError("Completed planning must address a screened finding")
     _ids(report.recommendations, "recommendation_id")
     findings = {x.finding_id: x for x in planner.screening.findings}
     hypotheses = {x.hypothesis_id: x for x in planner.investigation.hypotheses}
@@ -226,8 +224,17 @@ def validate_planner_report(report: PlannerReport, planner: PlannerInput) -> Non
         linked_sources.update(
             loc.source_id for aid in rec.analysis_ids for loc in analyses[aid].source_locators
         )
+        scoped_evidence = set()
+        for hid in rec.hypothesis_ids:
+            hypothesis = hypotheses[hid]
+            if not related.intersection(hypothesis.finding_ids):
+                raise ValueError("Planner hypothesis is unrelated to its findings")
+            for eid in hypothesis.supporting_evidence_ids + hypothesis.contradicting_evidence_ids:
+                if not set(hypothesis.finding_ids).intersection(evidence[eid].finding_ids):
+                    raise ValueError("Hypothesis evidence is unrelated to its findings")
+                scoped_evidence.add(eid)
         for eid in rec.evidence_ids:
-            if not related.intersection(evidence[eid].finding_ids):
+            if not related.intersection(evidence[eid].finding_ids) and eid not in scoped_evidence:
                 raise ValueError("Planner evidence is unrelated to its findings")
             linked_sources.add(evidence[eid].source_id)
         if not set(rec.source_ids) <= linked_sources:
@@ -242,10 +249,15 @@ def validate_planner_report(report: PlannerReport, planner: PlannerInput) -> Non
         }
         if not contradictions <= set(rec.evidence_ids):
             raise ValueError("Planner must retain relevant contradictory evidence")
+        relevant_hypotheses = {
+            hid
+            for hid, hypothesis in hypotheses.items()
+            if related.intersection(hypothesis.finding_ids)
+        }
+        if not relevant_hypotheses <= set(rec.hypothesis_ids):
+            raise ValueError("Planner must retain relevant hypotheses")
         for hid in rec.hypothesis_ids:
             hypothesis = hypotheses[hid]
-            if not related.intersection(hypothesis.finding_ids):
-                raise ValueError("Planner hypothesis is unrelated to its findings")
             if not set(
                 hypothesis.supporting_evidence_ids + hypothesis.contradicting_evidence_ids
             ) <= set(rec.evidence_ids):
@@ -256,3 +268,56 @@ def validate_planner_report(report: PlannerReport, planner: PlannerInput) -> Non
             findings[f].finding_type == "evidence_gap" for f in related
         ):
             raise ValueError("Evidence-gap basis requires a gap finding")
+
+    # Planning completion requires an explicit disposition, not a claim that all
+    # scientific questions are resolved. Partial legacy snapshots may omit these.
+    _ids(report.finding_dispositions, "finding_id")
+    disposed = {d.finding_id for d in report.finding_dispositions}
+    _require(list(disposed), set(findings), "disposition finding ID")
+    if report.status == "completed" and not set(findings) <= disposed:
+        raise ValueError(
+            "Completed planning must address every finding with an explicit disposition"
+        )
+    recommendations = {r.recommendation_id: r for r in report.recommendations}
+    for disposition in report.finding_dispositions:
+        fid = disposition.finding_id
+        _require(
+            disposition.recommendation_ids, set(recommendations), "disposition recommendation ID"
+        )
+        _require(disposition.analysis_ids, set(analyses), "disposition analysis ID")
+        _require(disposition.evidence_ids, set(evidence), "disposition evidence ID")
+        allowed_analyses = set(findings[fid].analysis_ids)
+        allowed_analyses.update(
+            aid
+            for a in planner.investigation.assessed_findings
+            if a.finding_id == fid
+            for aid in a.analysis_ids
+        )
+        if not set(disposition.analysis_ids) <= allowed_analyses:
+            raise ValueError("Disposition analysis is unrelated to its finding")
+        if any(fid not in evidence[eid].finding_ids for eid in disposition.evidence_ids):
+            raise ValueError("Disposition evidence is unrelated to its finding")
+        if any(
+            fid not in recommendations[rid].finding_ids for rid in disposition.recommendation_ids
+        ):
+            raise ValueError("Disposition recommendation is unrelated to its finding")
+        if disposition.status == "requires_further_investigation":
+            if not disposition.recommendation_ids:
+                raise ValueError(
+                    "Further investigation disposition requires a valid follow-up action"
+                )
+        elif disposition.recommendation_ids:
+            raise ValueError("Follow-up actions require a further-investigation disposition")
+        if disposition.status == "resolved":
+            if not disposition.analysis_ids and not disposition.evidence_ids:
+                raise ValueError(
+                    "Resolved planning disposition requires source-linked review support"
+                )
+            if any(analyses[aid].status != "completed" for aid in disposition.analysis_ids):
+                raise ValueError("Resolved disposition cannot rely on unavailable analysis")
+        for rec in report.recommendations:
+            if (
+                fid in rec.finding_ids
+                and rec.recommendation_id not in disposition.recommendation_ids
+            ):
+                raise ValueError("Disposition must retain its selected follow-up actions")

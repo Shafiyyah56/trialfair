@@ -246,3 +246,12 @@ research. Source review and draft fallbacks remained visible. Saved report was
 reopened successfully in the browser. See verification/demo-live.md. The live
 check exposed launcher package-path and planner timeline-label bugs; both are
 fixed and regression-tested. Current suite contains 266 offline tests.
+
+Merge-conflict resolution: incorporated origin/main 64cf634 (Agent 4 functional
+fixes and SYN-401 dataset) into feat/demo-integration. All newer planner code is
+preserved except the existing demo-only time cap. New disposition and evidence/
+hypothesis validation coexist with RunResult planner report validation. Current
+API/storage/progress/UI remain wired. Both owners' integration history is retained;
+Agent 4's own acknowledgement/handoff is preserved from main. Existing partial
+live demo report still validates. 298 tests pass, Ruff lint/format and whitespace
+checks pass. No synthetic fixture is relabelled as clinical evidence.

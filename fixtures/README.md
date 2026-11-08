@@ -15,3 +15,12 @@ fixture loader or pipeline in the scaffold.
 public/ is reserved for appropriately sourced and redistributable registry/API
 responses. replay/ is reserved for actual labelled saved runs. Both are empty
 apart from explanatory files. No external retrieval was performed for this commit.
+
+## synthetic/syn401 (participant-level, SYNTHETIC)
+
+SYN-401-102 is a mechanistic synthetic Phase Ib/IIa trial of a fictional hypnotic,
+calibrated to the published range across six approved hypnotics rather than any single
+drug. It contains SDTM-style DM, AE, PP and narrative CSVs, `truth.json` (generating
+parameters and expected conclusions), the generator, and a known-truth evaluation. See
+`synthetic/syn401/DATACARD.md` for sources, limitations and the proposed licence. It
+contains no real participant or trial data.

@@ -202,6 +202,94 @@ ScreeningOutput alone. No such shared-code change was applied or agreed here.
 PK descriptive ratios still need provenance-backed population/window comparability;
 source context could supply it without necessarily changing scientific contracts.
 
+## Agent 4 additive contract proposal — 2026-11-08
+
+Owner: Agent 4; agreement status: explicitly approved by the user on 2026-11-08.
+Implemented on feat/agent-4-planner. Pipeline integration remains with Agent 2.
+The user now requests Agent 4; older deferral notes describe previous scope.
+Starting baseline: reviewed main dfcfcf5, including service integration.
+
+Proposed shared changes (no dependency/schema-version migration):
+
+- Add PlannerRecommendation and PlannerReport to app/contracts.py, retaining
+  PlannerInput unchanged. Report fields: trial_id, status (existing completion
+  enum), recommendations (at most eight), unresolved_questions,
+  input_limitations, limitations, human_review_required=true, is_synthetic.
+- Recommendation fields: recommendation_id, action, rationale, priority,
+  priority_rationale, category (additional_analysis/additional_data_collection/
+  future_trial_design/interpretation_review), finding_ids, analysis_ids,
+  evidence_ids, source_ids, hypothesis_ids, evidence_basis
+  (observed_finding/evidence_gap/hypothesis), required_data, availability
+  (available/missing/not_assessed), feasibility, prerequisites,
+  resolves_question, limitations. IDs and provenance are checked against input;
+  relevant contradictions must remain attached. Proposed analysis feasibility
+  must reflect actual registered data and conservative Agent 1 preconditions.
+- Add planner to AgentEvent.agent. Use existing event types and context.emit;
+  no transport or stage-status extension.
+- Add validate_planner_report(report, input) to shared validation. Reject unknown
+  and unrelated links, incorrect trial/synthetic labels, suppressed contrary
+  evidence and completed status with explicitly incomplete upstream inputs.
+- First execution is independent run_planner(PlannerInput, ToolContext), with
+  at most two inspection turns and one structured selection turn. Reuse shared
+  budget/deadline and reserve the final turn. No automatic pipeline append.
+  Insufficient budget returns unavailable. No global limit increase.
+- Defer RunResult/API/storage/UI/pipeline scheduling changes to the integrator;
+  a later opt-in pipeline integration must reserve time/turns before Agents 1–3,
+  rather than append a planner after an exhausted deadline. Independent planning
+  is explicitly a separately budgeted execution when given a new context.
+
+Example proposed payload (synthetic illustration; IDs must resolve in actual input):
+
+```json
+{
+  "schema_version": "1.0",
+  "trial_id": "synthetic-trial",
+  "status": "partial",
+  "recommendations": [{
+    "schema_version": "1.0",
+    "recommendation_id": "plan-gap-1",
+    "action": "Obtain affected-participant counts and corresponding denominators by reported sex for the same arm and reporting window.",
+    "rationale": "The reported data do not support a sex-specific event-rate comparison.",
+    "priority": "high",
+    "priority_rationale": "Resolve the data prerequisite before interpreting a subgroup difference.",
+    "category": "additional_data_collection",
+    "finding_ids": ["gap-1"], "analysis_ids": [], "evidence_ids": [],
+    "source_ids": ["synthetic-source"], "hypothesis_ids": [],
+    "evidence_basis": "evidence_gap",
+    "required_data": ["Affected participants and at-risk denominators by sex, arm and window"],
+    "availability": "missing",
+    "feasibility": "Requires source retrieval or sponsor data; no comparison was executed.",
+    "prerequisites": ["Verify source-backed arm and reporting-window comparability"],
+    "resolves_question": "Can comparable sex-specific adverse-event rates be calculated?",
+    "limitations": ["Missing evidence does not establish safety."]
+  }],
+  "unresolved_questions": ["Upstream assessment requires completion."],
+  "input_limitations": ["Investigation is partial; no accepted literature evidence."],
+  "limitations": ["Human review must assess applicability and scientific support."],
+  "human_review_required": true,
+  "is_synthetic": true
+}
+```
+
+Implementation approach after agreement: application-authored candidate actions
+and numerical/clinical guardrails, with model selection/prioritisation over bounded
+candidates, allowlisted read-only inspection tools, full continuation history and
+a result for every tool call. This avoids accepting model-invented calculations
+or clinical actions. Complete/partial synthetic examples and offline behavioural
+tests accompany implementation. No full clinical/live readiness claim follows.
+
+
+Implementation details after approval: the model returns a compact Selection
+(candidate ID, priority, constrained reason code), not arbitrary report prose.
+Application code compiles PlannerReport from inspected candidates. Up to 24
+candidates, eight recommendations, two inspection turns and one extraction turn,
+with a 30-second local cap inside the unchanged original deadline. Existing
+Agent 1 audit_subgroup_availability supplies deterministic prerequisite checks;
+no statistics, source requests or recursive agents are executed. Explicit upstream
+limitations keep the report partial; failed selection returns unavailable.
+Only shared Python edits are additive contracts/event identity and validation.
+RunResult, runtime, context, model adapter, config, API, storage, UI and dependencies
+remain unchanged. Live/provider and combined clinical acceptance are unverified.
 
 ## Shared changes: participant-level analyses (2026-11-08, pushed to main)
 
@@ -331,3 +419,42 @@ budget and visible source-based assessment/candidate-draft fallbacks when a mode
 fails. Normal autonomous mode remains available. Read DEMO.md. No dependencies or
 schema-version migration; teammates should update clients for optional planner
 report/progress fields. 265 offline tests pass; actual live demo retest is pending.
+
+## Agent 4 functional corrections — 2026-11-08
+
+Authorisation: the user explicitly requested fixes for the four verified issues,
+with Agent 4-only scope except a shared output-contract addition if necessary.
+The minimal addition is PlannerFindingDisposition plus a defaulted
+PlannerReport.finding_dispositions list, required by the corrected completion
+validation to distinguish resolved, explicitly unresolved and follow-up states
+without interpreting free-form prose. This changes only the Agent 4 output; no
+Agent 1–3 payload, PlannerInput, RunResult or function signature changes. No
+schema-version, dependency or lock changes. Older partial reports still parse;
+older completed planner reports need explicit dispositions before validation.
+The complete synthetic fixture has been updated. No persisted planner migration
+is currently needed because planner output is not integrated into storage.
+
+Planner-only generation now matches requested PK parameters, preserves hypotheses
+with scoped evidence, and uses existing representation counts before suggesting
+new collection. Shared validation changes apply only inside validate_planner_report:
+accept indirect evidence only through a relevant retained hypothesis; retain all
+relevant hypotheses; validate related dispositions and full completed coverage.
+No changes to validate_run, validate_planner_input, Agents 1–3 or their implementations.
+See verification/agent-4-fixes.md for TDD evidence, scenario results and limits.
+Default pipeline scheduling, new API/storage/UI integration and live acceptance
+remain the integrator's follow-up. Changes are local; no push/PR update/merge.
+
+## Resolved main merge after Agent 4 fixes
+
+The integrator merged origin/main at 64cf634 into feat/demo-integration, retaining
+all new Agent 4 implementation/validation fixes, dispositions and updated synthetic
+fixtures, plus the existing four-agent API/storage/progress/UI/demo integration.
+The incoming planner code is unchanged except for the existing explicit demo-only
+90-second cap; ordinary planning remains 30 seconds. RunResult.planner_report and
+its run-level validation checks are retained alongside the new output fields.
+
+The stronger completed-plan disposition rules remain enforced. Existing partial
+saved demo reports still validate; the previously observed 95.87-second report
+with four draft actions was checked successfully. Old notes saying planner output
+is not stored describe the pre-integration implementation. All 298 offline tests,
+Ruff lint/format and whitespace checks pass. No paid/live call was made for this merge.
