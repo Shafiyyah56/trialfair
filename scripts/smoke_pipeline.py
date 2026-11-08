@@ -40,6 +40,10 @@ async def smoke(nct_id, *, demo=False):
                     "duration_seconds": round(result.duration_ms / 1000, 2),
                     "screening_available": result.screening is not None,
                     "investigation_available": result.investigation is not None,
+                    "planner_available": result.planner_report is not None,
+                    "recommendations": len(result.planner_report.recommendations)
+                    if result.planner_report
+                    else 0,
                     "evidence_reports": len(result.evidence_reports),
                     "evidence_items": len(evidence_items),
                     "cited_sources": len({item.source_id for item in evidence_items}),
@@ -51,7 +55,13 @@ async def smoke(nct_id, *, demo=False):
             ),
             flush=True,
         )
-        return bool(result.screening and result.investigation and evidence_items)
+        return bool(
+            result.screening
+            and result.investigation
+            and evidence_items
+            and result.planner_report
+            and result.planner_report.recommendations
+        )
     finally:
         await context.aclose()
 
@@ -67,7 +77,10 @@ def main():
     if args.demo and args.nct_id != "NCT04280705":
         parser.error("The curated demo only supports NCT04280705.")
     if not asyncio.run(smoke(args.nct_id, demo=args.demo)):
-        print("The full path returned no cited evidence; review pipeline-smoke.json.", flush=True)
+        print(
+            "The full path did not return cited evidence and a follow-up plan; review the report.",
+            flush=True,
+        )
         raise SystemExit(1)
 
 

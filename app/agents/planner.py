@@ -514,7 +514,8 @@ async def run_planner(planner_input: PlannerInput, context: ToolContext) -> Plan
             validate_planner_report(report, planner)
             _emit(context, "stop", "Planning ended with status partial.")
             return report
-        async with asyncio.timeout(min(30, context.budget.remaining_seconds())):
+        planning_cap = 90 if context.demo_profile else 30
+        async with asyncio.timeout(min(planning_cap, context.budget.remaining_seconds())):
             for _ in range(min(2, available - 1)):
                 reply = await generate_with_budget(context, messages, tools=TOOLS)
                 messages.append(

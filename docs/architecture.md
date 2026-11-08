@@ -17,6 +17,7 @@ result. Do not create citations from model memory.
 - execute_analysis(AnalysisRequest, ToolContext) -> AnalysisResult
 - run_safety(ScreeningOutput, ToolContext) -> InvestigationReport
 - run_evidence(EvidenceRequest, ToolContext) -> EvidenceReport
+- run_planner(PlannerInput, ToolContext) -> PlannerReport
 - run_trial(TrialInput, ToolContext) -> RunResult
 
 These are async Python functions. Do not create localhost agent servers. Each
@@ -43,10 +44,10 @@ call Agent 2 or execute statistics itself. Agent 2 decides whether suggestions a
 valid, useful and within the shared budget.
 
 PlannerInput is a snapshot of final screening, investigation and evidence reports.
-It must match the enclosing RunResult. Agent 4 now supports independent
-`run_planner(PlannerInput, ToolContext) -> PlannerReport` execution on its feature
-branch. Default orchestration, API, persistence and UI integration remain pending;
-see [planner usage](agent-4-usage.md).
+It must match the enclosing RunResult. Agent 4 runs with reserved turns/time in
+the original context and returns optional RunResult.planner_report. It is validated
+against that exact snapshot on API/storage boundaries and rendered in the UI.
+See [planner usage](agent-4-usage.md) and [demo profiles](DEMO.md).
 
 ## Budgets and errors
 

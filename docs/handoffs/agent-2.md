@@ -217,3 +217,24 @@ nested budget resets. UI polling supports the longer configured deadline. A new
 async API integration test verifies cited evidence, actual progress and persistence
 with injected model calls and no network calls. Agent 4 wiring remains pending
 its pushed implementation at this checkpoint.
+
+Agent 4 is now integrated: original GitHub commit 0281f17 imported via browser
+patch with author attribution preserved (local imported commit 84971d2), followed
+by integrator-owned orchestration/runtime/API/storage/progress/UI changes. All four
+agents share the same model, counters and original deadline, with phase reservation
+for planning. RunResult.planner_report is optional for backward-readable saved runs
+and validated against the exact final PlannerInput. Curated demo source/model/draft
+labels remain visible. No Agent 4 acknowledgement was made on its owner's behalf.
+
+Current checks: 264 passed, 1 live test deselected; Ruff lint/format pass. Actual
+Streamlit component rendering is tested, including the four-agent diagram. The
+sandbox backend launch returned Operation not permitted; the user was asked to
+start backend/dashboard in Terminal for actual browser/provider verification.
+No actual all-four live run has been claimed. See DEMO.md for exact commands.
+
+Final additional UI check renders a complete synthetic four-agent saved report,
+including planner cards and metrics. Total now 265 offline tests, 1 live test
+excluded. Locked offline installation, Ruff lint/format and whitespace checks pass.
+The configured model remains gemini-4-argon; credentials were only checked for
+presence. No keys were printed or copied. No local server or paid run was launched
+successfully from this sandbox. The user's Terminal is required for live QA.

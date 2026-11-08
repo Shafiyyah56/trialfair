@@ -107,7 +107,13 @@ def create_app(
         downstream_emit = context.emit
 
         def capture(event):
-            active_runs.record_event(run_id, event, context.evidence_reports)
+            active_runs.record_event(
+                run_id,
+                event,
+                context.evidence_reports,
+                investigation=context.investigation_report,
+                planner_report=context.planner_report,
+            )
             downstream_emit(event)
 
         context.emit = capture
@@ -119,10 +125,10 @@ def create_app(
     @application.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
         return HealthResponse(
-            status="partial",
-            agents_implemented=False,
+            status="ready",
+            agents_implemented=True,
             # Implementation flags, not credential/source connectivity checks.
-            components={"safety": True, "interpreter": True, "evidence": True, "planner": False},
+            components={"safety": True, "interpreter": True, "evidence": True, "planner": True},
         )
 
     @application.post("/runs", response_model=RunResult)

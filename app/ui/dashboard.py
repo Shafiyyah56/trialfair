@@ -21,6 +21,19 @@ def render_result(st, result: RunResult, *, saved: bool = False) -> None:
     label = "Saved result review" if saved else "Execution result"
     st.caption(f"{label} · mode: {result.mode} · model: {result.model_id or 'none recorded'}")
     st.write(f"Status: **{result.status}** · duration: {result.duration_ms / 1000:.2f}s")
+    columns = st.columns(4)
+    columns[0].metric(
+        "Screening findings", len(result.screening.findings) if result.screening else 0
+    )
+    columns[1].metric("Evidence items", sum(len(r.evidence_items) for r in result.evidence_reports))
+    columns[2].metric(
+        "Cited sources",
+        len({e.source_id for r in result.evidence_reports for e in r.evidence_items}),
+    )
+    columns[3].metric(
+        "Follow-up actions",
+        len(result.planner_report.recommendations) if result.planner_report else 0,
+    )
     for error in result.errors:
         st.warning(error)
     screening = result.screening
@@ -82,6 +95,35 @@ def render_result(st, result: RunResult, *, saved: bool = False) -> None:
                 st.caption(limitation)
         for limitation in report.limitations:
             st.caption(limitation)
+    st.subheader("Next investigations for human review")
+    if result.planner_report:
+        plan = result.planner_report
+        st.caption(f"Planner status: {plan.status} · human approval required")
+        for recommendation in plan.recommendations:
+            with st.expander(
+                f"{recommendation.priority.upper()} · {recommendation.action}", expanded=True
+            ):
+                st.write(recommendation.rationale)
+                st.caption(recommendation.priority_rationale)
+                st.write(f"Resolves: {recommendation.resolves_question}")
+                st.write(f"Data: {recommendation.availability} · {recommendation.feasibility}")
+                if recommendation.required_data:
+                    st.write("Required data: " + "; ".join(recommendation.required_data))
+                if recommendation.prerequisites:
+                    st.write("Prerequisites: " + "; ".join(recommendation.prerequisites))
+                st.caption("Linked findings: " + ", ".join(recommendation.finding_ids))
+                st.caption(
+                    "Evidence: " + (", ".join(recommendation.evidence_ids) or "evidence gap")
+                )
+                for limitation in recommendation.limitations:
+                    st.caption(limitation)
+        for limitation in plan.limitations:
+            st.warning(limitation)
+        with st.expander("Planning input limitations and unresolved questions"):
+            for line in [*plan.input_limitations, *plan.unresolved_questions]:
+                st.write(line)
+    else:
+        st.info("No planning output is available in this saved run.")
     st.subheader("Traceable sources")
     sources = {x.source_id: x for x in bundle.sources}
     for report in result.evidence_reports:
@@ -106,7 +148,7 @@ def render_result(st, result: RunResult, *, saved: bool = False) -> None:
         )
     for limitation in bundle.limitations:
         st.caption(limitation)
-    st.caption("Research support for human review. Trial Improvement Planner is not implemented.")
+    st.caption("Research support for human review. No proposed action is executed automatically.")
     st.download_button(
         "Download validated run JSON",
         result.model_dump_json(indent=2),
@@ -124,12 +166,33 @@ def render_live_progress(st, progress: RunProgress) -> None:
         latest = progress.events[-1].summary if progress.events else "Starting this stage"
         st.caption(latest)
 
+    stage_nodes = {
+        "interpreter": ("1 Data screening", progress.screening is not None),
+        "safety": ("2 Safety investigation", progress.investigation is not None),
+        "evidence": ("3 Evidence review", bool(progress.evidence_reports)),
+        "planner": ("4 Follow up planning", progress.planner_report is not None),
+    }
+    dot = [
+        'digraph { rankdir=LR; bgcolor="transparent"; '
+        'node [shape=box style="rounded,filled" fontname="Arial" color="#cbd5e1"];'
+    ]
+    for name, (label, available) in stage_nodes.items():
+        color = (
+            "#dbeafe" if progress.active_agent == name else "#dcfce7" if available else "#f1f5f9"
+        )
+        dot.append(f'{name} [label="{label}" fillcolor="{color}"];')
+    dot.append(
+        "interpreter -> safety; safety -> evidence; evidence -> safety; safety -> planner; }"
+    )
+    st.graphviz_chart("\n".join(dot), use_container_width=True)
+    st.caption("Blue: active agent · Green: output available · Grey: pending")
     stages = [
         ("Trial data screening", progress.screening is not None),
         ("Safety investigation", progress.investigation is not None),
         ("External evidence", bool(progress.evidence_reports)),
+        ("Follow-up planning", progress.planner_report is not None),
     ]
-    columns = st.columns(3)
+    columns = st.columns(4)
     for column, (label, complete) in zip(columns, stages, strict=True):
         column.metric(label, "Available" if complete else "Pending")
 

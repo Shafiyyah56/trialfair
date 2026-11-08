@@ -10,12 +10,13 @@ from app.contracts import (
     AgentEvent,
     EvidenceReport,
     InvestigationReport,
+    PlannerReport,
     RunResult,
     ScreeningOutput,
 )
 
 RunState = Literal["queued", "running", "completed", "partial", "failed"]
-AgentName = Literal["interpreter", "safety", "evidence", "orchestrator"]
+AgentName = Literal["interpreter", "safety", "evidence", "planner", "orchestrator"]
 
 
 class RunAccepted(BaseModel):
@@ -40,6 +41,7 @@ class RunProgress(BaseModel):
     screening: ScreeningOutput | None = None
     evidence_reports: list[EvidenceReport] = Field(default_factory=list)
     investigation: InvestigationReport | None = None
+    planner_report: PlannerReport | None = None
     result_available: bool = False
     started_at: datetime
     updated_at: datetime
@@ -79,18 +81,22 @@ class ActiveRunRegistry:
         run_id: str,
         event: AgentEvent,
         evidence_reports: list[EvidenceReport],
+        investigation: InvestigationReport | None = None,
+        planner_report: PlannerReport | None = None,
     ) -> None:
         labels = {
             "interpreter": "Interpreting trial data",
             "safety": "Investigating safety findings",
             "evidence": "Researching external evidence",
+            "planner": "Planning follow-up investigations",
             "orchestrator": "Validating and assembling results",
         }
         milestones = {
             "interpreter": 0.15,
             "safety": 0.5,
             "evidence": 0.7,
-            "orchestrator": 0.9,
+            "planner": 0.9,
+            "orchestrator": 0.95,
         }
         with self._lock:
             current = self._runs[run_id]
@@ -100,6 +106,10 @@ class ActiveRunRegistry:
             current.progress = max(current.progress, milestones[event.agent])
             current.events.append(event.model_copy(deep=True))
             current.evidence_reports = [report.model_copy(deep=True) for report in evidence_reports]
+            if investigation is not None:
+                current.investigation = investigation.model_copy(deep=True)
+            if planner_report is not None:
+                current.planner_report = planner_report.model_copy(deep=True)
             current.updated_at = datetime.now(UTC)
 
     def screening_ready(self, run_id: str, screening: ScreeningOutput) -> None:
@@ -116,7 +126,9 @@ class ActiveRunRegistry:
         with self._lock:
             current = self._runs[result.run_id]
             current.status = result.status
-            current.stage = "Investigation complete"
+            current.stage = (
+                "Report ready" if result.status == "completed" else "Partial report ready"
+            )
             current.progress = 1.0
             current.active_agent = None
             current.events = [event.model_copy(deep=True) for event in result.events]
@@ -126,6 +138,9 @@ class ActiveRunRegistry:
             ]
             current.investigation = (
                 result.investigation.model_copy(deep=True) if result.investigation else None
+            )
+            current.planner_report = (
+                result.planner_report.model_copy(deep=True) if result.planner_report else None
             )
             current.result_available = True
             current.updated_at = datetime.now(UTC)

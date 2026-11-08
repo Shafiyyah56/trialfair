@@ -50,6 +50,10 @@ def configure_demo_context(context):
     """Reuse the actual registry capture with its original hash/date; never label it fresh."""
     context.demo_profile = "remdesivir-curated"
     context.evidence_handler = run_curated_evidence
+    if context.planner_handler is None:
+        from app.agents.planner import run_planner
+
+        context.planner_handler = run_planner
     capture = ROOT / f"fixtures/public/{DEMO_TRIAL}.json"
     provenance = json.loads(capture.with_suffix(".provenance.json").read_text())
     raw = capture.read_bytes()
@@ -177,6 +181,9 @@ async def ensure_demo_evidence(screening, context):
         context,
     )
     context.evidence_reports.append(report)
+    demo_event(
+        context, "evidence", "revision", "Curated evidence output is ready for safety review."
+    )
 
 
 def source_review_fallback(screening, context, previous):
@@ -238,4 +245,32 @@ async def run_demo_safety(screening, context):
         )
         return source_review_fallback(screening, context, report)
     report.limitations.append(DEMO_LABEL)
+    return report
+
+
+def draft_plan_fallback(planner_input, context, previous):
+    """Preserve safe candidate actions as a labelled rules draft if provider selection fails."""
+    from app.agents.planner import build_candidates
+    from app.validation import validate_planner_report
+
+    candidates = build_candidates(planner_input, context)[:8]
+    report = previous.model_copy(
+        update={
+            "status": "partial",
+            "recommendations": candidates,
+            "limitations": [
+                *previous.limitations,
+                "Rules-based draft from validated action templates; the live planner did not "
+                "complete selection. A researcher must select and prioritise these actions.",
+            ],
+        }
+    )
+    validate_planner_report(report, planner_input)
+    demo_event(
+        context,
+        "planner",
+        "revision",
+        "Live selection unavailable; presenting validated candidate actions as a rules draft.",
+    )
+    demo_event(context, "planner", "stop", "Draft follow-up plan ready for human review.")
     return report

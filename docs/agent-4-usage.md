@@ -2,9 +2,10 @@
 
 Agent 4 runs independently on an existing validated `PlannerInput`. The user
 approved the additive contract/event/validation proposal on 2026-11-08.
-It is not yet scheduled by `run_trial`, exposed by an API route, saved in
-`RunResult`/SQLite or rendered by the dashboard. The health endpoint still
-reports planner=false for that default pipeline. The integrator owns those steps.
+On feat/demo-integration it is now scheduled by `run_trial`, returned as optional
+RunResult.planner_report, validated on SQLite reads/writes and shown in the
+dashboard. Health reports all four implementations present; this is not a source
+uptime, credential or medical-validity check. See [the demo runbook](DEMO.md).
 
 ## In-process execution
 
@@ -39,7 +40,8 @@ No model, network, credentials or filesystem operation happens at module import.
   one separate structured selection call. Every returned tool call gets a result,
   including unknown, duplicate or excess calls. Full model responses preserve
   opaque continuation tokens; provider contents are never logged.
-- At most 30 seconds, always inside the existing shared deadline. A minimum of
+- At most 30 seconds normally (90 in explicit curated-demo mode), always inside
+  the existing shared deadline. A minimum of
   two remaining model turns and two seconds is required before model work.
   There is no budget reset, hidden retry or global limit increase. A provider
   attempt is counted by `generate_with_budget` exactly once.
@@ -114,11 +116,11 @@ timeouts, bounded candidates and the complete/partial examples. Live planner
 provider compatibility, real-world recommendation usefulness and the combined
 cited clinical pipeline remain unverified.
 
-## Integrator follow-up
+## Default pipeline integration
 
-Before scheduling in the original pipeline, reserve planner turns/time BEFORE
-running Agents 1–3 and propagate unavailable/partial planning honestly. Do not
-append planning to an exhausted 150-second deadline or silently raise limits.
-Then agree optional `RunResult`/API/storage/UI additions, validate persisted
-planner outputs on reads and writes, and wire real backend events into the UI.
-No such integration is implied by this independent implementation.
+The integrator reserves three model turns and a portion of the original deadline
+before Agents 1–3 run. Used counters are never reset. Partial/unavailable planning
+remains explicit, and planner events reach the existing progress endpoint.
+The curated demo has an explicitly longer configured budget and a labelled
+rules-based candidate draft if provider selection fails. Normal mode does not
+silently substitute this draft. See DEMO.md for the exact execution profile.

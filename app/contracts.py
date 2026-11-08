@@ -375,6 +375,7 @@ class RunResult(Contract):
     investigation: InvestigationReport | None = None
     evidence_reports: list[EvidenceReport] = Field(default_factory=list)
     planner_input: PlannerInput | None = None
+    planner_report: PlannerReport | None = None
     events: list[AgentEvent] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
     duration_ms: Annotated[float, Field(ge=0)]

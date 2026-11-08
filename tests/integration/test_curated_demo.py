@@ -84,6 +84,32 @@ def test_demo_async_api_reaches_cited_persisted_report(context_factory, tmp_path
 
         async def generate(self, messages, **kwargs):
             self.turn += 1
+            if "candidates" in messages[-1].content:
+                self.candidates = messages[-1].content["candidates"]
+                ids = sorted({fid for c in self.candidates for fid in c["finding_ids"]})
+                return ModelResponse(
+                    tool_calls=[
+                        ToolCall(
+                            call_id=f"planner-{i}",
+                            name="inspect_finding",
+                            arguments={"identifier": fid},
+                        )
+                        for i, fid in enumerate(ids)
+                    ]
+                )
+            if "choices" in (kwargs.get("output_schema") or {}).get("properties", {}):
+                return ModelResponse(
+                    structured_output={
+                        "choices": [
+                            {
+                                "recommendation_id": c["recommendation_id"],
+                                "priority": "high",
+                                "reason": "follow_up",
+                            }
+                            for c in self.candidates[:8]
+                        ]
+                    }
+                )
             if self.turn == 1:
                 return ModelResponse(
                     structured_output={
@@ -159,6 +185,8 @@ def test_demo_async_api_reaches_cited_persisted_report(context_factory, tmp_path
         assert result.screening.trial_bundle.trial_id == DEMO_TRIAL
         assert len(result.evidence_reports[0].evidence_items) == 3
         assert result.planner_input is not None
+        assert result.planner_report.recommendations
+        assert progress["planner_report"]["recommendations"]
         assert (
             result.investigation.assessed_findings
         )  # Explicit rules fallback if model is incomplete.

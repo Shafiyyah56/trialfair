@@ -309,3 +309,25 @@ limitations keep the report partial; failed selection returns unavailable.
 Only shared Python edits are additive contracts/event identity and validation.
 RunResult, runtime, context, model adapter, config, API, storage, UI and dependencies
 remain unchanged. Live/provider and combined clinical acceptance are unverified.
+
+## All four agents and curated demo integration
+
+Owner: Agent 2/integrator on feat/demo-integration; authorised by the user's urgent
+full-demo request. Agent 4 commit 0281f17 was imported from GitHub with original
+author preserved; only an integration-document conflict required resolution,
+preserving both the participant-analysis and planner sections.
+
+Shared additive changes: optional RunResult.planner_report; ToolContext planner
+handler and stage snapshots; planner progress identity/output; schema/reference
+validation of planner outputs before storage/display. Normal runtime now wires
+run_planner. Budget reservation allocates three original model turns and a portion
+of the original deadline before Agents 1–3; counters are never reset. All four
+implementations appear in health metadata, independently of provider uptime.
+
+Explicit /demo/runs/async uses captured NCT04280705 and three real curated article
+excerpts/annotations with labels and hashes. This does not invent source requests
+or autonomous searches. Only this explicit profile has a longer configured shared
+budget and visible source-based assessment/candidate-draft fallbacks when a model
+fails. Normal autonomous mode remains available. Read DEMO.md. No dependencies or
+schema-version migration; teammates should update clients for optional planner
+report/progress fields. 265 offline tests pass; actual live demo retest is pending.

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import httpx
 
 from app.agents.evidence import run_evidence
+from app.agents.planner import run_planner
 from app.config import Settings
 from app.context import RunBudget, ToolContext
 from app.model_client import GeminiModelClient
@@ -87,5 +88,6 @@ def build_context(
         emit=lambda event: None,
         analysis_handler=execute_analysis,
         evidence_handler=run_evidence,
+        planner_handler=run_planner,
         resource_closers=resources,
     )

@@ -145,6 +145,12 @@ def validate_run(result: RunResult) -> None:
             or result.planner_input.evidence_reports != result.evidence_reports
         ):
             raise ValueError("PlannerInput must match current run outputs")
+    if result.planner_report is not None:
+        if result.planner_input is None:
+            raise ValueError("Planner report requires its validated input snapshot")
+        validate_planner_report(result.planner_report, result.planner_input)
+        if result.status == "completed" and result.planner_report.status != "completed":
+            raise ValueError("Incomplete planning prevents completed run status")
 
 
 def planner_input_limitations(planner: PlannerInput) -> list[str]:
