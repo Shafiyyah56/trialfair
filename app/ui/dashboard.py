@@ -73,6 +73,9 @@ def render_result(st, result: RunResult, *, saved: bool = False) -> None:
         st.caption(f"Request {report.request_id}: {report.status}")
         for item in report.evidence_items:
             st.write(f"**{item.relation}** · {item.claim}")
+            if item.source_locator.excerpt:
+                with st.expander("Inspect supporting source excerpt"):
+                    st.write(item.source_locator.excerpt)
             st.caption(f"Source {item.source_id} · {item.source_locator.location}")
             st.caption(item.relevance)
             for limitation in item.limitations:
@@ -117,6 +120,7 @@ def render_live_progress(st, progress: RunProgress) -> None:
     st.subheader("Investigation pipeline")
     st.progress(progress.progress, text=progress.stage)
     if progress.active_agent:
+        st.caption(f"Active agent: **{progress.active_agent.title()}**")
         latest = progress.events[-1].summary if progress.events else "Starting this stage"
         st.caption(latest)
 
@@ -173,7 +177,7 @@ def run_with_live_updates(st, backend: str, path: str, payload: dict) -> RunResu
     response.raise_for_status()
     accepted = RunAccepted.model_validate(response.json())
     panel = st.empty()
-    deadline = time.monotonic() + 170
+    deadline = time.monotonic() + 930
     while time.monotonic() < deadline:
         response = httpx.get(backend + accepted.progress_url, timeout=10)
         response.raise_for_status()
@@ -199,13 +203,22 @@ def main() -> None:
     st.write("Investigate sex-specific clinical trial safety signals and missing evidence.")
     st.caption("Trial screening, safety investigation and external evidence for human review.")
     backend = "http://127.0.0.1:8000"
-    action = st.radio("Input", ["Prepared screening JSON", "Completed trial", "Review saved run"])
+    action = st.radio(
+        "Input", ["Curated demo", "Completed trial", "Prepared screening JSON", "Review saved run"]
+    )
     with st.form("investigation"):
         upload = None
         nct_id = ""
         narrative = ""
         run_id = ""
-        if action == "Completed trial":
+        if action == "Curated demo":
+            nct_id = "NCT04280705"
+            st.info(
+                "ACTT-1 remdesivir demonstration: real captured trial data, three "
+                "preselected publications and prepared evidence annotations. Other model "
+                "stages run live when available. This is not an autonomous literature search."
+            )
+        elif action == "Completed trial":
             nct_id = st.text_input("ClinicalTrials.gov NCT identifier")
             narrative = st.text_area("Optional trial symptom descriptions", max_chars=20000)
             st.caption(
@@ -247,7 +260,7 @@ def main() -> None:
                         path = "/investigations"
                         payload = {"screening": screening.model_dump(mode="json"), "mode": "live"}
                     else:
-                        path = "/runs"
+                        path = "/demo/runs" if action == "Curated demo" else "/runs"
                         payload = {"nct_id": nct_id.strip(), "mode": "live"}
                         if narrative.strip():
                             digest = hashlib.sha256(narrative.encode()).hexdigest()

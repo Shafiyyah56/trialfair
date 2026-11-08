@@ -93,6 +93,7 @@ class ToolContext:
     datasets: dict[str, TrialBundle] = field(default_factory=dict)
     additional_analyses: list[AnalysisResult] = field(default_factory=list)
     evidence_reports: list[EvidenceReport] = field(default_factory=list)
+    demo_profile: str | None = None
     resource_closers: list[Callable[[], Awaitable[None]]] = field(default_factory=list, repr=False)
     _closed: bool = field(default=False, init=False, repr=False)
 

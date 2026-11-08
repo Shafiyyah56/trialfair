@@ -1,0 +1,91 @@
+{
+  "profile": "remdesivir-curated",
+  "trial_id": "NCT04280705",
+  "selection": "Three developer-selected papers from previously retrieved Europe PMC records. Curated demonstration, not an autonomous or exhaustive literature search.",
+  "items": [
+    {
+      "quote": "Pooled analysis revealed no significant association between remdesivir use and CAEs (RR=0.84, 95% CI: 0.68 to 1.04, p=0.118).",
+      "claim": "A meta-analysis of seven randomized trials did not detect an overall association between remdesivir and cardiac adverse events.",
+      "relation": "inconclusive",
+      "study_design": "Systematic review and meta-analysis of randomized controlled trials",
+      "relevance": "Overall cardiac safety context; this excerpt does not resolve human sex-specific risk.",
+      "limitations": [
+        "An overall null association does not establish safety equivalence between women and men.",
+        "Included trials may overlap the input trial; do not count these as independent replications."
+      ],
+      "source": {
+        "schema_version": "1.0",
+        "source_id": "epmc-med-40681210-6bd9849d8d20",
+        "source_type": "publication",
+        "title": "Cardiac adverse events associated with remdesivir in COVID-19 patients: a systematic review and meta-analysis of randomised controlled trials.",
+        "url": "https://europepmc.org/article/MED/40681210",
+        "external_id": "MED:40681210",
+        "retrieved_at": "2026-11-08T11:16:18.253214Z",
+        "content_hash": "6bd9849d8d2095a4bab22769496f10f03e51f267cc44d847c77c341697139c6e",
+        "licence_name": "cc by",
+        "licence_url": null,
+        "licence_status": "verified",
+        "access_level": "abstract",
+        "is_synthetic": false
+      },
+      "location": "abstract[1729:1854]",
+      "excerpt_hash": "d49d8538b1dbb57a1e44714279017e80adda7d77baaa286c73692c853003837d"
+    },
+    {
+      "quote": "The study found no clinically relevant QTc prolongation from remdesivir at a supratherapeutic dose (ΔΔQTcF < 10 ms).",
+      "claim": "A healthy-participant study reported no clinically relevant QTc prolongation at its studied single supratherapeutic dose.",
+      "relation": "background",
+      "study_design": "Controlled single-dose QT study in healthy participants",
+      "relevance": "Human cardiac repolarization context; population, dose and endpoint differ from hospitalized COVID-19 safety.",
+      "limitations": [
+        "No sex-stratified risk estimate is established by the selected excerpt.",
+        "QTc is one endpoint; this result cannot establish absence of all cardiac adverse effects."
+      ],
+      "source": {
+        "schema_version": "1.0",
+        "source_id": "epmc-med-42316440-5894c0405f50",
+        "source_type": "publication",
+        "title": "Thorough QT/QTc Clinical Study to Evaluate the Effect of Remdesivir on Cardiac Repolarization in Healthy Participants.",
+        "url": "https://europepmc.org/article/MED/42316440",
+        "external_id": "MED:42316440",
+        "retrieved_at": "2026-11-08T11:08:39.970352Z",
+        "content_hash": "5894c0405f5015b55e5fc06602b532c5c9f80f4565d53ee461a45ee17bc16e3a",
+        "licence_name": "cc by-nc-nd",
+        "licence_url": null,
+        "licence_status": "verified",
+        "access_level": "abstract",
+        "is_synthetic": false
+      },
+      "location": "abstract[1499:1615]",
+      "excerpt_hash": "61e016771723e07e92d566a1fa0c65a58fbe546dc2acc38dc4fb2cbbe32a1f1d"
+    },
+    {
+      "quote": "Male guinea pigs were more susceptible to electrophysiological instability and mitochondrial dysfunction.",
+      "claim": "A guinea-pig experiment reported greater male susceptibility to electrophysiological instability and mitochondrial dysfunction.",
+      "relation": "background",
+      "study_design": "Preclinical experiment in male and female guinea pigs",
+      "relevance": "Sex-dependent mechanistic hypothesis to investigate; this is animal evidence, not a finding of increased risk in women.",
+      "limitations": [
+        "Animal findings cannot be treated as observed human clinical risk.",
+        "Species, route and exposure differences require investigation before clinical interpretation."
+      ],
+      "source": {
+        "schema_version": "1.0",
+        "source_id": "epmc-med-42074328-0317fe5135a3",
+        "source_type": "publication",
+        "title": "Electrophysiological and Molecular Features of Remdesivir-Induced Cardiac Toxicity in Male and Female Guinea Pigs.",
+        "url": "https://europepmc.org/article/MED/42074328",
+        "external_id": "MED:42074328",
+        "retrieved_at": "2026-11-08T11:08:55.995786Z",
+        "content_hash": "0317fe5135a3875c197e943d9d920f8fe5cca3a5d741d73ac3bbe88148dc406b",
+        "licence_name": "cc by",
+        "licence_url": null,
+        "licence_status": "verified",
+        "access_level": "abstract",
+        "is_synthetic": false
+      },
+      "location": "abstract[1685:1790]",
+      "excerpt_hash": "02611817fdb168a3a219308d88742e29c659f752ea2e731340d260c49d5e9fa3"
+    }
+  ]
+}

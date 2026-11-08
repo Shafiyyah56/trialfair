@@ -275,6 +275,7 @@ async def run_safety(screening: ScreeningOutput, context: ToolContext) -> Invest
         "registered_dataset_refs": list(context.datasets),
         "analysis_ids": [x.analysis_id for x in screening.analyses],
         "is_synthetic": screening.trial_bundle.is_synthetic,
+        "available_evidence_reports": [r.model_dump(mode="json") for r in context.evidence_reports],
     }
     messages = [
         ModelMessage(role="system", content=SYSTEM_PROMPT),

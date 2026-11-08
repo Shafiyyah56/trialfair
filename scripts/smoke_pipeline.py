@@ -10,15 +10,22 @@ from app.orchestrator import run_trial
 from app.runtime import build_context
 
 
-async def smoke(nct_id):
+async def smoke(nct_id, *, demo=False):
     trial_input = TrialInput(nct_id=nct_id, mode="live")
-    context = build_context(str(uuid4()), "live")
+    if demo:
+        from app.demo import build_demo_context
+
+        context = build_demo_context(str(uuid4()), "live")
+    else:
+        context = build_context(str(uuid4()), "live")
     context.emit = lambda event: print(
         f"{event.agent}/{event.event_type}: {event.summary}", flush=True
     )
     try:
         result = await run_trial(trial_input, context)
-        output = context.settings.data_dir / "pipeline-smoke.json"
+        output = context.settings.data_dir / (
+            "pipeline-demo.json" if demo else "pipeline-smoke.json"
+        )
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(result.model_dump_json(indent=2))
         evidence_items = [item for r in result.evidence_reports for item in r.evidence_items]
@@ -26,6 +33,7 @@ async def smoke(nct_id):
             json.dumps(
                 {
                     "mode": "live",
+                    "execution_profile": "curated-demo" if demo else "autonomous-investigation",
                     "model_id": result.model_id,
                     "trial_id": nct_id,
                     "status": result.status,
@@ -52,10 +60,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--live", action="store_true", help="Allow source and paid model calls")
     parser.add_argument("--nct-id", required=True, help="Completed trial with posted results")
+    parser.add_argument("--demo", action="store_true", help="Use explicitly curated ACTT-1 sources")
     args = parser.parse_args()
     if not args.live:
         parser.error("Explicit --live is required; no network requests were made.")
-    if not asyncio.run(smoke(args.nct_id)):
+    if args.demo and args.nct_id != "NCT04280705":
+        parser.error("The curated demo only supports NCT04280705.")
+    if not asyncio.run(smoke(args.nct_id, demo=args.demo)):
         print("The full path returned no cited evidence; review pipeline-smoke.json.", flush=True)
         raise SystemExit(1)
 

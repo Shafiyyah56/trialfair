@@ -193,3 +193,27 @@ files have not been edited.
 Start with docs/HANDOFF.md for the branch update recipe, exact shared interfaces,
 role-specific requirements and remaining service wiring. Then read
 docs/agent-2-usage.md for launch and smoke-check commands.
+
+## Full demo integration in progress
+
+Integrator acknowledgement: feat/demo-integration from 9c117d9, after reading
+current onboarding, architecture, assignments and shared interfaces. I own shared
+runtime/API/orchestration/progress/UI integration and reuse the single ModelClient,
+ToolContext and scientific contracts. Agent 4 implementation is being supplied by
+its owner; the user's current instruction supersedes the old deferral. No email
+is sent and no credentials are exposed. Baseline: 216 offline tests passed.
+
+Explicit curated demo for NCT04280705 uses the original hash-checked public trial
+capture and three short source-backed remdesivir excerpts selected from original
+Europe PMC responses. Prepared annotations are clearly labelled, never represented
+as a fresh autonomous search. Source hashes/dates/licences remain intact; only
+short excerpts are packaged. Human vs animal evidence and subgroup uncertainty
+remain explicit. A source-linked rules fallback is labelled when the safety model
+cannot finish. Normal autonomous execution remains available separately.
+
+The demo has its own visible endpoint/profile and a configurable 600-second shared
+budget (18 model turns minimum); normal default remains 150 seconds. There are no
+nested budget resets. UI polling supports the longer configured deadline. A new
+async API integration test verifies cited evidence, actual progress and persistence
+with injected model calls and no network calls. Agent 4 wiring remains pending
+its pushed implementation at this checkpoint.

@@ -33,7 +33,10 @@ class Settings(BaseSettings):
     max_evidence_requests: int = Field(default=2, gt=0, alias="TRIALFAIR_MAX_EVIDENCE_REQUESTS")
     max_additional_analyses: int = Field(default=3, gt=0, alias="TRIALFAIR_MAX_ADDITIONAL_ANALYSES")
     run_timeout_seconds: float = Field(
-        default=150, gt=0, le=150, alias="TRIALFAIR_RUN_TIMEOUT_SECONDS"
+        default=150, gt=0, le=900, alias="TRIALFAIR_RUN_TIMEOUT_SECONDS"
+    )
+    demo_timeout_seconds: float = Field(
+        default=600, gt=0, le=900, alias="TRIALFAIR_DEMO_TIMEOUT_SECONDS"
     )
 
     def require_live_credentials(self) -> None:

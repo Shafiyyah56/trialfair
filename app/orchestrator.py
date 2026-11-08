@@ -61,7 +61,13 @@ async def _run(trial_input, screening, context, *, mode, on_screening=None):
                 on_screening(screening.model_copy(deep=True))
             # Register the canonical bundle for additional analyses if Agent 1 did not.
             context.datasets.setdefault(screening.trial_bundle.trial_id, screening.trial_bundle)
-            investigation = await run_safety(screening, context)
+            if context.demo_profile:
+                from app.demo import DEMO_LABEL, run_demo_safety
+
+                screening.trial_bundle.limitations.append(DEMO_LABEL)
+                investigation = await run_demo_safety(screening, context)
+            else:
+                investigation = await run_safety(screening, context)
     except TimeoutError:
         errors.append("Run deadline exhausted; verified completed work is retained.")
     except NotImplementedError:
