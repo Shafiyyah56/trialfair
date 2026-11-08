@@ -225,12 +225,13 @@ def render_live_progress(st, progress: RunProgress) -> None:
             "interpreter": "Trial data interpretation",
             "safety": "Safety investigation",
             "evidence": "External evidence research",
+            "planner": "Follow-up planning",
             "orchestrator": "Result validation",
         }
         st.dataframe(
             [
                 {
-                    "stage": labels[event.agent],
+                    "stage": labels.get(event.agent, event.agent.title()),
                     "activity": event.summary,
                 }
                 for event in progress.events[-8:]

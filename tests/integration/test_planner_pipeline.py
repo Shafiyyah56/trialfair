@@ -81,10 +81,14 @@ def test_live_four_agent_diagram_renders():
 from datetime import datetime, UTC
 import streamlit as st
 from app.progress import RunProgress
+from app.contracts import AgentEvent
 from app.ui.dashboard import render_live_progress
 render_live_progress(st, RunProgress(
     run_id="visual-check", status="running", stage="Planning follow-up investigations",
-    progress=0.9, active_agent="planner", started_at=datetime.now(UTC), updated_at=datetime.now(UTC)
+    progress=0.9, active_agent="planner",
+    started_at=datetime.now(UTC), updated_at=datetime.now(UTC),
+    events=[AgentEvent(event_id="planner-event",run_id="visual-check",timestamp=datetime.now(UTC),
+                      agent="planner",event_type="decision",summary="Planning started.")]
 ))
 """).run()
     assert not app.exception
