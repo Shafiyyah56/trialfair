@@ -281,3 +281,26 @@ were inspected. Full API flows for all three datasets use injected models in tes
 The browser file-selection tool denied repository paths under its configured
 workspace policy; it was not bypassed. A full paid/live browser upload requires
 manual file selection. Instructions and source links are in SYNTHETIC_UPLOAD.md.
+
+## UI presentation polish
+
+Integrator acknowledgement: feat/ui-polish from 5b86318; existing onboarding,
+architecture and shared interfaces reviewed. Own dashboard/report presentation
+and integration tests. Existing contracts, ModelClient, ToolContext, runtime,
+dependencies, model calls and timing budgets are unchanged. Credentials stay local.
+
+Inputs now prioritise synthetic CSV upload, completed trial and saved-run review.
+Additional demo/developer modes remain accessible from the sidebar. Results are
+organised into final report, findings, evidence and activity tabs. Agent 4 actions
+have an overview, rationale, required data, prerequisites and linked evidence.
+HTML/Markdown exports preserve human-review, partial, synthetic, curated and
+fallback notices, source provenance and limitations; JSON remains available.
+
+Browser QA reopened saved SYN-401 run e09dfd50-0b95-489b-82cc-d49e1290e129,
+showing its existing eight actions and two evidence items. No new paid model run
+was started. The UI does not revise scientific conclusions or turn partial runs
+into completed runs. Export tests also check escaped uploaded titles and preserve
+the original validated payload.
+
+Validation: 316 offline tests passed, 1 live test deselected; Ruff lint/format and
+whitespace checks passed. Existing TestClient dependency warning remains.
