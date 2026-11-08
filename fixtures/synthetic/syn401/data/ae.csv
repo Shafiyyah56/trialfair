@@ -1,0 +1,57 @@
+STUDYID,USUBJID,AESEQ,AETERM,AEDECOD,AEBODSYS,AESEV,AESER,AEREL,AESTDTC,AEENDTC
+SYN-401-102,SYN-401-102-0020,1,diarrhoea,Diarrhoea,Gastrointestinal disorders,MILD,N,NOT RELATED,2025-04-25,2025-04-28
+SYN-401-102,SYN-401-102-0021,1,dizziness,Dizziness,Nervous system disorders,MILD,N,RELATED,2025-04-12,2025-04-14
+SYN-401-102,SYN-401-102-0027,1,HA,Headache,Nervous system disorders,MODERATE,N,NOT RELATED,2025-03-15,2025-03-16
+SYN-401-102,SYN-401-102-0027,2,headache,Headache,Nervous system disorders,MODERATE,N,NOT RELATED,2025-03-23,2025-03-25
+SYN-401-102,SYN-401-102-0027,3,headache on waking,Headache,Nervous system disorders,MODERATE,N,NOT RELATED,2025-03-29,2025-03-30
+SYN-401-102,SYN-401-102-0027,4,HA,Headache,Nervous system disorders,MODERATE,N,POSSIBLY RELATED,2025-03-31,2025-04-01
+SYN-401-102,SYN-401-102-0030,1,LBP,Back pain,Musculoskeletal and connective tissue disorders,MILD,N,NOT RELATED,2025-02-19,2025-02-21
+SYN-401-102,SYN-401-102-0031,1,nausea after breakfast,Nausea,Gastrointestinal disorders,MILD,N,NOT RELATED,2025-03-03,2025-03-03
+SYN-401-102,SYN-401-102-0035,1,LBP,Back pain,Musculoskeletal and connective tissue disorders,MILD,N,NOT RELATED,2025-04-12,2025-04-13
+SYN-401-102,SYN-401-102-0037,1,diarrhoea,Diarrhoea,Gastrointestinal disorders,MILD,N,NOT RELATED,2025-05-01,2025-05-01
+SYN-401-102,SYN-401-102-0039,1,tension headache,Headache,Nervous system disorders,MODERATE,N,NOT RELATED,2025-04-23,2025-04-24
+SYN-401-102,SYN-401-102-0042,1,diarrhoea,Diarrhoea,Gastrointestinal disorders,MILD,N,POSSIBLY RELATED,2025-05-13,2025-05-16
+SYN-401-102,SYN-401-102-0052,1,headache,Headache,Nervous system disorders,MODERATE,N,NOT RELATED,2025-03-03,2025-03-03
+SYN-401-102,SYN-401-102-0052,2,headache on waking,Headache,Nervous system disorders,MILD,N,NOT RELATED,2025-03-05,2025-03-06
+SYN-401-102,SYN-401-102-0053,1,back pain,Back pain,Musculoskeletal and connective tissue disorders,MILD,N,NOT RELATED,2025-05,
+SYN-401-102,SYN-401-102-0055,1,drowsy next morning,Somnolence,Nervous system disorders,MILD,N,RELATED,2025-03-08,2025-03-11
+SYN-401-102,SYN-401-102-0055,2,somnolence,Somnolence,Nervous system disorders,MODERATE,N,RELATED,2025-03-09,2025-03-11
+SYN-401-102,SYN-401-102-0059,1,tired,Fatigue,General disorders and administration site conditions,MILD,N,NOT RELATED,2025-04-22,2025-04-22
+SYN-401-102,SYN-401-102-0066,1,head pain,Headache,Nervous system disorders,MILD,N,NOT RELATED,2025-05-05,
+SYN-401-102,SYN-401-102-0067,1,HA,Headache,Nervous system disorders,MILD,N,NOT RELATED,2025-05-10,2025-05-12
+SYN-401-102,SYN-401-102-0067,2,low energy,Fatigue,General disorders and administration site conditions,MILD,N,POSSIBLY RELATED,2025-05-16,2025-05-17
+SYN-401-102,SYN-401-102-0071,1,tiredness,Fatigue,General disorders and administration site conditions,MILD,N,NOT RELATED,2025-04-02,2025-04-05
+SYN-401-102,SYN-401-102-0075,1,head pain,Headache,Nervous system disorders,MILD,N,POSSIBLY RELATED,2025-04-14,2025-04-15
+SYN-401-102,SYN-401-102-0075,2,frontal headache,Headache,Nervous system disorders,MILD,N,NOT RELATED,2025-04-17,2025-04-17
+SYN-401-102,SYN-401-102-0076,1,lower back ache,Back pain,Musculoskeletal and connective tissue disorders,MILD,N,NOT RELATED,2025-03-12,
+SYN-401-102,SYN-401-102-0079,1,back pain,Back pain,Musculoskeletal and connective tissue disorders,MILD,N,NOT RELATED,2025-05-11,2025-05-11
+SYN-401-102,SYN-401-102-0079,2,diarrhea,Diarrhoea,Gastrointestinal disorders,MODERATE,N,POSSIBLY RELATED,2025-05-19,2025-05-19
+SYN-401-102,SYN-401-102-0081,1,lower back ache,Back pain,Musculoskeletal and connective tissue disorders,MILD,N,POSSIBLY RELATED,2025-05-05,2025-05-08
+SYN-401-102,SYN-401-102-0082,1,LBP,Back pain,Musculoskeletal and connective tissue disorders,MILD,N,NOT RELATED,2025-04-11,
+SYN-401-102,SYN-401-102-0084,1,headache on waking,Headache,Nervous system disorders,MILD,N,UNLIKELY RELATED,2025-03-31,2025-04-01
+SYN-401-102,SYN-401-102-0088,1,frontal headache,Headache,Nervous system disorders,MILD,N,POSSIBLY RELATED,2025-04-01,2025-04-03
+SYN-401-102,SYN-401-102-0088,2,headache on waking,Headache,Nervous system disorders,MODERATE,N,NOT RELATED,2025-04-12,2025-04-15
+SYN-401-102,SYN-401-102-0089,1,sore throat and runny nose,Upper respiratory tract infection,Infections and infestations,MILD,N,NOT RELATED,2025-03-19,
+SYN-401-102,SYN-401-102-0092,1,lower back ache,Back pain,Musculoskeletal and connective tissue disorders,MILD,N,NOT RELATED,2025-02-11,
+SYN-401-102,SYN-401-102-0094,1,URTI,Upper respiratory tract infection,Infections and infestations,MILD,N,NOT RELATED,2025-04-24,
+SYN-401-102,SYN-401-102-0094,2,cold symptoms,Upper respiratory tract infection,Infections and infestations,MILD,N,NOT RELATED,2025-05-13,2025-05-15
+SYN-401-102,SYN-401-102-0097,1,giddiness,Dizziness,Nervous system disorders,MODERATE,N,RELATED,2025-03-18,2025-03-18
+SYN-401-102,SYN-401-102-0101,1,"found in kitchen at night, no memory of event",Somnambulism,Psychiatric disorders,MILD,Y,RELATED,2025-03-28,2025-03-29
+SYN-401-102,SYN-401-102-0102,1,dizzy,Dizziness,Nervous system disorders,MILD,N,POSSIBLY RELATED,2025-04-14,2025-04-15
+SYN-401-102,SYN-401-102-0104,1,LBP,Back pain,Musculoskeletal and connective tissue disorders,MILD,N,NOT RELATED,2025-03-13,
+SYN-401-102,SYN-401-102-0107,1,LBP,Back pain,Musculoskeletal and connective tissue disorders,MILD,N,NOT RELATED,2025-04-14,
+SYN-401-102,SYN-401-102-0111,1,HA,Headache,Nervous system disorders,MODERATE,N,UNLIKELY RELATED,2025-02-24,2025-02-27
+SYN-401-102,SYN-401-102-0111,2,headache,Headache,Nervous system disorders,MILD,N,NOT RELATED,2025-02-26,2025-02-28
+SYN-401-102,SYN-401-102-0111,3,sore throat and runny nose,Upper respiratory tract infection,Infections and infestations,MILD,N,NOT RELATED,2025-03-03,2025-03-04
+SYN-401-102,SYN-401-102-0111,4,tension headache,Headache,Nervous system disorders,MILD,N,NOT RELATED,2025-03-04,2025-03-05
+SYN-401-102,SYN-401-102-0119,1,back pain,Back pain,Musculoskeletal and connective tissue disorders,MILD,N,NOT RELATED,2025-02,
+SYN-401-102,SYN-401-102-0120,1,common cold,Upper respiratory tract infection,Infections and infestations,MILD,N,UNLIKELY RELATED,2025-03-31,2025-04-03
+SYN-401-102,SYN-401-102-0123,1,daytime sleepiness,Somnolence,Nervous system disorders,MODERATE,N,POSSIBLY RELATED,2025-04-09,2025-04-12
+SYN-401-102,SYN-401-102-0125,1,excessive sleepiness AM,Somnolence,Nervous system disorders,MODERATE,N,POSSIBLY RELATED,2025-05-08,2025-05-08
+SYN-401-102,SYN-401-102-0125,2,sleepy until midday,Somnolence,Nervous system disorders,MILD,N,RELATED,2025-05-10,2025-05-11
+SYN-401-102,SYN-401-102-0125,3,excessive sleepiness AM,Somnolence,Nervous system disorders,MILD,N,RELATED,2025-05-11,2025-05-12
+SYN-401-102,SYN-401-102-0126,1,nauseous,Nausea,Gastrointestinal disorders,MILD,N,NOT RELATED,2025-03-04,2025-03-04
+SYN-401-102,SYN-401-102-0127,1,headache on waking,Headache,Nervous system disorders,MODERATE,N,NOT RELATED,2025-04-15,2025-04-17
+SYN-401-102,SYN-401-102-0129,1,headache on waking,Headache,Nervous system disorders,MILD,N,NOT RELATED,2025-04-13,2025-04-13
+SYN-401-102,SYN-401-102-0130,1,low energy,Fatigue,General disorders and administration site conditions,MILD,N,NOT RELATED,2025-04-08,2025-04-11
+SYN-401-102,SYN-401-102-0134,1,felt dizzy on standing,Dizziness,Nervous system disorders,MODERATE,N,RELATED,2025-02-27,2025-03-02

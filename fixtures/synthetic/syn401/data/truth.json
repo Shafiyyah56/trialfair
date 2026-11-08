@@ -1,0 +1,208 @@
+{
+  "study": "SYN-401-102",
+  "is_synthetic": true,
+  "generator_version": "2.0.0",
+  "scenario": "exposure_mediated",
+  "seed": 401,
+  "scenario_parameters": {
+    "female_exposure_ratio": 1.3,
+    "female_pd_sensitivity": 1.0,
+    "equal_weights": false,
+    "headache_sex_effect": true
+  },
+  "design": {
+    "arms": [
+      [
+        "PBO",
+        "Placebo"
+      ],
+      [
+        "SYN5",
+        "SYN-401 5 mg"
+      ],
+      [
+        "SYN10",
+        "SYN-401 10 mg"
+      ]
+    ],
+    "randomised_per_arm": 40,
+    "p_female": 0.3
+  },
+  "pk_model": {
+    "CL_typ_L_per_h_70kg_male": 6.0,
+    "V_typ_L_70kg": 60.0,
+    "ka": 2.0,
+    "F": 0.7,
+    "omega_CL": 0.35,
+    "omega_V": 0.2,
+    "sigma_prop": 0.08,
+    "auc_ref": 1005.0251195425529,
+    "theta_sex_after_weight": 0.8733706680879895
+  },
+  "ae_model": {
+    "Somnolence": {
+      "p0": 0.03,
+      "target_top_dose": 0.08,
+      "exposure": true
+    },
+    "Dizziness": {
+      "p0": 0.04,
+      "target_top_dose": 0.07,
+      "exposure": true
+    },
+    "Somnambulism": {
+      "p0": 0.001,
+      "target_top_dose": 0.01,
+      "exposure": true,
+      "serious_prob": 0.5
+    },
+    "Headache": {
+      "p0_by_sex": {
+        "M": 0.09,
+        "F": 0.13
+      },
+      "drug_logit_shift": 0.25
+    },
+    "Nausea": {
+      "p0": 0.05
+    },
+    "Fatigue": {
+      "p0": 0.05
+    },
+    "Upper respiratory tract infection": {
+      "p0": 0.04
+    },
+    "Back pain": {
+      "p0": 0.03
+    },
+    "Diarrhoea": {
+      "p0": 0.03
+    }
+  },
+  "calibrated_exposure_slopes": {
+    "Somnolence": 0.8094541002475362,
+    "Dizziness": 0.4765523266191156,
+    "Somnambulism": 1.5858497908597724
+  },
+  "true_effects": {
+    "expected_female_to_male_AUC_ratio_typical": 1.3,
+    "Somnolence": "female > male in active arms only",
+    "Dizziness": "female > male in active arms only (weaker effect)",
+    "Somnambulism": "rare and exposure-related; too sparse for a sex comparison",
+    "Headache": "female > male in ALL arms including placebo (baseline epidemiology, not drug-related)",
+    "Nausea, Fatigue, URTI, Back pain, Diarrhoea": "no drug or sex effect",
+    "class_evidence_note": "Published hypnotic evidence is mixed (2 of 6 class drugs report higher female exposure). It is related-drug context for SYN-401, not direct evidence; this trial's own PK is the drug-specific evidence.",
+    "mechanism": "lower female clearance: body weight plus a residual sex effect"
+  },
+  "class_reference": {
+    "zolpidem": {
+      "female_exposure": 1.45,
+      "female_exposure_note": "AUC 40-50% higher in women",
+      "somnolence": [
+        15,
+        2
+      ],
+      "dizziness": [
+        12,
+        5
+      ],
+      "headache": [
+        19,
+        16
+      ],
+      "half_life_h": 2.5,
+      "sources": [
+        "Greenblatt 2014 J Clin Pharmacol 54:282",
+        "FDA DSC Jan/May 2013",
+        "Ambien CR US PI (12.5 mg adult table)",
+        "Ambien US PI 12.3"
+      ]
+    },
+    "suvorexant": {
+      "female_exposure": 1.17,
+      "female_exposure_note": "AUC +17%, Cmax +9% in women",
+      "somnolence": [
+        7,
+        3
+      ],
+      "dizziness": null,
+      "headache": null,
+      "half_life_h": 12,
+      "sources": [
+        "Suvorexant AU product information (TGA)",
+        "Belsomra US PI"
+      ]
+    },
+    "lemborexant": {
+      "female_exposure": 1.0,
+      "female_exposure_note": "no clinically significant sex difference (label)",
+      "somnolence": [
+        10,
+        1
+      ],
+      "dizziness": null,
+      "headache": null,
+      "half_life_h": 18,
+      "sources": [
+        "Dayvigo US PI 12.3 and highlights (10 mg)"
+      ]
+    },
+    "daridorexant": {
+      "female_exposure": 1.0,
+      "female_exposure_note": "no clinically significant sex effect (label)",
+      "somnolence": [
+        5,
+        4
+      ],
+      "dizziness": [
+        3,
+        2
+      ],
+      "headache": [
+        7,
+        5
+      ],
+      "half_life_h": 8,
+      "sources": [
+        "Quviviq US PI",
+        "FDA Drug Trials Snapshot: Quviviq"
+      ]
+    },
+    "eszopiclone": {
+      "female_exposure": 1.0,
+      "female_exposure_note": "PK similar in men and women (label)",
+      "somnolence": [
+        8,
+        3
+      ],
+      "dizziness": [
+        7,
+        4
+      ],
+      "headache": null,
+      "half_life_h": 6,
+      "sources": [
+        "Lunesta US PI (3 mg, 6-week adult table; somnolence row differs between label versions)"
+      ]
+    },
+    "zaleplon": {
+      "female_exposure": 1.0,
+      "female_exposure_note": "no significant PK difference by sex (label)",
+      "somnolence": null,
+      "dizziness": null,
+      "headache": null,
+      "half_life_h": 1,
+      "sources": [
+        "Sonata US PI"
+      ]
+    }
+  },
+  "other_sources": {
+    "phase_female_shares": "Labots G et al. Br J Clin Pharmacol 2018;84(4):700-707. doi:10.1111/bcp.13497",
+    "body_weight_means": "Health Survey for England 2019 (NHS Digital): mean 85.4 kg men, 72.1 kg women",
+    "headache_sex_ratio": "Schwartz BS et al. JAMA 1998;279(5):381-3 (episodic TTH prevalence ratio 1.16); reviews report 1.16-3",
+    "complex_sleep_behaviour": "FDA Drug Safety Communication, 30 Apr 2019 (boxed warning)",
+    "pk_predicts_adr_direction": "Zucker I, Prendergast BJ. Biol Sex Differ 2020;11:32. doi:10.1186/s13293-020-00308-5",
+    "half_lives": "MSD Manual hypnotics table; product labels (lemborexant effective t1/2 17-19 h)"
+  }
+}
