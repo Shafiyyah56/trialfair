@@ -105,6 +105,7 @@ git pull --ff-only
 git switch -c feat/agent-1-interpreter
 git switch -c feat/agent-2-safety
 git switch -c feat/agent-3-evidence
+git switch -c feat/agent-4-planner
 ```
 
 If the branch already exists locally, use `git switch <branch>` instead. If it is
@@ -115,6 +116,7 @@ already on GitHub, use `git switch --track origin/<branch>` after `git fetch`.
 | `feat/agent-1-interpreter` | Natural-language interpretation, registry parsing, Python statistics | [Agent 1](docs/agent-1.md) |
 | `feat/agent-2-safety` | Safety investigation, shared Gemini adapter, orchestration, API and dashboard | [Agent 2](docs/agent-2.md) |
 | `feat/agent-3-evidence` | Adaptive literature and related-trial investigation | [Agent 3](docs/agent-3.md) |
+| `feat/agent-4-planner` | Trial improvement planning and prioritised research follow-ups for human review | [Agent 4](docs/agent-4.md) |
 
 The Agent 2 developer is the integrator and owns shared files. Coordinate changes
 in [integration notes](docs/integration.md) before changing a contract. Merge shared
