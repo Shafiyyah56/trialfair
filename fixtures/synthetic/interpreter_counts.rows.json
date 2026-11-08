@@ -1,0 +1,46 @@
+[
+  {
+    "analysis_population": "Safety population",
+    "event_occurrences": null,
+    "event_seriousness": "non_serious",
+    "group_id": "arm-A",
+    "intervention": "Synthetic X 1 mg",
+    "is_synthetic": true,
+    "normalised_term": null,
+    "participants_affected": 20,
+    "participants_at_risk": 100,
+    "reported_sex_category": "Female",
+    "reporting_window": "Day 1-7",
+    "row_id": "ae-0",
+    "schema_version": "1.0",
+    "source_locator": {
+      "excerpt": null,
+      "location": "synthetic.ae[0]",
+      "schema_version": "1.0",
+      "source_id": "source-synthetic-1"
+    },
+    "source_term": "Dizziness"
+  },
+  {
+    "analysis_population": "Safety population",
+    "event_occurrences": null,
+    "event_seriousness": "non_serious",
+    "group_id": "arm-A",
+    "intervention": "Synthetic X 1 mg",
+    "is_synthetic": true,
+    "normalised_term": null,
+    "participants_affected": 10,
+    "participants_at_risk": 100,
+    "reported_sex_category": "Male",
+    "reporting_window": "Day 1-7",
+    "row_id": "ae-1",
+    "schema_version": "1.0",
+    "source_locator": {
+      "excerpt": null,
+      "location": "synthetic.ae[1]",
+      "schema_version": "1.0",
+      "source_id": "source-synthetic-1"
+    },
+    "source_term": "Dizziness"
+  }
+]

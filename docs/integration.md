@@ -85,3 +85,27 @@ these additive shared changes for the other branches:
 Agent 1 and Agent 3 implementation files are untouched by Agent 2. Their default
 stubs still block a fully live trial-to-report run until merged and wired. Health
 component flags must be updated by the integrator when that wiring is verified.
+
+## Agent 1 implementation handoff — 2026-11-08
+
+Owner: Agent 1. Existing shared signatures and dependencies are unchanged.
+`ClinicalTrialsClient(httpx_client, shared_budget, cache_dir=None, replay=False)`
+and `SuppliedTerminology(mappings=None)` are ready for Agent 2 runtime composition.
+See [Agent 1 usage](agent-1-usage.md) for tool parameters and conservative limits.
+
+Pending coordination, not an agreed schema change:
+
+- AE comparisons require the same group_id and recorded intervention/population/
+  reporting window. Separate source sex-subgroup IDs cannot be proved to share
+  an arm using v1.0 alone; they return unavailable. A future arm/dose linkage must
+  carry actual source provenance, not model-supplied compatibility flags.
+- PKRow lacks population and sampling-window fields. Reported summaries work;
+  cross-category ratios are withheld pending a provenance-backed extension.
+- ScreeningOutput has no partial status. Agent 2 should propagate explicit
+  interpreter-incomplete limitations/review events to run-level partial status.
+- Related-trial search retains the existing list[TrialSearchHit] signature;
+  source provenance is obtained by fetch_trial for selected hits. Search hits
+  alone are not evidence claims. Persistent captured search replay is not provided.
+
+Agreement status: review by Agent 2 pending. No migration or version change was
+applied. Agent 2/3 implementation files and shared contracts were not edited.
